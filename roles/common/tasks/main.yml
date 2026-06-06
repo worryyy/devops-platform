@@ -21,20 +21,34 @@
       - curl
       - tar
       - iptables
+      - iproute2
       - ca-certificates
     state: present
+
+- name: Read Tailscale interface IPv4 addresses
+  command: ip -4 -o addr show dev "{{ k3s_flannel_iface }}"
+  register: tailscale_iface_addrs
+  changed_when: false
+
+- name: Assert inventory IP is assigned to Tailscale interface
+  assert:
+    that:
+      - "('inet ' ~ ansible_host ~ '/') in tailscale_iface_addrs.stdout"
+    fail_msg: >-
+      Expected {{ k3s_flannel_iface }} on {{ inventory_hostname }} to contain
+      inventory IP {{ ansible_host }}, but got:
+      {{ tailscale_iface_addrs.stdout | default('no interface output') }}
+    success_msg: "{{ k3s_flannel_iface }} contains inventory IP {{ ansible_host }}"
 
 - name: Ensure br_netfilter module is loaded
   modprobe:
     name: br_netfilter
     state: present
-  ignore_errors: yes
 
 - name: Ensure overlay module is loaded
   modprobe:
     name: overlay
     state: present
-  ignore_errors: yes
 
 - name: Configure basic sysctl for Kubernetes networking
   sysctl:
@@ -46,7 +60,6 @@
     - { name: "net.bridge.bridge-nf-call-iptables", value: "1" }
     - { name: "net.bridge.bridge-nf-call-ip6tables", value: "1" }
     - { name: "net.ipv4.ip_forward", value: "1" }
-  ignore_errors: yes
 
 - name: Check memory
   command: free -h
@@ -86,3 +99,30 @@
           endpoint:
             - "https://docker.1ms.run"
             - "https://registry-1.docker.io"
+  register: k3s_registries_config
+
+- name: Check existing k3s server service
+  stat:
+    path: /etc/systemd/system/k3s.service
+  register: common_k3s_server_service
+
+- name: Restart k3s server after registry mirror change
+  systemd:
+    name: k3s
+    state: restarted
+  when:
+    - k3s_registries_config.changed
+    - common_k3s_server_service.stat.exists
+
+- name: Check existing k3s agent service
+  stat:
+    path: /etc/systemd/system/k3s-agent.service
+  register: common_k3s_agent_service
+
+- name: Restart k3s agent after registry mirror change
+  systemd:
+    name: k3s-agent
+    state: restarted
+  when:
+    - k3s_registries_config.changed
+    - common_k3s_agent_service.stat.exists

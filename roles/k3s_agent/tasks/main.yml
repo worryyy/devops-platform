@@ -25,10 +25,12 @@
   register: agent_token_file
   delegate_to: "{{ k3s_join_server_host }}"
   become: yes
+  no_log: true
 
 - name: Resolve k3s token for agent
   set_fact:
     k3s_join_token: "{{ agent_token_file.content | b64decode | trim }}"
+  no_log: true
 
 - name: Debug k3s join info
   debug:
@@ -55,36 +57,24 @@
 - name: Build k3s agent install command
   set_fact:
     k3s_agent_install_cmd: >-
-      timeout 300 /bin/bash -c '
-      INSTALL_K3S_MIRROR={{ k3s_mirror }}
-      INSTALL_K3S_VERSION={{ k3s_version }}
-      INSTALL_K3S_SKIP_START=true
-      K3S_URL=https://{{ k3s_join_server_ip }}:6443
-      K3S_TOKEN={{ k3s_join_token }}
-      /tmp/install-k3s.sh agent
+      timeout 300 /tmp/install-k3s.sh agent
       --flannel-iface={{ k3s_flannel_iface }}
       --node-ip={{ ansible_host }}
       --node-label node-type=worker
-      '
-
-- name: Print k3s agent install command
-  debug:
-    var: k3s_agent_install_cmd
 
 - name: Install k3s agent without starting service
   shell: "{{ k3s_agent_install_cmd }}"
   args:
     executable: /bin/bash
     creates: /etc/systemd/system/k3s-agent.service
+  environment:
+    INSTALL_K3S_MIRROR: "{{ k3s_mirror }}"
+    INSTALL_K3S_VERSION: "{{ k3s_version }}"
+    INSTALL_K3S_SKIP_START: "true"
+    K3S_URL: "https://{{ k3s_join_server_ip }}:6443"
+    K3S_TOKEN: "{{ k3s_join_token }}"
   register: k3s_agent_install_result
-
-- name: Print k3s agent install stdout
-  debug:
-    var: k3s_agent_install_result.stdout_lines
-
-- name: Print k3s agent install stderr
-  debug:
-    var: k3s_agent_install_result.stderr_lines
+  no_log: true
 
 - name: Check k3s-agent service file
   stat:

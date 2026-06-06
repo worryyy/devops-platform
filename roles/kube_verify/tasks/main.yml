@@ -26,6 +26,19 @@
   delay: 10
   changed_when: false
 
+- name: Wait until all non-completed pods are Running and Ready
+  shell: |
+    set -o pipefail
+    kubectl get pods -A --field-selector=status.phase!=Succeeded --no-headers \
+      | awk '{split($3, ready, "/"); if ($4 != "Running" || ready[1] != ready[2]) print}'
+  args:
+    executable: /bin/bash
+  register: unhealthy_pods
+  until: unhealthy_pods.stdout == ""
+  retries: 30
+  delay: 10
+  changed_when: false
+
 - name: Get all pods
   command: kubectl get pods -A -o wide
   register: pods_output

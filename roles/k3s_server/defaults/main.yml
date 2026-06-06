@@ -1,5 +1,5 @@
 ---
-k3s_version: "v1.28.8+k3s1"
+k3s_version: "v1.34.8+k3s1"
 
 k3s_install_script_url: "https://rancher-mirror.rancher.cn/k3s/k3s-install.sh"
 k3s_mirror: "cn"
