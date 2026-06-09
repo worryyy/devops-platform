@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: workloads
+  namespace: argocd
+spec:
+  description: Business workloads managed by ArgoCD
+
+  sourceRepos:
+    - '*'
+
+  destinations:
+    - namespace: app
+      server: https://kubernetes.default.svc
+    - namespace: chaos-testing
+      server: https://kubernetes.default.svc
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
