@@ -1,0 +1,12 @@
+replicaCount: 1
+
+fullnameOverride: forum-api-target
+
+nodeSelector:
+  workload-role: chaos-target
+
+podLabels:
+  app-role: chaos-target
+  chaos-target: "true"
+
+secretName: forum-api-secrets
