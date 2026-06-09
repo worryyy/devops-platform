@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: forum-api
+  namespace: argocd
+spec:
+  project: workloads
+
+  source:
+    repoURL: 
+    targetRevision: main
+    path: charts/forum-api
+    helm:
+      releaseName: forum-api
+      valueFiles:
+        - ../../helm-values/workloads/forum-api-business.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: app
+
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
