@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: forum-api-target
+  namespace: argocd
+spec:
+  project: workloads
+
+  source:
+    repoURL: https://github.com/worryyy/k3s-platform.git
+    targetRevision: main
+    path: charts/forum-api
+    helm:
+      releaseName: forum-api-target
+      valueFiles:
+        - ../../helm-values/workloads/forum-api-target.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: chaos-testing
+
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
