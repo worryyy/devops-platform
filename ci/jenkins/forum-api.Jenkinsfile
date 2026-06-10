@@ -44,10 +44,12 @@ spec:
     }
   }
 
-  environment {
-    IMAGE_REPO = "ccr.ccs.tencentyun.com/k3s-platform/server"
-    GIT_PUSH_REPO = "https://github.com/worryyy/k3s-platform.git"
-  }
+environment {
+  IMAGE_REPO = "ccr.ccs.tencentyun.com/k3s-platform/server"
+  GIT_PUSH_REPO = "https://github.com/worryyy/k3s-platform.git"
+  GOPROXY = "https://goproxy.cn,direct"
+  GO111MODULE = "on"
+}
 
   stages {
     stage('Prepare') {
@@ -60,16 +62,19 @@ spec:
       }
     }
 
-    stage('Test') {
-      steps {
-        container('golang') {
-          sh '''
-            cd apps/api
-            go test ./...
-          '''
-        }
-      }
+stage('Test') {
+  steps {
+    container('golang') {
+      sh '''
+        go env -w GOPROXY=https://goproxy.cn,direct
+        go env -w GO111MODULE=on
+        cd apps/api
+        go mod download
+        go test ./...
+      '''
     }
+  }
+}
 
     stage('Build and Push Image') {
       steps {
