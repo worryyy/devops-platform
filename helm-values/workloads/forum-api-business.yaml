@@ -2,6 +2,16 @@ replicaCount: 1
 
 fullnameOverride: forum-api
 
+image:
+  registry: ccr.ccs.tencentyun.com
+  repository: k3s-platform/server
+  tag: dev
+  pullPolicy: IfNotPresent
+  pullSecrets:
+    - tcr-secret
+
+secretName: forum-api-secrets
+
 nodeSelector:
   workload-role: business
 
