@@ -1,0 +1,21 @@
+controller:
+  serviceType: ClusterIP
+
+  nodeSelector:
+    platform-role: control
+
+  image:
+    registry: ccr.ccs.tencentyun.com
+    repository: k3s-platform/jenkins
+    tag: "2.555.2-lts-jdk21"
+    pullPolicy: IfNotPresent
+
+  imagePullSecretName: tcr-secret
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1024Mi
