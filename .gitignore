@@ -7,3 +7,15 @@ ENV/
 
 # Local OMX runtime state and logs
 .omx/
+
+# Frontend dependencies, build output, and caches
+web/node_modules/
+web/dist/
+web/.vite/
+web/.vite-temp/
+web/coverage/
+web/*.tsbuildinfo
+web/npm-debug.log*
+web/yarn-debug.log*
+web/yarn-error.log*
+web/pnpm-debug.log*
