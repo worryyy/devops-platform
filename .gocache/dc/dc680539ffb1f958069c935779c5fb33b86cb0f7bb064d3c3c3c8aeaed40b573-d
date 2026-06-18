@@ -1,0 +1,8 @@
+./frontend.go
+./handler_bindings.go
+./health.go
+./legacy_routes.go
+./models.go
+./release_handler.go
+./routes.go
+./routes_test.go

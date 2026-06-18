@@ -1,0 +1,4 @@
+./consumer.go
+./message.go
+./publisher.go
+./rabbitmq.go

@@ -1,0 +1,8 @@
+./bindings.go
+./handler.go
+./loader.go
+./model.go
+./routes.go
+./sanitizer.go
+./service.go
+./validator.go

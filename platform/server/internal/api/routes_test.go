@@ -131,42 +131,20 @@ func (r testReadiness) Ping(ctx context.Context) error {
 	return r.err
 }
 
-func TestListServicesUsesUnifiedResponse(t *testing.T) {
+func TestServicesRouteIsOwnedByCatalogModule(t *testing.T) {
 	router := newTestRouter(t, &testStore{}, testPublisher{}, nil)
 
 	recorder := perform(router, http.MethodGet, "/api/services", nil)
 
-	assertHTTPStatus(t, recorder, http.StatusOK)
-	response := decodeAPIResponse(t, recorder)
-	if response.Code != http.StatusOK {
-		t.Fatalf("Code = %d, want %d", response.Code, http.StatusOK)
-	}
-	data := responseData(t, response)
-	if data["version"] != "v1" {
-		t.Fatalf("data.version = %#v", data["version"])
-	}
-	services, ok := data["services"].([]interface{})
-	if !ok || len(services) != 1 {
-		t.Fatalf("data.services = %#v", data["services"])
-	}
+	assertHTTPStatus(t, recorder, http.StatusNotFound)
 }
 
-func TestGetServiceNotFoundUsesUnifiedResponse(t *testing.T) {
+func TestGetServiceRouteIsOwnedByCatalogModule(t *testing.T) {
 	router := newTestRouter(t, &testStore{}, testPublisher{}, nil)
 
 	recorder := perform(router, http.MethodGet, "/api/services/missing", nil)
 
 	assertHTTPStatus(t, recorder, http.StatusNotFound)
-	response := decodeAPIResponse(t, recorder)
-	if response.Code != http.StatusNotFound {
-		t.Fatalf("Code = %d, want %d", response.Code, http.StatusNotFound)
-	}
-	if response.Message != "service not found" {
-		t.Fatalf("Message = %q", response.Message)
-	}
-	if response.Data != nil {
-		t.Fatalf("Data = %#v, want nil", response.Data)
-	}
 }
 
 func TestCreateReleaseReturnsAcceptedUnifiedResponse(t *testing.T) {

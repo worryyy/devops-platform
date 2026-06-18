@@ -64,7 +64,7 @@ spec:
               containerPort: {{ .Values.api.service.targetPort }}
               protocol: TCP
           env:
-            - name: CATALOG_PATH
+            - name: SERVICE_CATALOG_PATH
               value: {{ .Values.config.catalogPath | quote }}
             {{- range $key, $value := .Values.env }}
             - name: {{ $key }}

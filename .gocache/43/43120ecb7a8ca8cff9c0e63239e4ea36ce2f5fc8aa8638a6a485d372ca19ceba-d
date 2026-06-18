@@ -1,0 +1,10 @@
+./build_store.go
+./dashboard_store.go
+./deploy_store.go
+./helpers.go
+./model.go
+./pipeline_store.go
+./postgres.go
+./store_event.go
+./store_lock.go
+./store_release.go

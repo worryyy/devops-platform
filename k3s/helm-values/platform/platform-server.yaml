@@ -4,7 +4,7 @@ image:
   tag: dev
   pullPolicy: Always
   pullSecrets:
-    - tcr--platform-secret
+    - tcr-platform-secret
 
 api:
   replicaCount: 1
@@ -17,6 +17,19 @@ api:
     limits:
       cpu: 300m
       memory: 256Mi
+
+ingress:
+  enabled: true
+  className: traefik
+  annotations: {}
+  hosts:
+    - host: ""
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    enabled: false
+    secretName: ""
 
 worker:
   replicaCount: 1
@@ -31,7 +44,7 @@ worker:
       memory: 256Mi
 
 config:
-  catalogPath: /etc/platform/service-catalog.yaml
+  catalogPath: /app/configs/service-catalog.yaml
 
 env:
   POSTGRES_HOST: platform-postgresql.platform.svc.cluster.local

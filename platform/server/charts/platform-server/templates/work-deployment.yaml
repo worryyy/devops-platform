@@ -60,7 +60,7 @@ spec:
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           env:
-            - name: CATALOG_PATH
+            - name: SERVICE_CATALOG_PATH
               value: {{ .Values.config.catalogPath | quote }}
             {{- range $key, $value := .Values.env }}
             - name: {{ $key }}

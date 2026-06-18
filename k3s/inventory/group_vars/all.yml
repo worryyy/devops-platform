@@ -9,7 +9,7 @@ k3s_server_ip: "{{ hostvars[k3s_server_host]['ansible_host'] }}"
 
 k3s_flannel_iface: "tailscale0"
 
-disable_traefik: true
+disable_traefik: false
 
 kubeconfig_local_path: "{{ lookup('env', 'HOME') }}/.kube/config"
 kubeconfig_tmp_path: "/tmp/k3s.yaml"

@@ -19,3 +19,8 @@ README.md
 
 Dockerfile
 docker-compose.yml
+
+web/node_modules
+web/dist
+web/tsconfig.tsbuildinfo
+platform/server/internal/app/frontend/dist

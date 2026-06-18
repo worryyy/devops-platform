@@ -35,6 +35,19 @@ api:
       cpu: 300m
       memory: 256Mi
 
+ingress:
+  enabled: false
+  className: traefik
+  annotations: {}
+  hosts:
+    - host: ecampusops.top
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    enabled: false
+    secretName: ""
+
 worker:
   replicaCount: 1
   command: []

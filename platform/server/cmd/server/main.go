@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/worryyy/devops-platform/platform/server/internal/app"
 	"github.com/worryyy/devops-platform/platform/server/internal/config"
 )
 
@@ -23,12 +24,12 @@ func main() {
 
 	switch os.Args[1] {
 	case "api":
-		if err := runAPI(ctx, cfg, logger); err != nil {
+		if err := app.RunAPI(ctx, cfg, logger); err != nil {
 			logger.Error("api exited", "error", err)
 			os.Exit(1)
 		}
 	case "worker":
-		if err := runWorker(ctx, cfg, logger); err != nil {
+		if err := app.RunWorker(ctx, cfg, logger); err != nil {
 			logger.Error("worker exited", "error", err)
 			os.Exit(1)
 		}

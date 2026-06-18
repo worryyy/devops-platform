@@ -53,7 +53,7 @@ func (h ReleaseHandler) Events(c *gin.Context) {
 
 func (h ReleaseHandler) ListByService(c *gin.Context) {
 	limit := requestLimit(c, 50)
-	releases, err := h.releases.ListReleasesByService(c.Request.Context(), c.Param("name"), limit)
+	releases, err := h.releases.ListReleasesByService(c.Request.Context(), c.Param("serviceName"), limit)
 	if err != nil {
 		responses.Fail(c, err)
 		return
