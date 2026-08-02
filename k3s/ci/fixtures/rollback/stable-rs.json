@@ -1,0 +1,9 @@
+{
+  "kind": "ReplicaSet",
+  "metadata": {"name": "ecampus-topic-abc123"},
+  "spec": {
+    "replicas": 2,
+    "template": {"spec": {"containers": [{"image": "ccr.ccs.tencentyun.com/k3s-platform/ecampus-topic:git-aaaa1111@sha256:1111111111111111111111111111111111111111111111111111111111111111"}]}}
+  },
+  "status": {"replicas": 2, "availableReplicas": 2}
+}

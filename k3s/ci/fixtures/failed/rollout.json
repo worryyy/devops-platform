@@ -1,0 +1,13 @@
+{
+  "apiVersion": "argoproj.io/v1alpha1",
+  "kind": "Rollout",
+  "metadata": {
+    "name": "ecampus-user",
+    "namespace": "app"
+  },
+  "status": {
+    "phase": "Degraded",
+    "abortedAt": "2026-08-02T10:00:00Z",
+    "message": "AnalysisRun ecampus-user-abc-2-4 failed: metric canary-error-rate assessed Failed"
+  }
+}

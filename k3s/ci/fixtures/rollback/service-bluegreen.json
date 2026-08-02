@@ -1,0 +1,18 @@
+{
+  "service": "chat",
+  "image": "ccr.ccs.tencentyun.com/k3s-platform/ecampus-chat",
+  "values_file": "k3s/helm-values/workloads/ecampus-chat.yaml",
+  "environment": "dev",
+  "namespace": "app",
+  "application": "ecampus-chat",
+  "argocd_namespace": "argocd",
+  "rollout": "ecampus-chat",
+  "resource_name": "ecampus-chat",
+  "workload_kind": "Rollout",
+  "effective_profile": "controlled-bluegreen",
+  "analysis": {"minSamples": 20, "maxErrorRate": 0.01, "maxP95Seconds": 1.0},
+  "wait_timeout": "45m",
+  "manual_promotion": true,
+  "stable_service": "ecampus-chat",
+  "health_path": "/health"
+}

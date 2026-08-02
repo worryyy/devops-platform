@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ecampus-release
+  namespace: delivery
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ecampus-release
+  namespace: app
+rules:
+  - apiGroups: [argoproj.io]
+    resources: [rollouts, rollouts/status]
+    verbs: [get, list, watch]
+  - apiGroups: [argoproj.io]
+    resources: [rollouts]
+    verbs: [patch, update]
+  - apiGroups: [argoproj.io]
+    resources: [rollouts/promote, rollouts/abort, rollouts/restart]
+    verbs: [create]
+  - apiGroups: [argoproj.io]
+    resources: [rollouts/undo]
+    verbs: [create]
+  - apiGroups: [argoproj.io]
+    resources: [analysisruns, analysisruns/status]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [deployments, deployments/status, replicasets]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [update]
+  - apiGroups: [""]
+    resources: [pods, services, endpoints]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ecampus-release
+  namespace: app
+subjects:
+  - kind: ServiceAccount
+    name: ecampus-release
+    namespace: delivery
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ecampus-release
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ecampus-release
+  namespace: argocd
+rules:
+  - apiGroups: [argoproj.io]
+    resources: [applications, applications/status]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ecampus-release
+  namespace: argocd
+subjects:
+  - kind: ServiceAccount
+    name: ecampus-release
+    namespace: delivery
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ecampus-release

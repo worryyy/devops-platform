@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loki
+  namespace: argocd
+spec:
+  project: platform-addons
+
+  sources:
+    - repoURL: https://grafana-community.github.io/helm-charts
+      chart: loki
+      targetRevision: 17.3.0
+      helm:
+        releaseName: loki
+        valueFiles:
+          - $values/k3s/helm-values/platform/loki.yaml
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: alloy
+      targetRevision: 1.9.0
+      helm:
+        releaseName: alloy
+        valueFiles:
+          - $values/k3s/helm-values/platform/alloy.yaml
+    - repoURL: https://github.com/worryyy/devops-platform.git
+      targetRevision: main
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

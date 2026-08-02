@@ -1,0 +1,31 @@
+{
+  "apiVersion": "argoproj.io/v1alpha1",
+  "kind": "AnalysisRun",
+  "metadata": {
+    "name": "ecampus-user-5b4c9f8d7c-2-3",
+    "namespace": "app",
+    "labels": {
+      "rollout.argoproj.io/rollout": "ecampus-user"
+    }
+  },
+  "status": {
+    "phase": "Successful",
+    "message": "metric canary-samples assessed Success due to consecutiveSuccessLimit (2) reached",
+    "metricResults": [
+      {
+        "name": "canary-error-rate",
+        "phase": "Successful",
+        "measurements": [
+          {
+            "phase": "Successful",
+            "value": "0.0012"
+          },
+          {
+            "phase": "Successful",
+            "value": "0.0009"
+          }
+        ]
+      }
+    ]
+  }
+}

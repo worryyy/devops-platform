@@ -1,0 +1,734 @@
+alertmanager:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 2Gi
+  config:
+    enabled: true
+    global: {}
+    route:
+      receiver: default-receiver
+      group_by:
+        - alertname
+        - namespace
+        - service
+        - environment
+        - deploy_id
+        - release_batch
+        - failure_domain
+      group_wait: 20s
+      group_interval: 5m
+      repeat_interval: 3h
+      routes:
+        - receiver: deploy-context
+          matchers:
+            - alertname="ReleaseDeployNoiseWindow"
+    receivers:
+      - name: default-receiver
+      - name: deploy-context
+    inhibit_rules:
+      - source_matchers:
+          - alertname="ReleaseDeployNoiseWindow"
+          - deploy_id=~".+"
+        target_matchers:
+          - signal_type="deploy_noise"
+          - alertname=~"ReleasePodRestarting|ReleasePodTerminating"
+          - deploy_id=~".+"
+        equal:
+          - namespace
+          - service
+          - environment
+          - deploy_id
+      - source_matchers:
+          - signal_type="user_impact"
+          - failure_domain="service"
+          - deploy_id=~".+"
+          - service=~".+"
+          - environment=~".+"
+        target_matchers:
+          - signal_type="deploy_noise"
+          - alertname=~"ReleasePodRestarting|ReleasePodTerminating"
+          - deploy_id=~".+"
+          - service=~".+"
+          - environment=~".+"
+        equal:
+          - namespace
+          - service
+          - environment
+          - deploy_id
+
+prometheus-pushgateway:
+  enabled: false
+
+server:
+  global:
+    scrape_interval: 30s
+    evaluation_interval: 30s
+  persistentVolume:
+    enabled: true
+    size: 8Gi
+
+scrapeConfigs:
+  kubernetes-pods:
+    metric_relabel_configs:
+      - action: labeldrop
+        regex: delivery_platform_(deploy_id|git_sha|environment|release_batch|image_digest|gitops_revision)
+  kubernetes-pods-slow:
+    metric_relabel_configs:
+      - action: labeldrop
+        regex: delivery_platform_(deploy_id|git_sha|environment|release_batch|image_digest|gitops_revision)
+
+extraScrapeConfigs: |
+  - job_name: kubelet
+    scheme: https
+    metrics_path: /metrics/cadvisor
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      insecure_skip_verify: true
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    kubernetes_sd_configs:
+      - role: node
+    relabel_configs:
+      - action: labelmap
+        regex: __meta_kubernetes_node_label_(.+)
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        action: keep
+        regex: kubelet_volume_stats_(used_bytes|capacity_bytes)
+  - job_name: ingress-nginx
+    kubernetes_sd_configs:
+      - role: endpoints
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_namespace]
+        action: keep
+        regex: ingress-nginx
+      - source_labels: [__meta_kubernetes_service_name]
+        action: keep
+        regex: ingress-nginx-controller-metrics
+      - source_labels: [__meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: metrics
+  - job_name: argo-rollouts
+    kubernetes_sd_configs:
+      - role: endpoints
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_namespace]
+        action: keep
+        regex: argo-rollouts
+      - source_labels: [__meta_kubernetes_service_name]
+        action: keep
+        regex: argo-rollouts-metrics
+      - source_labels: [__meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: metrics
+  - job_name: app-release-info
+    honor_labels: true
+    scrape_interval: 2m
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_delivery_platform_release_info_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_delivery_platform_release_info_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels:
+          - __meta_kubernetes_pod_annotation_delivery_platform_release_info_port
+          - __meta_kubernetes_pod_ip
+        action: replace
+        regex: (\d+);(([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4})
+        replacement: '[$2]:$1'
+        target_label: __address__
+      - source_labels:
+          - __meta_kubernetes_pod_annotation_delivery_platform_release_info_port
+          - __meta_kubernetes_pod_ip
+        action: replace
+        regex: (\d+);((([0-9]+?)(\.|$)){4})
+        replacement: $2:$1
+        target_label: __address__
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: pod
+      - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+        action: replace
+        target_label: service
+      - source_labels: [__meta_kubernetes_pod_label_delivery_platform_deploy_id]
+        action: replace
+        target_label: deploy_id
+      - source_labels: [__meta_kubernetes_pod_label_delivery_platform_git_sha]
+        action: replace
+        target_label: git_sha
+      - source_labels: [__meta_kubernetes_pod_label_delivery_platform_environment]
+        action: replace
+        target_label: environment
+      - source_labels: [__meta_kubernetes_pod_label_delivery_platform_release_batch]
+        action: replace
+        target_label: release_batch
+      - source_labels: [__meta_kubernetes_pod_annotation_delivery_platform_image_digest]
+        action: replace
+        target_label: image_digest
+      - source_labels: [__meta_kubernetes_pod_annotation_delivery_platform_gitops_revision]
+        action: replace
+        target_label: gitops_revision
+      - source_labels: [__meta_kubernetes_pod_phase]
+        regex: Pending|Succeeded|Failed|Completed
+        action: drop
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        action: keep
+        regex: app_deploy_info
+  - job_name: ecampus-http
+    scrape_interval: 30s
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_namespace]
+        action: keep
+        regex: app
+      - source_labels: [__meta_kubernetes_pod_container_port_name]
+        action: keep
+        regex: http
+      - source_labels:
+          - __meta_kubernetes_pod_ip
+          - __meta_kubernetes_pod_container_port_number
+        action: replace
+        regex: (([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4});(\d+)
+        replacement: '[$1]:$3'
+        target_label: __address__
+      - source_labels:
+          - __meta_kubernetes_pod_ip
+          - __meta_kubernetes_pod_container_port_number
+        action: replace
+        regex: ((([0-9]+?)(\.|$)){4});(\d+)
+        replacement: $1:$5
+        target_label: __address__
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: pod
+      - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+        action: replace
+        target_label: service
+      - source_labels: [__meta_kubernetes_pod_label_rollouts_pod_template_hash]
+        action: replace
+        target_label: revision
+      - source_labels: [__meta_kubernetes_pod_label_pod_template_hash]
+        action: replace
+        target_label: revision
+      - source_labels: [__meta_kubernetes_pod_label_delivery_platform_deploy_id]
+        action: replace
+        target_label: deploy_id
+      - source_labels: [__meta_kubernetes_pod_label_delivery_platform_git_sha]
+        action: replace
+        target_label: git_sha
+      - source_labels: [__meta_kubernetes_pod_label_delivery_platform_environment]
+        action: replace
+        target_label: environment
+      - source_labels: [__meta_kubernetes_pod_label_delivery_platform_release_batch]
+        action: replace
+        target_label: release_batch
+      - source_labels: [__meta_kubernetes_pod_annotation_delivery_platform_image_digest]
+        action: replace
+        target_label: image_digest
+      - source_labels: [__meta_kubernetes_pod_annotation_delivery_platform_gitops_revision]
+        action: replace
+        target_label: gitops_revision
+      - source_labels: [__meta_kubernetes_pod_phase]
+        regex: Pending|Succeeded|Failed|Completed
+        action: drop
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        action: keep
+        regex: ecampus_http_.*
+
+kube-state-metrics:
+  metricLabelsAllowlist:
+    - pods=[app.kubernetes.io/name,app.kubernetes.io/instance,delivery.platform/deploy-id,delivery.platform/git-sha,delivery.platform/environment,delivery.platform/release-batch,rollouts-pod-template-hash,pod-template-hash]
+    - deployments=[app.kubernetes.io/name,app.kubernetes.io/instance,delivery.platform/deploy-id,delivery.platform/git-sha,delivery.platform/environment,delivery.platform/release-batch]
+  metricAnnotationsAllowlist:
+    - pods=[delivery.platform/image-digest,delivery.platform/gitops-revision]
+    - deployments=[delivery.platform/image-digest,delivery.platform/gitops-revision]
+
+serverFiles:
+  recording_rules.yml:
+    groups:
+      - name: delivery-platform-release-recording
+        rules:
+          - record: delivery_platform:pod_release_info
+            expr: |
+              max by (namespace, pod, instance, service, deploy_id, release_batch, environment, git_sha, image_digest, gitops_revision) (
+                label_replace(
+                  label_replace(
+                    label_replace(
+                      label_replace(
+                        label_replace(
+                          label_replace(
+                            kube_pod_labels{label_delivery_platform_deploy_id!=""},
+                            "deploy_id", "$1", "label_delivery_platform_deploy_id", "(.+)"
+                          ),
+                          "release_batch", "$1", "label_delivery_platform_release_batch", "(.*)"
+                        ),
+                        "environment", "$1", "label_delivery_platform_environment", "(.*)"
+                      ),
+                      "git_sha", "$1", "label_delivery_platform_git_sha", "(.*)"
+                    ),
+                    "service", "$1", "label_app_kubernetes_io_name", "(.+)"
+                  ),
+                  "instance", "$1", "label_app_kubernetes_io_instance", "(.+)"
+                )
+                * on (namespace, pod) group_left(image_digest)
+                  label_replace(
+                    kube_pod_annotations{annotation_delivery_platform_image_digest=~".+"},
+                    "image_digest", "$1", "annotation_delivery_platform_image_digest", "(.*)"
+                  )
+                * on (namespace, pod) group_left(gitops_revision)
+                  label_replace(
+                    kube_pod_annotations{annotation_delivery_platform_gitops_revision=~".+"},
+                    "gitops_revision", "$1", "annotation_delivery_platform_gitops_revision", "(.*)"
+                  )
+              )
+          - record: delivery_platform:release_info
+            expr: |
+              max by (namespace, service, environment, revision, deploy_id, release_batch, image_digest, git_sha, gitops_revision) (
+                label_replace(
+                  label_replace(
+                    label_replace(
+                      label_replace(
+                        label_replace(
+                          label_replace(
+                            label_replace(
+                              kube_pod_labels{label_delivery_platform_deploy_id!=""},
+                              "deploy_id", "$1", "label_delivery_platform_deploy_id", "(.+)"
+                            ),
+                            "release_batch", "$1", "label_delivery_platform_release_batch", "(.*)"
+                          ),
+                          "environment", "$1", "label_delivery_platform_environment", "(.*)"
+                        ),
+                        "git_sha", "$1", "label_delivery_platform_git_sha", "(.*)"
+                      ),
+                      "service", "$1", "label_app_kubernetes_io_name", "(.+)"
+                    ),
+                    "revision", "$1", "label_rollouts_pod_template_hash", "(.+)"
+                  ),
+                  "revision", "$1", "label_pod_template_hash", "(.+)"
+                )
+                * on (namespace, pod) group_left(image_digest)
+                  label_replace(
+                    kube_pod_annotations{annotation_delivery_platform_image_digest=~".+"},
+                    "image_digest", "$1", "annotation_delivery_platform_image_digest", "(.*)"
+                  )
+                * on (namespace, pod) group_left(gitops_revision)
+                  label_replace(
+                    kube_pod_annotations{annotation_delivery_platform_gitops_revision=~".+"},
+                    "gitops_revision", "$1", "annotation_delivery_platform_gitops_revision", "(.*)"
+                  )
+              )
+          - record: delivery_platform:workload_release_info
+            expr: |
+              max by (namespace, workload, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision) (
+                label_replace(
+                  delivery_platform:pod_release_info,
+                  "workload", "$1", "instance", "(.+)"
+                )
+              )
+          - record: delivery_platform:deployment_release_info
+            expr: |
+              max by (namespace, deployment, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision) (
+                label_replace(
+                  label_replace(
+                    label_replace(
+                      label_replace(
+                        label_replace(
+                          label_replace(
+                            kube_deployment_labels{label_delivery_platform_deploy_id!=""},
+                            "deploy_id", "$1", "label_delivery_platform_deploy_id", "(.+)"
+                          ),
+                          "release_batch", "$1", "label_delivery_platform_release_batch", "(.*)"
+                        ),
+                        "environment", "$1", "label_delivery_platform_environment", "(.*)"
+                      ),
+                      "git_sha", "$1", "label_delivery_platform_git_sha", "(.*)"
+                    ),
+                    "service", "$1", "label_app_kubernetes_io_name", "(.+)"
+                  ),
+                  "deployment", "$1", "label_app_kubernetes_io_instance", "(.+)"
+                )
+                * on (namespace, deployment) group_left(image_digest)
+                  label_replace(
+                    kube_deployment_annotations{annotation_delivery_platform_image_digest=~".+"},
+                    "image_digest", "$1", "annotation_delivery_platform_image_digest", "(.*)"
+                  )
+                * on (namespace, deployment) group_left(gitops_revision)
+                  label_replace(
+                    kube_deployment_annotations{annotation_delivery_platform_gitops_revision=~".+"},
+                    "gitops_revision", "$1", "annotation_delivery_platform_gitops_revision", "(.*)"
+                  )
+              )
+      - name: ecampus-http-recording
+        rules:
+          # Stable and candidate revisions are compared exactly: every rule is
+          # aggregated by revision (rollouts-pod-template-hash or
+          # pod-template-hash) and environment only. Release identity is joined
+          # at alert evaluation time from delivery_platform:release_info so a
+          # new release does not create new time series.
+          - record: ecampus:http_requests_total:rate5m
+            expr: |
+              sum by (namespace, service, environment, revision) (
+                rate(ecampus_http_requests_total[5m])
+              )
+          - record: ecampus:http_errors_total:rate5m
+            expr: |
+              sum by (namespace, service, environment, revision) (
+                rate(ecampus_http_requests_total{outcome="failure"}[5m])
+              )
+          - record: ecampus:http_error_ratio:rate5m
+            expr: |
+              ecampus:http_errors_total:rate5m
+              / clamp_min(ecampus:http_requests_total:rate5m, 0.001)
+          - record: ecampus:http_request_duration_seconds:p95:5m
+            expr: |
+              histogram_quantile(
+                0.95,
+                sum by (namespace, service, environment, revision, le) (
+                  rate(ecampus_http_request_duration_seconds_bucket[5m])
+                )
+              )
+          - record: ecampus:http_route_success_ratio:rate5m
+            expr: |
+              sum by (namespace, service, environment, revision, route) (
+                rate(ecampus_http_requests_total{outcome="success"}[5m])
+              )
+              / clamp_min(sum by (namespace, service, environment, revision, route) (
+                rate(ecampus_http_requests_total[5m])
+              ), 0.001)
+  alerting_rules.yml:
+    groups:
+      - name: delivery-platform-deploy-noise
+        rules:
+          - alert: ReleaseDeployNoiseWindow
+            expr: |
+              max by (namespace, service, instance, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision) (
+                (time() - kube_pod_created < 900)
+                * on (namespace, pod) group_left(service, instance, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
+                  delivery_platform:pod_release_info
+              )
+            for: 1m
+            labels:
+              severity: info
+              signal_type: deploy_context
+              failure_domain: service
+            annotations:
+              summary: Release noise window is active for {{ $labels.service }}
+              description: Recent pods for deploy {{ $labels.deploy_id }} (batch {{ $labels.release_batch }}) allow transient deploy-noise alerts to be grouped and inhibited without muting user-impact alerts.
+              image_digest: '{{ printf "%.12s" $labels.image_digest }}'
+              git_sha: '{{ $labels.git_sha }}'
+              rollout: '{{ $labels.instance }}'
+              prometheus_query: 'delivery_platform:pod_release_info{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",deploy_id="{{ $labels.deploy_id }}"}'
+              loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
+          - alert: ReleasePodRestarting
+            expr: |
+              sum by (namespace, pod, container, instance, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision) (
+                increase(kube_pod_container_status_restarts_total{container!="",container!="POD"}[10m])
+                * on (namespace, pod) group_left(instance, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
+                  delivery_platform:pod_release_info
+              ) > 0
+            for: 2m
+            labels:
+              severity: warning
+              signal_type: deploy_noise
+              failure_domain: service
+            annotations:
+              summary: Pod restarted during release {{ $labels.deploy_id }}
+              description: Container {{ $labels.container }} in pod {{ $labels.pod }} restarted during a release noise window.
+              image_digest: '{{ printf "%.12s" $labels.image_digest }}'
+              git_sha: '{{ $labels.git_sha }}'
+              rollout: '{{ $labels.instance }}'
+              prometheus_query: 'kube_pod_container_status_restarts_total{namespace="{{ $labels.namespace }}",pod="{{ $labels.pod }}"}'
+              loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
+          - alert: ReleasePodNotReady
+            expr: |
+              max by (namespace, pod, instance, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision) (
+                (kube_pod_status_ready{condition="true"} == 0)
+                * on (namespace, pod) group_left(instance, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
+                  delivery_platform:pod_release_info
+              ) > 0
+            for: 5m
+            labels:
+              severity: warning
+              signal_type: deploy_noise
+              failure_domain: service
+            annotations:
+              summary: Pod not ready during release {{ $labels.deploy_id }}
+              description: Pod {{ $labels.pod }} is not ready during a release noise window.
+              image_digest: '{{ printf "%.12s" $labels.image_digest }}'
+              git_sha: '{{ $labels.git_sha }}'
+              rollout: '{{ $labels.instance }}'
+              prometheus_query: 'kube_pod_status_ready{namespace="{{ $labels.namespace }}",pod="{{ $labels.pod }}"}'
+              loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
+          - alert: ReleasePodTerminating
+            expr: |
+              max by (namespace, pod, instance, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision) (
+                kube_pod_deletion_timestamp
+                * on (namespace, pod) group_left(instance, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
+                  delivery_platform:pod_release_info
+              ) > 0
+            for: 2m
+            labels:
+              severity: info
+              signal_type: deploy_noise
+              failure_domain: service
+            annotations:
+              summary: Pod terminating during release {{ $labels.deploy_id }}
+              description: Pod {{ $labels.pod }} is terminating during a release noise window.
+              image_digest: '{{ printf "%.12s" $labels.image_digest }}'
+              git_sha: '{{ $labels.git_sha }}'
+              rollout: '{{ $labels.instance }}'
+              prometheus_query: 'kube_pod_deletion_timestamp{namespace="{{ $labels.namespace }}",pod="{{ $labels.pod }}"}'
+              loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
+          - alert: ReleaseReplicaShortage
+            expr: |
+              (
+                (
+                  (kube_deployment_status_replicas_available < kube_deployment_spec_replicas)
+                  * on (namespace, deployment) group_left(service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
+                    delivery_platform:deployment_release_info
+                )
+                or
+                (
+                  (rollout_info_replicas_available < rollout_info_replicas_desired)
+                  * on (namespace, name) group_left(service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
+                    label_replace(
+                      delivery_platform:workload_release_info,
+                      "name", "$1", "workload", "(.+)"
+                    )
+                )
+              ) > 0
+            for: 5m
+            labels:
+              severity: warning
+              signal_type: deploy_noise
+              failure_domain: service
+            annotations:
+              summary: Replica shortage for {{ $labels.service }} during release {{ $labels.deploy_id }}
+              description: Available replicas are below desired for more than 5 minutes; this is not suppressed by release noise windows.
+              image_digest: '{{ printf "%.12s" $labels.image_digest }}'
+              git_sha: '{{ $labels.git_sha }}'
+              rollout: '{{ $labels.deployment }}{{ $labels.name }}{{ $labels.workload }}'
+              prometheus_query: 'kube_deployment_status_replicas_available{namespace="{{ $labels.namespace }}"} < kube_deployment_spec_replicas{namespace="{{ $labels.namespace }}"}'
+              loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
+      - name: delivery-platform-release-gate
+        rules:
+          - alert: ReleaseAnalysisInconclusiveOrError
+            expr: |
+              max by (namespace, name, workload, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision) (
+                label_replace(
+                  analysis_run_phase{phase=~"Inconclusive|Error"},
+                  "workload", "$1", "name", "^(.+)-[0-9]+-((prepromotion|postpromotion)|[0-9]+)-[a-z0-9]+$"
+                )
+                * on (namespace, workload) group_left(service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
+                  delivery_platform:workload_release_info
+              )
+            for: 1m
+            labels:
+              severity: info
+              signal_type: deploy_context
+              failure_domain: service
+            annotations:
+              summary: Analysis for {{ $labels.service }} is inconclusive or errored
+              description: AnalysisRun {{ $labels.name }} could not produce a release verdict ({{ $labels.deploy_id }}); this is a deploy-context signal, not user impact.
+              image_digest: '{{ printf "%.12s" $labels.image_digest }}'
+              git_sha: '{{ $labels.git_sha }}'
+              rollout: '{{ $labels.workload }}'
+              prometheus_query: 'analysis_run_phase{namespace="{{ $labels.namespace }}",name="{{ $labels.name }}"}'
+              loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
+          - alert: ReleaseAnalysisFailed
+            expr: |
+              max by (namespace, name, workload, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision) (
+                label_replace(
+                  analysis_run_phase{phase="Failed"},
+                  "workload", "$1", "name", "^(.+)-[0-9]+-((prepromotion|postpromotion)|[0-9]+)-[a-z0-9]+$"
+                )
+                * on (namespace, workload) group_left(service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
+                  delivery_platform:workload_release_info
+              )
+            for: 1m
+            labels:
+              severity: warning
+              signal_type: release_gate_failed
+              failure_domain: service
+            annotations:
+              summary: Release analysis failed for {{ $labels.service }}
+              description: AnalysisRun {{ $labels.name }} failed ({{ $labels.deploy_id }}); the release gate did not pass. User impact is not implied.
+              image_digest: '{{ printf "%.12s" $labels.image_digest }}'
+              git_sha: '{{ $labels.git_sha }}'
+              rollout: '{{ $labels.workload }}'
+              prometheus_query: 'analysis_run_phase{namespace="{{ $labels.namespace }}",name="{{ $labels.name }}"}'
+              loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
+          - alert: ReleaseRolloutDegraded
+            expr: |
+              max by (namespace, name, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision) (
+                rollout_info{phase="Degraded"}
+                * on (namespace, name) group_left(service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
+                  label_replace(
+                    delivery_platform:workload_release_info,
+                    "name", "$1", "workload", "(.+)"
+                  )
+              )
+            for: 1m
+            labels:
+              severity: warning
+              signal_type: release_gate_failed
+              failure_domain: service
+            annotations:
+              summary: Rollout {{ $labels.name }} is degraded
+              description: Rollout {{ $labels.name }} ({{ $labels.deploy_id }}) is Degraded; the release gate did not pass.
+              image_digest: '{{ printf "%.12s" $labels.image_digest }}'
+              git_sha: '{{ $labels.git_sha }}'
+              rollout: '{{ $labels.name }}'
+              prometheus_query: 'rollout_info{namespace="{{ $labels.namespace }}",name="{{ $labels.name }}"}'
+              loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
+      - name: delivery-platform-user-impact
+        rules:
+          - alert: VersionHighErrorRate
+            expr: |
+              (
+                (
+                  max by (namespace, service, environment, revision) (ecampus:http_error_ratio:rate5m) > 0.05
+                )
+                and
+                (
+                  sum by (namespace, service, environment, revision) (ecampus:http_requests_total:rate5m) * 300 >= 50
+                )
+              )
+              * on (namespace, service, environment, revision) group_left(deploy_id, release_batch, image_digest, git_sha, gitops_revision)
+                delivery_platform:release_info
+            for: 5m
+            labels:
+              severity: warning
+              signal_type: user_impact
+              failure_domain: service
+            annotations:
+              summary: Version error rate high for {{ $labels.service }} revision {{ $labels.revision }}
+              description: Error ratio is above 5 percent for deploy {{ $labels.deploy_id }} (digest {{ printf "%.12s" $labels.image_digest }}).
+              image_digest: '{{ printf "%.12s" $labels.image_digest }}'
+              git_sha: '{{ $labels.git_sha }}'
+              prometheus_query: 'ecampus:http_error_ratio:rate5m{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}",revision="{{ $labels.revision }}"}'
+              loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
+          - alert: VersionHighP95Latency
+            expr: |
+              (
+                (
+                  max by (namespace, service, environment, revision) (ecampus:http_request_duration_seconds:p95:5m) > 1.5
+                )
+                and
+                (
+                  sum by (namespace, service, environment, revision) (rate(ecampus_http_request_duration_seconds_count[5m])) * 300 >= 50
+                )
+              )
+              * on (namespace, service, environment, revision) group_left(deploy_id, release_batch, image_digest, git_sha, gitops_revision)
+                delivery_platform:release_info
+            for: 5m
+            labels:
+              severity: warning
+              signal_type: user_impact
+              failure_domain: service
+            annotations:
+              summary: Version p95 latency high for {{ $labels.service }} revision {{ $labels.revision }}
+              description: P95 latency is above 1.5 seconds for deploy {{ $labels.deploy_id }} (digest {{ printf "%.12s" $labels.image_digest }}).
+              image_digest: '{{ printf "%.12s" $labels.image_digest }}'
+              git_sha: '{{ $labels.git_sha }}'
+              prometheus_query: 'ecampus:http_request_duration_seconds:p95:5m{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}",revision="{{ $labels.revision }}"}'
+              loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
+          - alert: ServiceHighErrorRate
+            expr: |
+              (
+                max by (namespace, service, environment) (ecampus:http_error_ratio:rate5m) > 0.05
+              )
+              and
+              (
+                sum by (namespace, service, environment) (ecampus:http_requests_total:rate5m) * 300 >= 50
+              )
+            for: 5m
+            labels:
+              severity: critical
+              signal_type: user_impact
+              failure_domain: service
+            annotations:
+              summary: Service error rate high for {{ $labels.service }}
+              description: Error ratio is above 5 percent across every revision of {{ $labels.service }} in {{ $labels.environment }}.
+              prometheus_query: 'ecampus:http_error_ratio:rate5m{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"}'
+              loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"}'
+          - alert: ServiceHighP95Latency
+            expr: |
+              (
+                max by (namespace, service, environment) (ecampus:http_request_duration_seconds:p95:5m) > 1.5
+              )
+              and
+              (
+                sum by (namespace, service, environment) (rate(ecampus_http_request_duration_seconds_count[5m])) * 300 >= 50
+              )
+            for: 5m
+            labels:
+              severity: critical
+              signal_type: user_impact
+              failure_domain: service
+            annotations:
+              summary: Service p95 latency high for {{ $labels.service }}
+              description: P95 latency is above 1.5 seconds across every revision of {{ $labels.service }} in {{ $labels.environment }}.
+              prometheus_query: 'ecampus:http_request_duration_seconds:p95:5m{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"}'
+              loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"}'
+          - alert: IngressHighErrorRate
+            expr: |
+              (
+                sum by (namespace, ingress) (rate(nginx_ingress_controller_requests{status=~"5.."}[5m]))
+                /
+                clamp_min(sum by (namespace, ingress) (rate(nginx_ingress_controller_requests[5m])), 1)
+              ) > 0.02
+            for: 5m
+            labels:
+              severity: critical
+              signal_type: user_impact
+              failure_domain: ingress
+            annotations:
+              summary: High ingress 5xx error rate on {{ $labels.namespace }}/{{ $labels.ingress }}
+              description: Ingress 5xx error rate is above 2 percent and must not be inhibited by deploy noise rules.
+          - alert: IngressHighP95Latency
+            expr: |
+              histogram_quantile(
+                0.95,
+                sum by (namespace, ingress, le) (
+                  rate(nginx_ingress_controller_request_duration_seconds_bucket[5m])
+                )
+              ) > 1.5
+            for: 5m
+            labels:
+              severity: critical
+              signal_type: user_impact
+              failure_domain: ingress
+            annotations:
+              summary: High ingress p95 latency on {{ $labels.namespace }}/{{ $labels.ingress }}
+              description: Ingress p95 latency is above 1.5 seconds and must not be inhibited by deploy noise rules.
+      - name: delivery-platform-infra
+        rules:
+          - alert: LokiPVCUsageHigh
+            expr: |
+              max by (namespace, persistentvolumeclaim) (
+                kubelet_volume_stats_used_bytes{namespace="monitoring", persistentvolumeclaim=~"data-loki-.*"}
+                / clamp_min(kubelet_volume_stats_capacity_bytes{namespace="monitoring", persistentvolumeclaim=~"data-loki-.*"}, 1)
+              ) > 0.8
+            for: 15m
+            labels:
+              severity: warning
+              signal_type: infra
+              failure_domain: storage
+            annotations:
+              summary: Loki PVC usage above 80 percent
+              description: Persistent volume {{ $labels.persistentvolumeclaim }} used by Loki is above 80 percent of its capacity.
+              prometheus_query: 'kubelet_volume_stats_used_bytes{namespace="monitoring",persistentvolumeclaim="{{ $labels.persistentvolumeclaim }}"} / kubelet_volume_stats_capacity_bytes{namespace="monitoring",persistentvolumeclaim="{{ $labels.persistentvolumeclaim }}"}'

@@ -9,7 +9,9 @@ import (
 	"syscall"
 
 	"github.com/worryyy/devops-platform/platform/server/internal/app"
+	"github.com/worryyy/devops-platform/platform/server/internal/catalog"
 	"github.com/worryyy/devops-platform/platform/server/internal/config"
+	"github.com/worryyy/devops-platform/platform/server/internal/releasestore"
 )
 
 func main() {
@@ -28,17 +30,16 @@ func main() {
 			logger.Error("api exited", "error", err)
 			os.Exit(1)
 		}
-	case "worker":
-		if err := app.RunWorker(ctx, cfg, logger); err != nil {
-			logger.Error("worker exited", "error", err)
-			os.Exit(1)
-		}
+	case "catalog":
+		os.Exit(catalog.RunCLI(os.Args[2:], os.Stdout, os.Stderr))
+	case "release-record":
+		os.Exit(releasestore.RunCLI(os.Args[2:], os.Stdout, os.Stderr))
 	default:
 		usageAndExit()
 	}
 }
 
 func usageAndExit() {
-	fmt.Fprintln(os.Stderr, "usage: platform-server api|worker")
+	fmt.Fprintln(os.Stderr, "usage: platform-server api|catalog|release-record")
 	os.Exit(2)
 }

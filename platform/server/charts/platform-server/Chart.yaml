@@ -1,6 +1,6 @@
 apiVersion: v2
 name: platform-server
-description: CI/CD platform server API and worker
+description: Delivery catalog and platform health API
 type: application
 version: 0.1.0
 appVersion: "0.1.0"

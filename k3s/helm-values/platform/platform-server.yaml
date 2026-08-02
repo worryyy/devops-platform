@@ -30,33 +30,3 @@ ingress:
   tls:
     enabled: false
     secretName: ""
-
-worker:
-  replicaCount: 1
-  nodeSelector:
-    platform-role: light
-  resources:
-    requests:
-      cpu: 50m
-      memory: 128Mi
-    limits:
-      cpu: 300m
-      memory: 256Mi
-
-config:
-  catalogPath: /app/configs/service-catalog.yaml
-
-env:
-  POSTGRES_HOST: platform-postgresql.platform.svc.cluster.local
-  POSTGRES_PORT: "5432"
-  POSTGRES_DB: platform_db
-  POSTGRES_USER: platform_user
-
-  RABBITMQ_HOST: platform-rabbitmq.platform.svc.cluster.local
-  RABBITMQ_PORT: "5672"
-  RABBITMQ_USER: platform_user
-
-  JENKINS_BASE_URL: http://jenkins.cicd.svc.cluster.local:8080
-  JENKINS_USERNAME: admin
-
-secretName: platform-server-secrets

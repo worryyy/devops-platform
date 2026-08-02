@@ -1,0 +1,22 @@
+fullnameOverride: ecampus-reservation
+
+image:
+  repository: k3s-platform/ecampus-reservation
+  tag: dev
+  digest: ""
+
+platform:
+  serviceName: reservation
+
+release:
+  deployId: ""
+  gitSha: ""
+  gitopsRevision: ""
+  environment: dev
+  buildNumber: ""
+
+rollout:
+  profile: controlled-bluegreen
+  ingress:
+    paths:
+      - /api/reservation

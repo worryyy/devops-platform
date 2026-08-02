@@ -3,11 +3,24 @@ global:
 
 configs:
   params:
-    server.insecure: true
+    server.insecure: false
+  secret:
+    githubSecret: ""
 
 server:
   service:
     type: ClusterIP
+  ingress:
+    enabled: true
+    controller: generic
+    ingressClassName: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    hostname: ""
+    path: /
+    pathType: Prefix
+    tls: false
 
 controller:
   resources:

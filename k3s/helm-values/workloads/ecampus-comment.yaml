@@ -1,0 +1,22 @@
+fullnameOverride: ecampus-comment
+
+image:
+  repository: k3s-platform/ecampus-comment
+  tag: dev
+  digest: ""
+
+platform:
+  serviceName: comment
+
+release:
+  deployId: ""
+  gitSha: ""
+  gitopsRevision: ""
+  environment: dev
+  buildNumber: ""
+
+rollout:
+  profile: critical-canary
+  ingress:
+    paths:
+      - /api/comment

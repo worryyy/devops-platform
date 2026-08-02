@@ -1,0 +1,17 @@
+{
+  "apiVersion": "argoproj.io/v1alpha1",
+  "kind": "AnalysisRun",
+  "metadata": {
+    "name": "ecampus-academic-aaa-2-1",
+    "namespace": "app"
+  },
+  "status": {
+    "phase": "Running",
+    "metricResults": [
+      {
+        "name": "canary-error-rate",
+        "phase": "Running"
+      }
+    ]
+  }
+}

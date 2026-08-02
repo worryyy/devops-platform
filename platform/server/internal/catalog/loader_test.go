@@ -13,16 +13,31 @@ func TestLoadServiceCatalog(t *testing.T) {
 	if catalog.Version != "v1" {
 		t.Fatalf("Version = %q, want v1", catalog.Version)
 	}
-	service, ok := catalog.ServiceByName("forum-api")
+	if len(catalog.Services) != 13 {
+		t.Fatalf("Services = %d, want 13", len(catalog.Services))
+	}
+	expected := []string{"academic", "agentchat", "chat", "comment", "file", "marketplace", "moderation", "notification", "reservation", "school", "theme", "topic", "user"}
+	for index, service := range catalog.Services {
+		if service.Name != expected[index] {
+			t.Fatalf("Services[%d] = %q, want %q", index, service.Name, expected[index])
+		}
+	}
+	service, ok := catalog.ServiceByName("topic")
 	if !ok {
-		t.Fatalf("ServiceByName(forum-api) = false")
+		t.Fatalf("ServiceByName(topic) = false")
 	}
 	environment, ok := service.EnvironmentByName("dev")
 	if !ok {
 		t.Fatalf("EnvironmentByName(dev) = false")
 	}
-	if !BranchAllowed(environment.BranchPolicy, "feature/add-login") {
-		t.Fatalf("BranchAllowed(feature/add-login) = false")
+	if !BranchAllowed(environment.BranchPolicy, "main") {
+		t.Fatalf("BranchAllowed(main) = false")
+	}
+	if service.Kind != "go-service" {
+		t.Fatalf("Kind = %q, want go-service", service.Kind)
+	}
+	if environment.Image.Repository != "ccr.ccs.tencentyun.com/k3s-platform/ecampus-topic" {
+		t.Fatalf("Image.Repository = %q", environment.Image.Repository)
 	}
 }
 

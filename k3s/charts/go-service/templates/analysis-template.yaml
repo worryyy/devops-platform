@@ -1,0 +1,393 @@
+{{- if eq (include "goService.rolloutEnabled" .) "true" }}
+{{- if eq (include "goService.strategy" .) "canary" }}
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: {{ include "goService.analysisTemplateName" . }}
+  labels:
+    {{- include "goService.labels" . | nindent 4 }}
+spec:
+  args:
+    - name: service
+    - name: namespace
+    - name: request-route-regex
+    - name: operation-route-regex
+    - name: min-samples
+    - name: stable-min-samples
+    - name: max-error-rate
+    - name: max-error-rate-increase
+    - name: max-p95-ratio
+    - name: max-p95-seconds
+    - name: min-operation-success-rate
+  metrics:
+    # Every query returns a NaN sentinel (vector(0)/vector(0)) when the
+    # candidate revision has no samples, the stable revision has no samples,
+    # or the stable revision already violates its baseline. A NaN result fails
+    # both the success and the failure condition, so the measurement is
+    # neither Successful nor Failed (Inconclusive).
+    - name: canary-samples
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      successCondition: result >= {{ .Values.rollout.analysis.minSamples }}
+      failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+      consecutiveSuccessLimit: {{ .Values.rollout.analysis.consecutiveSuccessLimit }}
+      consecutiveErrorLimit: {{ .Values.rollout.analysis.consecutiveErrorLimit }}
+      provider:
+        prometheus:
+          address: {{ .Values.rollout.analysis.prometheusAddress | quote }}
+          query: |
+            sum(rate(ecampus_http_requests_total{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.latest-hash}}" }}"}[1m])) * 60
+            or on() (vector(0) / vector(0))
+    # Stable-version gates: a violation (too few samples, already-broken
+    # error rate or P95) returns NaN so the measurement is Inconclusive and
+    # progression pauses instead of failing the release.
+    - name: stable-samples
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      successCondition: result >= {{ .Values.rollout.analysis.stableMinSamples }}
+      consecutiveSuccessLimit: {{ .Values.rollout.analysis.consecutiveSuccessLimit }}
+      consecutiveErrorLimit: {{ .Values.rollout.analysis.consecutiveErrorLimit }}
+      provider:
+        prometheus:
+          address: {{ .Values.rollout.analysis.prometheusAddress | quote }}
+          query: |
+            sum(rate(ecampus_http_requests_total{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.stable-hash}}" }}"}[1m])) * 60
+            or on() (vector(0) / vector(0))
+    - name: stable-error-rate
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      successCondition: result <= {{ .Values.rollout.analysis.maxErrorRate }}
+      consecutiveSuccessLimit: {{ .Values.rollout.analysis.consecutiveSuccessLimit }}
+      consecutiveErrorLimit: {{ .Values.rollout.analysis.consecutiveErrorLimit }}
+      provider:
+        prometheus:
+          address: {{ .Values.rollout.analysis.prometheusAddress | quote }}
+          query: |
+            ecampus:http_error_ratio:rate5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.stable-hash}}" }}"}
+            or on() (vector(0) / vector(0))
+    - name: stable-p95
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      successCondition: result <= {{ .Values.rollout.analysis.maxP95Seconds }}
+      consecutiveSuccessLimit: {{ .Values.rollout.analysis.consecutiveSuccessLimit }}
+      consecutiveErrorLimit: {{ .Values.rollout.analysis.consecutiveErrorLimit }}
+      provider:
+        prometheus:
+          address: {{ .Values.rollout.analysis.prometheusAddress | quote }}
+          query: |
+            ecampus:http_request_duration_seconds:p95:5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.stable-hash}}" }}"}
+            or on() (vector(0) / vector(0))
+    - name: canary-error-rate
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      successCondition: result <= {{ .Values.rollout.analysis.maxErrorRate }}
+      failureCondition: result > {{ .Values.rollout.analysis.maxErrorRate }}
+      failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+      consecutiveSuccessLimit: {{ .Values.rollout.analysis.consecutiveSuccessLimit }}
+      consecutiveErrorLimit: {{ .Values.rollout.analysis.consecutiveErrorLimit }}
+      provider:
+        prometheus:
+          address: {{ .Values.rollout.analysis.prometheusAddress | quote }}
+          query: |
+            ecampus:http_error_ratio:rate5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.latest-hash}}" }}"}
+            or on() (vector(0) / vector(0))
+    - name: canary-error-rate-increase
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      successCondition: result <= {{ .Values.rollout.analysis.maxErrorRateIncrease }}
+      failureCondition: result > {{ .Values.rollout.analysis.maxErrorRateIncrease }}
+      failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+      consecutiveSuccessLimit: {{ .Values.rollout.analysis.consecutiveSuccessLimit }}
+      consecutiveErrorLimit: {{ .Values.rollout.analysis.consecutiveErrorLimit }}
+      provider:
+        prometheus:
+          address: {{ .Values.rollout.analysis.prometheusAddress | quote }}
+          query: |
+            (
+              ecampus:http_error_ratio:rate5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.latest-hash}}" }}"}
+              - on(namespace, service)
+              ecampus:http_error_ratio:rate5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.stable-hash}}" }}"}
+            )
+            and on(namespace, service)
+              (ecampus:http_error_ratio:rate5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.stable-hash}}" }}"} <= {{ .Values.rollout.analysis.maxErrorRate }})
+            or on() (vector(0) / vector(0))
+    - name: canary-p95
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      successCondition: result <= {{ .Values.rollout.analysis.maxP95Seconds }}
+      failureCondition: result > {{ .Values.rollout.analysis.maxP95Seconds }}
+      failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+      consecutiveSuccessLimit: {{ .Values.rollout.analysis.consecutiveSuccessLimit }}
+      consecutiveErrorLimit: {{ .Values.rollout.analysis.consecutiveErrorLimit }}
+      provider:
+        prometheus:
+          address: {{ .Values.rollout.analysis.prometheusAddress | quote }}
+          query: |
+            ecampus:http_request_duration_seconds:p95:5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.latest-hash}}" }}"}
+            or on() (vector(0) / vector(0))
+    - name: canary-p95-ratio
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      successCondition: result <= {{ .Values.rollout.analysis.maxP95Ratio }}
+      failureCondition: result > {{ .Values.rollout.analysis.maxP95Ratio }}
+      failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+      consecutiveSuccessLimit: {{ .Values.rollout.analysis.consecutiveSuccessLimit }}
+      consecutiveErrorLimit: {{ .Values.rollout.analysis.consecutiveErrorLimit }}
+      provider:
+        prometheus:
+          address: {{ .Values.rollout.analysis.prometheusAddress | quote }}
+          query: |
+            (
+              ecampus:http_request_duration_seconds:p95:5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.latest-hash}}" }}"}
+              / on(namespace, service)
+              ecampus:http_request_duration_seconds:p95:5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.stable-hash}}" }}"}
+            )
+            and on(namespace, service)
+              (ecampus:http_request_duration_seconds:p95:5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.stable-hash}}" }}"} > 0)
+            or on() (vector(0) / vector(0))
+{{- if ne .Values.rollout.analysis.operationRouteRegex "" }}
+    - name: canary-operation-success-rate
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      successCondition: result >= {{ .Values.rollout.analysis.minOperationSuccessRate }}
+      failureCondition: result < {{ .Values.rollout.analysis.minOperationSuccessRate }}
+      failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+      consecutiveSuccessLimit: {{ .Values.rollout.analysis.consecutiveSuccessLimit }}
+      consecutiveErrorLimit: {{ .Values.rollout.analysis.consecutiveErrorLimit }}
+      provider:
+        prometheus:
+          address: {{ .Values.rollout.analysis.prometheusAddress | quote }}
+          query: |
+            (
+              sum by (namespace, service, revision) (
+                rate(ecampus_http_requests_total{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.latest-hash}}" }}", route=~"{{ "{{args.operation-route-regex}}" }}", outcome="success"}[5m])
+              )
+              /
+              clamp_min(
+                sum by (namespace, service, revision) (
+                  rate(ecampus_http_requests_total{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.latest-hash}}" }}", route=~"{{ "{{args.operation-route-regex}}" }}"}[5m])
+                ),
+                1
+              )
+            )
+            and on(namespace, service, revision)
+              (sum by (namespace, service, revision) (
+                rate(ecampus_http_requests_total{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.latest-hash}}" }}", route=~"{{ "{{args.operation-route-regex}}" }}"}[5m])
+              ) > 0)
+            or on() (vector(0) / vector(0))
+{{- end }}
+{{- else if eq (include "goService.strategy" .) "bluegreen" }}
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: {{ include "goService.bluegreenPreviewTemplateName" . }}
+  labels:
+    {{- include "goService.labels" . | nindent 4 }}
+spec:
+  metrics:
+    # Job provider: curls the Preview Service health, dependency and read-only
+    # business endpoints. Authenticated probes read their test-account token
+    # from the rollout-probe-auth Secret.
+    - name: preview-probe
+      count: 1
+      failureLimit: 1
+      provider:
+        job:
+          metadata:
+            labels:
+              {{- include "goService.labels" . | nindent 14 }}
+              delivery.platform/rollout-profile: {{ include "goService.profileName" . | quote }}
+          spec:
+            activeDeadlineSeconds: {{ .Values.rollout.probeActiveDeadlineSeconds }}
+            backoffLimit: {{ .Values.rollout.probeBackoffLimit }}
+            template:
+              spec:
+                restartPolicy: Never
+                containers:
+                  - name: preview-probe
+                    image: {{ .Values.rollout.probeImage | quote }}
+                    imagePullPolicy: IfNotPresent
+                    env:
+                      - name: PREVIEW_SERVICE
+                        value: {{ include "goService.candidateServiceName" . | quote }}
+                      - name: PREVIEW_NAMESPACE
+                        value: {{ .Release.Namespace | quote }}
+                      - name: PROBE_TOKEN
+                        valueFrom:
+                          secretKeyRef:
+                            name: {{ .Values.rollout.probeSecret | quote }}
+                            key: {{ .Values.rollout.probeSecretKey | quote }}
+                            optional: true
+                    command:
+                      - /bin/sh
+                      - -ec
+                      - |
+                        set -eu
+                        base="http://$PREVIEW_SERVICE.$PREVIEW_NAMESPACE.svc.cluster.local"
+                        {{- range .Values.rollout.previewProbes }}
+                        {{- if .requiresAuth }}
+                        curl --fail --silent --show-error --connect-timeout 3 --max-time 8 \
+                          -H "Authorization: Bearer $PROBE_TOKEN" "$base{{ .path }}"
+                        {{- else }}
+                        curl --fail --silent --show-error --connect-timeout 3 --max-time 8 "$base{{ .path }}"
+                        {{- end }}
+                        {{- end }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: {{ include "goService.bluegreenPostTemplateName" . }}
+  labels:
+    {{- include "goService.labels" . | nindent 4 }}
+spec:
+  args:
+    - name: service
+    - name: namespace
+    - name: request-route-regex
+    - name: operation-route-regex
+    - name: min-samples
+    - name: stable-min-samples
+    - name: max-error-rate
+    - name: max-error-rate-increase
+    - name: max-p95-ratio
+    - name: max-p95-seconds
+    - name: min-operation-success-rate
+  metrics:
+    - name: bluegreen-error-rate
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      successCondition: result <= {{ .Values.rollout.analysis.maxErrorRate }}
+      failureCondition: result > {{ .Values.rollout.analysis.maxErrorRate }}
+      failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+      consecutiveSuccessLimit: {{ .Values.rollout.analysis.consecutiveSuccessLimit }}
+      consecutiveErrorLimit: {{ .Values.rollout.analysis.consecutiveErrorLimit }}
+      provider:
+        prometheus:
+          address: {{ .Values.rollout.analysis.prometheusAddress | quote }}
+          query: |
+            ecampus:http_error_ratio:rate5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.latest-hash}}" }}"}
+            or on() (vector(0) / vector(0))
+    - name: bluegreen-error-rate-increase
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      successCondition: result <= {{ .Values.rollout.analysis.maxErrorRateIncrease }}
+      failureCondition: result > {{ .Values.rollout.analysis.maxErrorRateIncrease }}
+      failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+      consecutiveSuccessLimit: {{ .Values.rollout.analysis.consecutiveSuccessLimit }}
+      consecutiveErrorLimit: {{ .Values.rollout.analysis.consecutiveErrorLimit }}
+      provider:
+        prometheus:
+          address: {{ .Values.rollout.analysis.prometheusAddress | quote }}
+          query: |
+            (
+              ecampus:http_error_ratio:rate5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.latest-hash}}" }}"}
+              - on(namespace, service)
+              ecampus:http_error_ratio:rate5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.stable-hash}}" }}"}
+            )
+            and on(namespace, service)
+              (ecampus:http_error_ratio:rate5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.stable-hash}}" }}"} <= {{ .Values.rollout.analysis.maxErrorRate }})
+            or on() (vector(0) / vector(0))
+    - name: bluegreen-p95
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      successCondition: result <= {{ .Values.rollout.analysis.maxP95Seconds }}
+      failureCondition: result > {{ .Values.rollout.analysis.maxP95Seconds }}
+      failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+      consecutiveSuccessLimit: {{ .Values.rollout.analysis.consecutiveSuccessLimit }}
+      consecutiveErrorLimit: {{ .Values.rollout.analysis.consecutiveErrorLimit }}
+      provider:
+        prometheus:
+          address: {{ .Values.rollout.analysis.prometheusAddress | quote }}
+          query: |
+            ecampus:http_request_duration_seconds:p95:5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.latest-hash}}" }}"}
+            or on() (vector(0) / vector(0))
+    - name: bluegreen-p95-ratio
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      successCondition: result <= {{ .Values.rollout.analysis.maxP95Ratio }}
+      failureCondition: result > {{ .Values.rollout.analysis.maxP95Ratio }}
+      failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+      consecutiveSuccessLimit: {{ .Values.rollout.analysis.consecutiveSuccessLimit }}
+      consecutiveErrorLimit: {{ .Values.rollout.analysis.consecutiveErrorLimit }}
+      provider:
+        prometheus:
+          address: {{ .Values.rollout.analysis.prometheusAddress | quote }}
+          query: |
+            (
+              ecampus:http_request_duration_seconds:p95:5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.latest-hash}}" }}"}
+              / on(namespace, service)
+              ecampus:http_request_duration_seconds:p95:5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.stable-hash}}" }}"}
+            )
+            and on(namespace, service)
+              (ecampus:http_request_duration_seconds:p95:5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.stable-hash}}" }}"} > 0)
+            or on() (vector(0) / vector(0))
+    # Stable-version gates: same semantics as the canary template.
+    - name: stable-samples
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      successCondition: result >= {{ .Values.rollout.analysis.stableMinSamples }}
+      consecutiveSuccessLimit: {{ .Values.rollout.analysis.consecutiveSuccessLimit }}
+      consecutiveErrorLimit: {{ .Values.rollout.analysis.consecutiveErrorLimit }}
+      provider:
+        prometheus:
+          address: {{ .Values.rollout.analysis.prometheusAddress | quote }}
+          query: |
+            sum(rate(ecampus_http_requests_total{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.stable-hash}}" }}"}[1m])) * 60
+            or on() (vector(0) / vector(0))
+    - name: stable-error-rate
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      successCondition: result <= {{ .Values.rollout.analysis.maxErrorRate }}
+      consecutiveSuccessLimit: {{ .Values.rollout.analysis.consecutiveSuccessLimit }}
+      consecutiveErrorLimit: {{ .Values.rollout.analysis.consecutiveErrorLimit }}
+      provider:
+        prometheus:
+          address: {{ .Values.rollout.analysis.prometheusAddress | quote }}
+          query: |
+            ecampus:http_error_ratio:rate5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.stable-hash}}" }}"}
+            or on() (vector(0) / vector(0))
+    - name: stable-p95
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      successCondition: result <= {{ .Values.rollout.analysis.maxP95Seconds }}
+      consecutiveSuccessLimit: {{ .Values.rollout.analysis.consecutiveSuccessLimit }}
+      consecutiveErrorLimit: {{ .Values.rollout.analysis.consecutiveErrorLimit }}
+      provider:
+        prometheus:
+          address: {{ .Values.rollout.analysis.prometheusAddress | quote }}
+          query: |
+            ecampus:http_request_duration_seconds:p95:5m{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.stable-hash}}" }}"}
+            or on() (vector(0) / vector(0))
+{{- if ne .Values.rollout.analysis.operationRouteRegex "" }}
+    - name: bluegreen-operation-success-rate
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      successCondition: result >= {{ .Values.rollout.analysis.minOperationSuccessRate }}
+      failureCondition: result < {{ .Values.rollout.analysis.minOperationSuccessRate }}
+      failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+      consecutiveSuccessLimit: {{ .Values.rollout.analysis.consecutiveSuccessLimit }}
+      consecutiveErrorLimit: {{ .Values.rollout.analysis.consecutiveErrorLimit }}
+      provider:
+        prometheus:
+          address: {{ .Values.rollout.analysis.prometheusAddress | quote }}
+          query: |
+            (
+              sum by (namespace, service, revision) (
+                rate(ecampus_http_requests_total{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.latest-hash}}" }}", route=~"{{ "{{args.operation-route-regex}}" }}", outcome="success"}[5m])
+              )
+              /
+              clamp_min(
+                sum by (namespace, service, revision) (
+                  rate(ecampus_http_requests_total{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.latest-hash}}" }}", route=~"{{ "{{args.operation-route-regex}}" }}"}[5m])
+                ),
+                1
+              )
+            )
+            and on(namespace, service, revision)
+              (sum by (namespace, service, revision) (
+                rate(ecampus_http_requests_total{namespace=~"{{ "{{args.namespace}}" }}", service=~"{{ "{{args.service}}" }}", revision=~"{{ "{{args.latest-hash}}" }}", route=~"{{ "{{args.operation-route-regex}}" }}"}[5m])
+              ) > 0)
+            or on() (vector(0) / vector(0))
+{{- end }}
+{{- end }}
+{{- end }}

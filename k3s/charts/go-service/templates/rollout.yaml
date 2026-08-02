@@ -1,0 +1,107 @@
+{{- if eq (include "goService.rolloutEnabled" .) "true" }}
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: {{ include "goService.fullname" . }}
+  labels:
+    {{- include "goService.labels" . | nindent 4 }}
+    {{- include "goService.releaseLabels" . | nindent 4 }}
+    delivery.platform/rollout-profile: {{ include "goService.profileName" . | quote }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "goService.selectorLabels" . | nindent 6 }}
+  strategy:
+{{- if eq (include "goService.strategy" .) "bluegreen" }}
+    blueGreen:
+      activeService: {{ include "goService.stableServiceName" . }}
+      previewService: {{ include "goService.candidateServiceName" . }}
+      previewReplicaCount: {{ include "goService.previewReplicaCount" . }}
+      autoPromotionEnabled: false
+      {{- include "goService.bluegreenPrePromotionAnalysis" . | nindent 6 }}
+      {{- include "goService.bluegreenPostPromotionAnalysis" . | nindent 6 }}
+      scaleDownDelaySeconds: {{ .Values.rollout.scaleDownDelaySeconds }}
+{{- else }}
+    canary:
+      stableService: {{ include "goService.stableServiceName" . }}
+      canaryService: {{ include "goService.candidateServiceName" . }}
+      trafficRouting:
+        nginx:
+          stableIngress: {{ include "goService.ingressName" . }}
+      steps:
+        {{- include "goService.rolloutSteps" . | nindent 8 }}
+{{- end }}
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- include "goService.releaseAnnotations" . | nindent 8 }}
+      labels:
+        {{- include "goService.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- include "goService.releaseLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- range . }}
+        - name: {{ . | quote }}
+        {{- end }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ include "goService.name" . }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ include "goService.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.app.port }}
+              protocol: TCP
+          env:
+            - name: APP_PROFILE
+              value: {{ .Values.app.profile | quote }}
+            {{- include "goService.releaseEnv" . | nindent 12 }}
+          volumeMounts:
+            - name: logs
+              mountPath: /app/logs
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.liveness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readiness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: logs
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

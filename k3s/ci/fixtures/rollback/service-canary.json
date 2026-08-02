@@ -1,0 +1,18 @@
+{
+  "service": "topic",
+  "image": "ccr.ccs.tencentyun.com/k3s-platform/ecampus-topic",
+  "values_file": "k3s/helm-values/workloads/ecampus-topic.yaml",
+  "environment": "dev",
+  "namespace": "app",
+  "application": "ecampus-topic",
+  "argocd_namespace": "argocd",
+  "rollout": "ecampus-topic",
+  "resource_name": "ecampus-topic",
+  "workload_kind": "Rollout",
+  "effective_profile": "standard-canary",
+  "analysis": {"minSamples": 20, "maxErrorRate": 0.02, "maxP95Seconds": 0.5},
+  "wait_timeout": "30m",
+  "manual_promotion": false,
+  "stable_service": "ecampus-topic",
+  "health_path": "/health"
+}

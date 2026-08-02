@@ -1,0 +1,29 @@
+{
+  "apiVersion": "argoproj.io/v1alpha1",
+  "kind": "AnalysisRun",
+  "metadata": {
+    "name": "ecampus-marketplace-bb2d1a1a1a-3-1",
+    "namespace": "app"
+  },
+  "status": {
+    "phase": "Error",
+    "message": "consecutiveErrors (2) > consecutiveErrorLimit (2): Prometheus query failed: connection refused",
+    "metricResults": [
+      {
+        "name": "bluegreen-error-rate",
+        "phase": "Error",
+        "consecutiveError": 2,
+        "measurements": [
+          {
+            "phase": "Error",
+            "message": "Prometheus query failed: connection refused"
+          },
+          {
+            "phase": "Error",
+            "message": "Prometheus query failed: connection refused"
+          }
+        ]
+      }
+    ]
+  }
+}

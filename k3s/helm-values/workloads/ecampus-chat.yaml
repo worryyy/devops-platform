@@ -1,0 +1,24 @@
+fullnameOverride: ecampus-chat
+
+image:
+  repository: k3s-platform/ecampus-chat
+  tag: dev
+  digest: ""
+
+platform:
+  serviceName: chat
+
+release:
+  deployId: ""
+  gitSha: ""
+  gitopsRevision: ""
+  environment: dev
+  buildNumber: ""
+
+rollout:
+  profile: controlled-bluegreen
+  ingress:
+    paths:
+      - /chat
+      - /api/conversation
+      - /api/message

@@ -1,0 +1,40 @@
+crds:
+  install: true
+  keep: true
+
+replicaCount: 1
+
+image:
+  repository: quay.io/argoprojlabs/argocd-image-updater
+  pullPolicy: IfNotPresent
+
+config:
+  argocd.namespace: argocd
+  interval: 2m
+  log.level: info
+  kube.events: true
+  registries:
+    - name: Tencent Cloud TCR
+      prefix: ccr.ccs.tencentyun.com
+      api_url: https://ccr.ccs.tencentyun.com
+      default: true
+      credentials: pullsecret:argocd/tcr-secret
+
+rbac:
+  enabled: true
+
+createClusterRoles: false
+
+serviceAccount:
+  create: true
+
+nodeSelector:
+  platform-role: control
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 300m
+    memory: 256Mi

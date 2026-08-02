@@ -1,0 +1,13 @@
+{
+  "kind": "Deployment",
+  "metadata": {"name": "ecampus-theme"},
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          {"name": "ecampus-theme", "image": "ccr.ccs.tencentyun.com/k3s-platform/ecampus-theme:git-def45678@sha256:2222222222222222222222222222222222222222222222222222222222222222"}
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "kind": "Rollout",
+  "metadata": {"name": "ecampus-chat", "namespace": "app"},
+  "status": {
+    "stableRS": "ecampus-chat-abc123",
+    "blueGreen": {"activeSelector": "abc123"}
+  }
+}

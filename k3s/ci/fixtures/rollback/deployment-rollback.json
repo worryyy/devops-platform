@@ -1,0 +1,8 @@
+{
+  "kind": "Deployment",
+  "metadata": {"name": "ecampus-theme", "namespace": "app"},
+  "spec": {
+    "template": {"spec": {"containers": [{"image": "ccr.ccs.tencentyun.com/k3s-platform/ecampus-theme:git-cccc3333@sha256:5555555555555555555555555555555555555555555555555555555555555555"}]}}
+  },
+  "status": {"replicas": 2, "availableReplicas": 2}
+}

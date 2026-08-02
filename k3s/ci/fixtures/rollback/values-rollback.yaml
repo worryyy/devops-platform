@@ -1,0 +1,10 @@
+image:
+  registry: ccr.ccs.tencentyun.com
+  repository: k3s-platform/ecampus-topic
+  tag: git-ffffffff
+  digest: "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+release:
+  gitSha: deadbeef1234567890deadbeef1234567890deadbe
+  gitopsRevision: ""
+  environment: dev
+  deployId: ""

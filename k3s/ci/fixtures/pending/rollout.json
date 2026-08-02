@@ -1,0 +1,15 @@
+{
+  "apiVersion": "argoproj.io/v1alpha1",
+  "kind": "Rollout",
+  "metadata": {
+    "name": "ecampus-academic",
+    "namespace": "app"
+  },
+  "status": {
+    "phase": "Progressing",
+    "canary": {
+      "stepIndex": 1,
+      "currentStepAnalysisRun": "ecampus-academic-aaa-2-1"
+    }
+  }
+}

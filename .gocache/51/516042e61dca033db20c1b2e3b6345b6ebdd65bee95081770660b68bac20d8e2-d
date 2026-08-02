@@ -1,6 +1,0 @@
-./decimal_int.go
-./dns.go
-./errors.go
-./identifier.go
-./kube.go
-./path.go

@@ -1,18 +1,6 @@
 package api
 
-import (
-	"context"
-
-	"github.com/gin-gonic/gin"
-	"github.com/worryyy/devops-platform/platform/server/internal/release"
-)
-
-type RouterDependencies struct {
-	Releases *release.Service
-	Store    interface {
-		Ping(ctx context.Context) error
-	}
-}
+import "github.com/gin-gonic/gin"
 
 func NewBaseRouter() *gin.Engine {
 	router := gin.New()
@@ -20,12 +8,8 @@ func NewBaseRouter() *gin.Engine {
 	return router
 }
 
-func NewRouter(deps RouterDependencies) *gin.Engine {
+func NewRouter() *gin.Engine {
 	router := NewBaseRouter()
-	RegisterHealthRoutes(router, deps.Store)
-
-	api := router.Group("/api")
-	RegisterLegacyReleaseRoutes(api, deps.Releases)
-
+	RegisterHealthRoutes(router)
 	return router
 }

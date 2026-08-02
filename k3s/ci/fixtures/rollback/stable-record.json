@@ -1,0 +1,10 @@
+{
+  "service": "topic",
+  "environment": "dev",
+  "git_revision": "abcdef1234567890abcdef1234567890abcdef12",
+  "image_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+  "image_tag": "git-abcdef12",
+  "config_revision": "0000000000000000000000000000000000000000",
+  "rollout_strategy": "canary",
+  "released_at": "2026-08-01T00:00:00Z"
+}

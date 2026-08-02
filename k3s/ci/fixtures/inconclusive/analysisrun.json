@@ -1,0 +1,25 @@
+{
+  "apiVersion": "argoproj.io/v1alpha1",
+  "kind": "AnalysisRun",
+  "metadata": {
+    "name": "ecampus-topic-xyz-2-2",
+    "namespace": "app"
+  },
+  "status": {
+    "phase": "Inconclusive",
+    "message": "metric canary-samples assessed Inconclusive: count (10) reached, consecutiveSuccessLimit (2) not reached",
+    "metricResults": [
+      {
+        "name": "canary-samples",
+        "phase": "Inconclusive",
+        "inconclusive": 10,
+        "measurements": [
+          {
+            "phase": "Inconclusive",
+            "value": "NaN"
+          }
+        ]
+      }
+    ]
+  }
+}

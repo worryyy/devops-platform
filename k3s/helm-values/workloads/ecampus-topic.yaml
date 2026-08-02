@@ -1,0 +1,24 @@
+fullnameOverride: ecampus-topic
+
+image:
+  repository: k3s-platform/ecampus-topic
+  tag: dev
+  digest: ""
+
+platform:
+  serviceName: topic
+
+release:
+  deployId: ""
+  gitSha: ""
+  gitopsRevision: ""
+  environment: dev
+  buildNumber: ""
+
+rollout:
+  profile: critical-canary
+  ingress:
+    paths:
+      - /api/topic
+      - /api/like
+      - /api/collection

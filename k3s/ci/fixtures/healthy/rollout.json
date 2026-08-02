@@ -1,0 +1,25 @@
+{
+  "apiVersion": "argoproj.io/v1alpha1",
+  "kind": "Rollout",
+  "metadata": {
+    "name": "ecampus-user",
+    "namespace": "app",
+    "labels": {
+      "delivery.platform/git-sha": "a1b2c3d4"
+    }
+  },
+  "spec": {
+    "replicas": 2,
+    "template": {
+      "metadata": {
+        "labels": {
+          "delivery.platform/git-sha": "a1b2c3d4"
+        }
+      }
+    }
+  },
+  "status": {
+    "phase": "Healthy",
+    "stableRS": "user-5b4c9f8d7c"
+  }
+}

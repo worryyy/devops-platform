@@ -1,0 +1,23 @@
+fullnameOverride: ecampus-agentchat
+
+image:
+  repository: k3s-platform/ecampus-agentchat
+  tag: dev
+  digest: ""
+
+platform:
+  serviceName: agentchat
+
+release:
+  deployId: ""
+  gitSha: ""
+  gitopsRevision: ""
+  environment: dev
+  buildNumber: ""
+
+rollout:
+  profile: controlled-bluegreen
+  ingress:
+    paths:
+      - /agent/ws
+      - /api/agent

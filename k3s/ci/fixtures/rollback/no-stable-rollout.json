@@ -1,0 +1,5 @@
+{
+  "kind": "Rollout",
+  "metadata": {"name": "ecampus-topic", "namespace": "app"},
+  "status": {"stableRS": "", "blueGreen": {}}
+}

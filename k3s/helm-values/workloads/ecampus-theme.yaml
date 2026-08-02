@@ -1,0 +1,24 @@
+fullnameOverride: ecampus-theme
+
+image:
+  repository: k3s-platform/ecampus-theme
+  tag: dev
+  digest: ""
+
+platform:
+  serviceName: theme
+
+release:
+  deployId: ""
+  gitSha: ""
+  gitopsRevision: ""
+  environment: dev
+  buildNumber: ""
+  rolloutProfile: fast-rolling
+
+rollout:
+  enabled: false
+  profile: fast-rolling
+  ingress:
+    paths:
+      - /api/theme

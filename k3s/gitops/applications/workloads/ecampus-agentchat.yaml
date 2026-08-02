@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ecampus-agentchat
+  namespace: argocd
+spec:
+  project: workloads
+
+  source:
+    repoURL: https://github.com/worryyy/devops-platform.git
+    targetRevision: main
+    path: k3s/charts/go-service
+    helm:
+      releaseName: ecampus-agentchat
+      valueFiles:
+        - ../../helm-values/workloads/ecampus-agentchat.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: app
+
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+

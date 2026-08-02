@@ -1,0 +1,22 @@
+fullnameOverride: ecampus-file
+
+image:
+  repository: k3s-platform/ecampus-file
+  tag: dev
+  digest: ""
+
+platform:
+  serviceName: file
+
+release:
+  deployId: ""
+  gitSha: ""
+  gitopsRevision: ""
+  environment: dev
+  buildNumber: ""
+
+rollout:
+  profile: standard-canary
+  ingress:
+    paths:
+      - /file

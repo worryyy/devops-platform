@@ -1,0 +1,76 @@
+# Single-replica Alloy Deployment: loki.source.kubernetes tails container logs
+# through the Kubernetes API, so one instance covers the whole cluster without
+# DaemonSet duplicate collection. HA would require Alloy Clustering.
+controller:
+  type: deployment
+  replicas: 1
+
+alloy:
+  enableReporting: false
+  configMap:
+    create: true
+    content: |
+      discovery.kubernetes "pods" {
+        role = "pod"
+      }
+
+      discovery.relabel "pods" {
+        targets = discovery.kubernetes.pods.targets
+
+        // Index labels stay low-cardinality and stable. Release identity is
+        // carried as structured metadata (or JSON fields) instead.
+        rule {
+          action       = "replace"
+          replacement  = "k3s"
+          target_label = "cluster"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          target_label  = "container"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+          target_label  = "service"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_delivery_platform_environment"]
+          target_label  = "environment"
+        }
+      }
+
+      loki.source.kubernetes "pods" {
+        targets    = discovery.relabel.pods.output
+        forward_to = [loki.process.release_meta.receiver]
+      }
+
+      loki.process "release_meta" {
+        stage.json {
+          expressions = {
+            deploy_id       = "deploy_id",
+            release_batch   = "release_batch",
+            image_digest    = "image_digest",
+            git_sha         = "git_sha",
+            gitops_revision = "gitops_revision",
+          }
+        }
+
+        stage.structured_metadata {
+          deploy_id       = ""
+          release_batch   = ""
+          image_digest    = ""
+          git_sha         = ""
+          gitops_revision = ""
+        }
+
+        forward_to = [loki.write.local.receiver]
+      }
+
+      loki.write "local" {
+        endpoint {
+          url = "http://loki.monitoring.svc:3100/loki/api/v1/push"
+        }
+      }

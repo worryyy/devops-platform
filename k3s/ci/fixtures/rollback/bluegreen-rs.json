@@ -1,0 +1,9 @@
+{
+  "kind": "ReplicaSet",
+  "metadata": {"name": "ecampus-chat-abc123"},
+  "spec": {
+    "replicas": 1,
+    "template": {"spec": {"containers": [{"image": "ccr.ccs.tencentyun.com/k3s-platform/ecampus-chat:git-bbbb2222@sha256:2222222222222222222222222222222222222222222222222222222222222222"}]}}
+  },
+  "status": {"replicas": 1, "availableReplicas": 1}
+}

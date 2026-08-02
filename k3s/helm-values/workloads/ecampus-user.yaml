@@ -1,0 +1,23 @@
+fullnameOverride: ecampus-user
+
+image:
+  repository: k3s-platform/ecampus-user
+  tag: dev
+  digest: ""
+
+platform:
+  serviceName: user
+
+release:
+  deployId: ""
+  gitSha: ""
+  gitopsRevision: ""
+  environment: dev
+  buildNumber: ""
+
+rollout:
+  profile: critical-canary
+  ingress:
+    paths:
+      - /api/user
+      - /api/wx

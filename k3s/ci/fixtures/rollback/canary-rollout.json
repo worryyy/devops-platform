@@ -1,0 +1,10 @@
+{
+  "kind": "Rollout",
+  "metadata": {"name": "ecampus-topic", "namespace": "app"},
+  "status": {
+    "stableRS": "ecampus-topic-abc123",
+    "currentPodHash": "def456",
+    "phase": "Degraded",
+    "blueGreen": {}
+  }
+}

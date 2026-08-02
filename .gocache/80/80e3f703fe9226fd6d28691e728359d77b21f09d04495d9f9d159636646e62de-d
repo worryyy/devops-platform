@@ -1,8 +1,0 @@
-./bindings.go
-./handler.go
-./model.go
-./routes.go
-./service.go
-./status.go
-./validator.go
-./worker.go

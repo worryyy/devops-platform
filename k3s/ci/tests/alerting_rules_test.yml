@@ -1,0 +1,471 @@
+# promtool test rules unit tests for delivery-platform alerting.
+# Run from k3s/ci/scripts/test-observability.sh with the extracted
+# recording_rules.yml and alerting_rules.yml next to this file.
+rule_files:
+  - recording_rules.yml
+  - alerting_rules.yml
+
+evaluation_interval: 1m
+
+tests:
+  # Version-level error alerts must join release_info exactly: every revision
+  # carries its own digest, and a revision without release_info never alerts.
+  - interval: 1m
+    input_series:
+      - series: 'kube_pod_labels{namespace="app",pod="comment-pod-a",label_app_kubernetes_io_name="comment",label_app_kubernetes_io_instance="ecampus-comment",label_delivery_platform_deploy_id="ecampus-pipeline-main-10-comment-1",label_delivery_platform_release_batch="ecampus-pipeline-main-10",label_delivery_platform_environment="dev",label_delivery_platform_git_sha="aaaaaaa1",label_rollouts_pod_template_hash="rev1"}'
+        values: '1 1 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-a",annotation_delivery_platform_image_digest="sha256:1111111111111111111111111111111111111111111111111111111111111111"}'
+        values: '1 1 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-a",annotation_delivery_platform_gitops_revision="g1"}'
+        values: '1 1 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_labels{namespace="app",pod="comment-pod-b",label_app_kubernetes_io_name="comment",label_app_kubernetes_io_instance="ecampus-comment",label_delivery_platform_deploy_id="ecampus-pipeline-main-11-comment-1",label_delivery_platform_release_batch="ecampus-pipeline-main-11",label_delivery_platform_environment="dev",label_delivery_platform_git_sha="bbbbbbb1",label_rollouts_pod_template_hash="rev2"}'
+        values: '1 1 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-b",annotation_delivery_platform_image_digest="sha256:2222222222222222222222222222222222222222222222222222222222222222"}'
+        values: '1 1 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-b",annotation_delivery_platform_gitops_revision="g2"}'
+        values: '1 1 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'ecampus_http_requests_total{namespace="app",service="comment",environment="dev",revision="rev1",outcome="success"}'
+        values: '0 19 38 57 76 95 114 133 152 171 190 209 228'
+      - series: 'ecampus_http_requests_total{namespace="app",service="comment",environment="dev",revision="rev1",outcome="failure"}'
+        values: '0 2 4 6 8 10 12 14 16 18 20 22 24'
+      - series: 'ecampus_http_requests_total{namespace="app",service="comment",environment="dev",revision="rev2",outcome="success"}'
+        values: '0 19 38 57 76 95 114 133 152 171 190 209 228'
+      - series: 'ecampus_http_requests_total{namespace="app",service="comment",environment="dev",revision="rev2",outcome="failure"}'
+        values: '0 2 4 6 8 10 12 14 16 18 20 22 24'
+      # rev3 has the same traffic but no release_info: the join must drop it.
+      - series: 'ecampus_http_requests_total{namespace="app",service="comment",environment="dev",revision="rev3",outcome="success"}'
+        values: '0 19 38 57 76 95 114 133 152 171 190 209 228'
+      - series: 'ecampus_http_requests_total{namespace="app",service="comment",environment="dev",revision="rev3",outcome="failure"}'
+        values: '0 2 4 6 8 10 12 14 16 18 20 22 24'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: VersionHighErrorRate
+        exp_alerts:
+          - exp_labels:
+              alertname: VersionHighErrorRate
+              namespace: app
+              service: comment
+              environment: dev
+              revision: rev1
+              deploy_id: ecampus-pipeline-main-10-comment-1
+              release_batch: ecampus-pipeline-main-10
+              image_digest: sha256:1111111111111111111111111111111111111111111111111111111111111111
+              git_sha: aaaaaaa1
+              gitops_revision: g1
+              severity: warning
+              signal_type: user_impact
+              failure_domain: service
+            exp_annotations:
+              summary: Version error rate high for comment revision rev1
+              description: Error ratio is above 5 percent for deploy ecampus-pipeline-main-10-comment-1 (digest sha256:11111).
+              image_digest: sha256:11111
+              git_sha: aaaaaaa1
+              prometheus_query: 'ecampus:http_error_ratio:rate5m{namespace="app",service="comment",environment="dev",revision="rev1"}'
+              loki_query: '{namespace="app",service="comment",environment="dev"} | json | deploy_id="ecampus-pipeline-main-10-comment-1"'
+          - exp_labels:
+              alertname: VersionHighErrorRate
+              namespace: app
+              service: comment
+              environment: dev
+              revision: rev2
+              deploy_id: ecampus-pipeline-main-11-comment-1
+              release_batch: ecampus-pipeline-main-11
+              image_digest: sha256:2222222222222222222222222222222222222222222222222222222222222222
+              git_sha: bbbbbbb1
+              gitops_revision: g2
+              severity: warning
+              signal_type: user_impact
+              failure_domain: service
+            exp_annotations:
+              summary: Version error rate high for comment revision rev2
+              description: Error ratio is above 5 percent for deploy ecampus-pipeline-main-11-comment-1 (digest sha256:22222).
+              image_digest: sha256:22222
+              git_sha: bbbbbbb1
+              prometheus_query: 'ecampus:http_error_ratio:rate5m{namespace="app",service="comment",environment="dev",revision="rev2"}'
+              loki_query: '{namespace="app",service="comment",environment="dev"} | json | deploy_id="ecampus-pipeline-main-11-comment-1"'
+      - eval_time: 12m
+        alertname: ServiceHighErrorRate
+        exp_alerts:
+          - exp_labels:
+              alertname: ServiceHighErrorRate
+              namespace: app
+              service: comment
+              environment: dev
+              severity: critical
+              signal_type: user_impact
+              failure_domain: service
+            exp_annotations:
+              summary: Service error rate high for comment
+              description: Error ratio is above 5 percent across every revision of comment in dev.
+              prometheus_query: 'ecampus:http_error_ratio:rate5m{namespace="app",service="comment",environment="dev"}'
+              loki_query: '{namespace="app",service="comment",environment="dev"}'
+
+  # Low traffic must not fire: 5 requests in 5 minutes with 100% failures.
+  - interval: 1m
+    input_series:
+      - series: 'kube_pod_labels{namespace="app",pod="comment-pod-l",label_app_kubernetes_io_name="comment",label_app_kubernetes_io_instance="ecampus-comment",label_delivery_platform_deploy_id="ecampus-pipeline-main-12-comment-1",label_delivery_platform_release_batch="ecampus-pipeline-main-12",label_delivery_platform_environment="dev",label_delivery_platform_git_sha="ccccccc1",label_rollouts_pod_template_hash="revl"}'
+        values: '1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-l",annotation_delivery_platform_image_digest="sha256:9999999999999999999999999999999999999999999999999999999999999999"}'
+        values: '1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-l",annotation_delivery_platform_gitops_revision="g9"}'
+        values: '1 1 1 1 1 1 1'
+      - series: 'ecampus_http_requests_total{namespace="app",service="comment",environment="dev",revision="revl",outcome="success"}'
+        values: '0 0 0 0 0 0 0'
+      - series: 'ecampus_http_requests_total{namespace="app",service="comment",environment="dev",revision="revl",outcome="failure"}'
+        values: '0 1 2 3 4 5 6'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: VersionHighErrorRate
+        exp_alerts: []
+      - eval_time: 6m
+        alertname: ServiceHighErrorRate
+        exp_alerts: []
+
+  # P95 needs enough histogram samples: <50 requests never fires, >=50 fires.
+  - interval: 1m
+    input_series:
+      - series: 'kube_pod_labels{namespace="app",pod="comment-pod-p",label_app_kubernetes_io_name="comment",label_app_kubernetes_io_instance="ecampus-comment",label_delivery_platform_deploy_id="ecampus-pipeline-main-13-comment-1",label_delivery_platform_release_batch="ecampus-pipeline-main-13",label_delivery_platform_environment="dev",label_delivery_platform_git_sha="ddddddd1",label_rollouts_pod_template_hash="revp"}'
+        values: '1 1 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-p",annotation_delivery_platform_image_digest="sha256:4444444444444444444444444444444444444444444444444444444444444444"}'
+        values: '1 1 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-p",annotation_delivery_platform_gitops_revision="g4"}'
+        values: '1 1 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'ecampus_http_request_duration_seconds_bucket{namespace="app",service="comment",environment="dev",revision="revp",le="0.1"}'
+        values: '0 2 4 6 8 10 12 14 16 18 20 22 24'
+      - series: 'ecampus_http_request_duration_seconds_bucket{namespace="app",service="comment",environment="dev",revision="revp",le="0.5"}'
+        values: '0 6 12 18 24 30 36 42 48 54 60 66 72'
+      - series: 'ecampus_http_request_duration_seconds_bucket{namespace="app",service="comment",environment="dev",revision="revp",le="1.0"}'
+        values: '0 12 24 36 48 60 72 84 96 108 120 132 144'
+      - series: 'ecampus_http_request_duration_seconds_bucket{namespace="app",service="comment",environment="dev",revision="revp",le="2.0"}'
+        values: '0 20 40 60 80 100 120 140 160 180 200 220 240'
+      - series: 'ecampus_http_request_duration_seconds_bucket{namespace="app",service="comment",environment="dev",revision="revp",le="+Inf"}'
+        values: '0 20 40 60 80 100 120 140 160 180 200 220 240'
+      - series: 'ecampus_http_request_duration_seconds_count{namespace="app",service="comment",environment="dev",revision="revp"}'
+        values: '0 20 40 60 80 100 120 140 160 180 200 220 240'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: VersionHighP95Latency
+        exp_alerts:
+          - exp_labels:
+              alertname: VersionHighP95Latency
+              namespace: app
+              service: comment
+              environment: dev
+              revision: revp
+              deploy_id: ecampus-pipeline-main-13-comment-1
+              release_batch: ecampus-pipeline-main-13
+              image_digest: sha256:4444444444444444444444444444444444444444444444444444444444444444
+              git_sha: ddddddd1
+              gitops_revision: g4
+              severity: warning
+              signal_type: user_impact
+              failure_domain: service
+            exp_annotations:
+              summary: Version p95 latency high for comment revision revp
+              description: P95 latency is above 1.5 seconds for deploy ecampus-pipeline-main-13-comment-1 (digest sha256:44444).
+              image_digest: sha256:44444
+              git_sha: ddddddd1
+              prometheus_query: 'ecampus:http_request_duration_seconds:p95:5m{namespace="app",service="comment",environment="dev",revision="revp"}'
+              loki_query: '{namespace="app",service="comment",environment="dev"} | json | deploy_id="ecampus-pipeline-main-13-comment-1"'
+      - eval_time: 12m
+        alertname: ServiceHighP95Latency
+        exp_alerts:
+          - exp_labels:
+              alertname: ServiceHighP95Latency
+              namespace: app
+              service: comment
+              environment: dev
+              severity: critical
+              signal_type: user_impact
+              failure_domain: service
+            exp_annotations:
+              summary: Service p95 latency high for comment
+              description: P95 latency is above 1.5 seconds across every revision of comment in dev.
+              prometheus_query: 'ecampus:http_request_duration_seconds:p95:5m{namespace="app",service="comment",environment="dev"}'
+              loki_query: '{namespace="app",service="comment",environment="dev"}'
+
+  # P95 with <50 samples in the window must stay quiet even when latency is high.
+  - interval: 1m
+    input_series:
+      - series: 'kube_pod_labels{namespace="app",pod="comment-pod-q",label_app_kubernetes_io_name="comment",label_app_kubernetes_io_instance="ecampus-comment",label_delivery_platform_deploy_id="ecampus-pipeline-main-14-comment-1",label_delivery_platform_release_batch="ecampus-pipeline-main-14",label_delivery_platform_environment="dev",label_delivery_platform_git_sha="eeeeeee1",label_rollouts_pod_template_hash="revq"}'
+        values: '1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-q",annotation_delivery_platform_image_digest="sha256:5555555555555555555555555555555555555555555555555555555555555555"}'
+        values: '1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-q",annotation_delivery_platform_gitops_revision="g5"}'
+        values: '1 1 1 1 1 1 1'
+      - series: 'ecampus_http_request_duration_seconds_bucket{namespace="app",service="comment",environment="dev",revision="revq",le="1.0"}'
+        values: '0 0 0 0 0 0 1'
+      - series: 'ecampus_http_request_duration_seconds_bucket{namespace="app",service="comment",environment="dev",revision="revq",le="2.0"}'
+        values: '0 1 2 3 4 5 6'
+      - series: 'ecampus_http_request_duration_seconds_bucket{namespace="app",service="comment",environment="dev",revision="revq",le="+Inf"}'
+        values: '0 1 2 3 4 5 6'
+      - series: 'ecampus_http_request_duration_seconds_count{namespace="app",service="comment",environment="dev",revision="revq"}'
+        values: '0 1 2 3 4 5 6'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: VersionHighP95Latency
+        exp_alerts: []
+      - eval_time: 6m
+        alertname: ServiceHighP95Latency
+        exp_alerts: []
+
+  # AnalysisRun phases classify into release_gate_failed / deploy_context and
+  # the AnalysisRun name regex extracts the workload for the release join.
+  - interval: 1m
+    input_series:
+      - series: 'kube_pod_labels{namespace="app",pod="comment-pod-a",label_app_kubernetes_io_name="comment",label_app_kubernetes_io_instance="ecampus-comment",label_delivery_platform_deploy_id="ecampus-pipeline-main-15-comment-1",label_delivery_platform_release_batch="ecampus-pipeline-main-15",label_delivery_platform_environment="dev",label_delivery_platform_git_sha="ffffff1",label_rollouts_pod_template_hash="reva"}'
+        values: '1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-a",annotation_delivery_platform_image_digest="sha256:6666666666666666666666666666666666666666666666666666666666666666"}'
+        values: '1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-a",annotation_delivery_platform_gitops_revision="g6"}'
+        values: '1 1 1 1 1 1'
+      - series: 'analysis_run_phase{namespace="app",name="ecampus-comment-3-1-abc123",phase="Failed"}'
+        values: '1 1 1 1 1 1'
+      - series: 'analysis_run_phase{namespace="app",name="ecampus-comment-3-2-def456",phase="Error"}'
+        values: '1 1 1 1 1 1'
+      - series: 'analysis_run_phase{namespace="app",name="ecampus-comment-3-3-ghi789",phase="Inconclusive"}'
+        values: '1 1 1 1 1 1'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ReleaseAnalysisFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: ReleaseAnalysisFailed
+              namespace: app
+              name: ecampus-comment-3-1-abc123
+              workload: ecampus-comment
+              service: comment
+              deploy_id: ecampus-pipeline-main-15-comment-1
+              release_batch: ecampus-pipeline-main-15
+              environment: dev
+              image_digest: sha256:6666666666666666666666666666666666666666666666666666666666666666
+              git_sha: ffffff1
+              gitops_revision: g6
+              severity: warning
+              signal_type: release_gate_failed
+              failure_domain: service
+            exp_annotations:
+              summary: Release analysis failed for comment
+              description: AnalysisRun ecampus-comment-3-1-abc123 failed (ecampus-pipeline-main-15-comment-1); the release gate did not pass. User impact is not implied.
+              image_digest: sha256:66666
+              git_sha: ffffff1
+              rollout: ecampus-comment
+              prometheus_query: 'analysis_run_phase{namespace="app",name="ecampus-comment-3-1-abc123"}'
+              loki_query: '{namespace="app",service="comment",environment="dev"} | json | deploy_id="ecampus-pipeline-main-15-comment-1"'
+      - eval_time: 5m
+        alertname: ReleaseAnalysisInconclusiveOrError
+        exp_alerts:
+          - exp_labels:
+              alertname: ReleaseAnalysisInconclusiveOrError
+              namespace: app
+              name: ecampus-comment-3-2-def456
+              workload: ecampus-comment
+              service: comment
+              deploy_id: ecampus-pipeline-main-15-comment-1
+              release_batch: ecampus-pipeline-main-15
+              environment: dev
+              image_digest: sha256:6666666666666666666666666666666666666666666666666666666666666666
+              git_sha: ffffff1
+              gitops_revision: g6
+              severity: info
+              signal_type: deploy_context
+              failure_domain: service
+            exp_annotations:
+              summary: Analysis for comment is inconclusive or errored
+              description: AnalysisRun ecampus-comment-3-2-def456 could not produce a release verdict (ecampus-pipeline-main-15-comment-1); this is a deploy-context signal, not user impact.
+              image_digest: sha256:66666
+              git_sha: ffffff1
+              rollout: ecampus-comment
+              prometheus_query: 'analysis_run_phase{namespace="app",name="ecampus-comment-3-2-def456"}'
+              loki_query: '{namespace="app",service="comment",environment="dev"} | json | deploy_id="ecampus-pipeline-main-15-comment-1"'
+          - exp_labels:
+              alertname: ReleaseAnalysisInconclusiveOrError
+              namespace: app
+              name: ecampus-comment-3-3-ghi789
+              workload: ecampus-comment
+              service: comment
+              deploy_id: ecampus-pipeline-main-15-comment-1
+              release_batch: ecampus-pipeline-main-15
+              environment: dev
+              image_digest: sha256:6666666666666666666666666666666666666666666666666666666666666666
+              git_sha: ffffff1
+              gitops_revision: g6
+              severity: info
+              signal_type: deploy_context
+              failure_domain: service
+            exp_annotations:
+              summary: Analysis for comment is inconclusive or errored
+              description: AnalysisRun ecampus-comment-3-3-ghi789 could not produce a release verdict (ecampus-pipeline-main-15-comment-1); this is a deploy-context signal, not user impact.
+              image_digest: sha256:66666
+              git_sha: ffffff1
+              rollout: ecampus-comment
+              prometheus_query: 'analysis_run_phase{namespace="app",name="ecampus-comment-3-3-ghi789"}'
+              loki_query: '{namespace="app",service="comment",environment="dev"} | json | deploy_id="ecampus-pipeline-main-15-comment-1"'
+
+  # Replica shortage on Deployments fires only after the 5 minute grace period.
+  - interval: 1m
+    input_series:
+      - series: 'kube_deployment_labels{namespace="app",deployment="ecampus-academic",label_app_kubernetes_io_name="academic",label_app_kubernetes_io_instance="ecampus-academic",label_delivery_platform_deploy_id="ecampus-pipeline-main-16-academic-1",label_delivery_platform_release_batch="ecampus-pipeline-main-16",label_delivery_platform_environment="dev",label_delivery_platform_git_sha="9999991"}'
+        values: '1 1 1 1 1 1 1 1 1'
+      - series: 'kube_deployment_annotations{namespace="app",deployment="ecampus-academic",annotation_delivery_platform_image_digest="sha256:7777777777777777777777777777777777777777777777777777777777777777"}'
+        values: '1 1 1 1 1 1 1 1 1'
+      - series: 'kube_deployment_annotations{namespace="app",deployment="ecampus-academic",annotation_delivery_platform_gitops_revision="g7"}'
+        values: '1 1 1 1 1 1 1 1 1'
+      - series: 'kube_deployment_status_replicas_available{namespace="app",deployment="ecampus-academic"}'
+        values: '1 1 1 1 1 1 1 1 1'
+      - series: 'kube_deployment_spec_replicas{namespace="app",deployment="ecampus-academic"}'
+        values: '3 3 3 3 3 3 3 3 3'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: ReleaseReplicaShortage
+        exp_alerts: []
+      - eval_time: 8m
+        alertname: ReleaseReplicaShortage
+        exp_alerts:
+          - exp_labels:
+              alertname: ReleaseReplicaShortage
+              namespace: app
+              deployment: ecampus-academic
+              service: academic
+              deploy_id: ecampus-pipeline-main-16-academic-1
+              release_batch: ecampus-pipeline-main-16
+              environment: dev
+              image_digest: sha256:7777777777777777777777777777777777777777777777777777777777777777
+              git_sha: "9999991"
+              gitops_revision: g7
+              severity: warning
+              signal_type: deploy_noise
+              failure_domain: service
+            exp_annotations:
+              summary: Replica shortage for academic during release ecampus-pipeline-main-16-academic-1
+              description: Available replicas are below desired for more than 5 minutes; this is not suppressed by release noise windows.
+              image_digest: sha256:77777
+              git_sha: "9999991"
+              rollout: ecampus-academic
+              prometheus_query: 'kube_deployment_status_replicas_available{namespace="app"} < kube_deployment_spec_replicas{namespace="app"}'
+              loki_query: '{namespace="app",service="academic",environment="dev"} | json | deploy_id="ecampus-pipeline-main-16-academic-1"'
+
+  # Replica shortage on Rollouts joins workload release info by rollout name.
+  - interval: 1m
+    input_series:
+      - series: 'kube_pod_labels{namespace="app",pod="comment-pod-r",label_app_kubernetes_io_name="comment",label_app_kubernetes_io_instance="ecampus-comment",label_delivery_platform_deploy_id="ecampus-pipeline-main-17-comment-1",label_delivery_platform_release_batch="ecampus-pipeline-main-17",label_delivery_platform_environment="dev",label_delivery_platform_git_sha="8888881",label_rollouts_pod_template_hash="revr"}'
+        values: '1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-r",annotation_delivery_platform_image_digest="sha256:8888888888888888888888888888888888888888888888888888888888888888"}'
+        values: '1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-r",annotation_delivery_platform_gitops_revision="g8"}'
+        values: '1 1 1 1 1 1 1 1 1'
+      - series: 'rollout_info_replicas_available{namespace="app",name="ecampus-comment"}'
+        values: '1 1 1 1 1 1 1 1 1'
+      - series: 'rollout_info_replicas_desired{namespace="app",name="ecampus-comment"}'
+        values: '3 3 3 3 3 3 3 3 3'
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: ReleaseReplicaShortage
+        exp_alerts:
+          - exp_labels:
+              alertname: ReleaseReplicaShortage
+              namespace: app
+              name: ecampus-comment
+              service: comment
+              deploy_id: ecampus-pipeline-main-17-comment-1
+              release_batch: ecampus-pipeline-main-17
+              environment: dev
+              image_digest: sha256:8888888888888888888888888888888888888888888888888888888888888888
+              git_sha: "8888881"
+              gitops_revision: g8
+              severity: warning
+              signal_type: deploy_noise
+              failure_domain: service
+            exp_annotations:
+              summary: Replica shortage for comment during release ecampus-pipeline-main-17-comment-1
+              description: Available replicas are below desired for more than 5 minutes; this is not suppressed by release noise windows.
+              image_digest: sha256:88888
+              git_sha: "8888881"
+              rollout: ecampus-comment
+              prometheus_query: 'kube_deployment_status_replicas_available{namespace="app"} < kube_deployment_spec_replicas{namespace="app"}'
+              loki_query: '{namespace="app",service="comment",environment="dev"} | json | deploy_id="ecampus-pipeline-main-17-comment-1"'
+
+  # Pods without a deploy_id must never open a noise window or fire pod noise.
+  - interval: 1m
+    input_series:
+      - series: 'kube_pod_labels{namespace="app",pod="plain-pod",label_app_kubernetes_io_name="comment",label_app_kubernetes_io_instance="ecampus-comment",label_delivery_platform_deploy_id="",label_delivery_platform_release_batch="",label_delivery_platform_environment="dev",label_delivery_platform_git_sha="",label_rollouts_pod_template_hash="revx"}'
+        values: '1 1 1 1 1 1 1'
+      - series: 'kube_pod_created{namespace="app",pod="plain-pod"}'
+        values: '0 0 0 0 0 0 0'
+      - series: 'kube_pod_container_status_restarts_total{namespace="app",pod="plain-pod",container="app"}'
+        values: '0 0 2 2 2 2 2'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: ReleaseDeployNoiseWindow
+        exp_alerts: []
+      - eval_time: 6m
+        alertname: ReleasePodRestarting
+        exp_alerts: []
+
+  # Transient pod noise carries deploy_id (the inhibition equal key) when the
+  # pod belongs to a release.
+  - interval: 1m
+    input_series:
+      - series: 'kube_pod_labels{namespace="app",pod="comment-pod-n",label_app_kubernetes_io_name="comment",label_app_kubernetes_io_instance="ecampus-comment",label_delivery_platform_deploy_id="ecampus-pipeline-main-18-comment-1",label_delivery_platform_release_batch="ecampus-pipeline-main-18",label_delivery_platform_environment="dev",label_delivery_platform_git_sha="1234567",label_rollouts_pod_template_hash="revn"}'
+        values: '1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-n",annotation_delivery_platform_image_digest="sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}'
+        values: '1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-n",annotation_delivery_platform_gitops_revision="gn"}'
+        values: '1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_created{namespace="app",pod="comment-pod-n"}'
+        values: '0 0 0 0 0 0 0 0 0'
+      - series: 'kube_pod_container_status_restarts_total{namespace="app",pod="comment-pod-n",container="app"}'
+        values: '0 0 2 2 2 2 2 2 2'
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: ReleaseDeployNoiseWindow
+        exp_alerts:
+          - exp_labels:
+              alertname: ReleaseDeployNoiseWindow
+              namespace: app
+              service: comment
+              instance: ecampus-comment
+              deploy_id: ecampus-pipeline-main-18-comment-1
+              release_batch: ecampus-pipeline-main-18
+              environment: dev
+              image_digest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+              git_sha: "1234567"
+              gitops_revision: gn
+              severity: info
+              signal_type: deploy_context
+              failure_domain: service
+            exp_annotations:
+              summary: Release noise window is active for comment
+              description: Recent pods for deploy ecampus-pipeline-main-18-comment-1 (batch ecampus-pipeline-main-18) allow transient deploy-noise alerts to be grouped and inhibited without muting user-impact alerts.
+              image_digest: sha256:aaaaa
+              git_sha: "1234567"
+              rollout: ecampus-comment
+              prometheus_query: 'delivery_platform:pod_release_info{namespace="app",service="comment",deploy_id="ecampus-pipeline-main-18-comment-1"}'
+              loki_query: '{namespace="app",service="comment",environment="dev"} | json | deploy_id="ecampus-pipeline-main-18-comment-1"'
+      - eval_time: 8m
+        alertname: ReleasePodRestarting
+        exp_alerts:
+          - exp_labels:
+              alertname: ReleasePodRestarting
+              namespace: app
+              pod: comment-pod-n
+              container: app
+              instance: ecampus-comment
+              service: comment
+              deploy_id: ecampus-pipeline-main-18-comment-1
+              release_batch: ecampus-pipeline-main-18
+              environment: dev
+              image_digest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+              git_sha: "1234567"
+              gitops_revision: gn
+              severity: warning
+              signal_type: deploy_noise
+              failure_domain: service
+            exp_annotations:
+              summary: Pod restarted during release ecampus-pipeline-main-18-comment-1
+              description: Container app in pod comment-pod-n restarted during a release noise window.
+              image_digest: sha256:aaaaa
+              git_sha: "1234567"
+              rollout: ecampus-comment
+              prometheus_query: 'kube_pod_container_status_restarts_total{namespace="app",pod="comment-pod-n"}'
+              loki_query: '{namespace="app",service="comment",environment="dev"} | json | deploy_id="ecampus-pipeline-main-18-comment-1"'

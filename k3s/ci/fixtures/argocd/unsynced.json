@@ -1,0 +1,8 @@
+{
+  "kind": "Application",
+  "metadata": {"name": "ecampus-topic", "namespace": "argocd"},
+  "status": {
+    "sync": {"revision": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"},
+    "health": {"status": "Progressing"}
+  }
+}

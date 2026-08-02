@@ -13,13 +13,10 @@ serviceAccount:
   create: true
   name: ""
 
-rbac:
-  create: true
-
 api:
   replicaCount: 1
   command: []
-  args: 
+  args:
     - api
   nodeSelector:
     platform-role: light
@@ -40,7 +37,7 @@ ingress:
   className: traefik
   annotations: {}
   hosts:
-    - host: ecampusops.top
+    - host: ""
       paths:
         - path: /
           pathType: Prefix
@@ -48,87 +45,7 @@ ingress:
     enabled: false
     secretName: ""
 
-worker:
-  replicaCount: 1
-  command: []
-  args: 
-    - worker
-  nodeSelector:
-    platform-role: light
-  resources:
-    requests:
-      cpu: 50m
-      memory: 128Mi
-    limits:
-      cpu: 300m
-      memory: 256Mi
-
-config:
-  catalogPath: /app/configs/service-catalog.yaml
-  serviceCatalog: |
-    version: v1
-
-    services:
-      - name: forum-api
-        displayName: Forum API
-        owner: worryyy
-
-        environments:
-          - name: dev
-            namespace: app
-
-            branchPolicy:
-              defaultBranch: main
-              allowedBranches:
-                - main
-                - develop
-                - feature/*
-
-            git:
-              repo: https://github.com/worryyy/forum-app.git
-              chartPath: k3s/charts/forum-api
-              valuesFile: k3s/helm-values/workloads/forum-api-business.yaml
-
-            image:
-              repository: ccr.ccs.tencentyun.com/k3s-platform/server
-              tagPolicy: git-sha
-              requireDigest: false
-
-            jenkins:
-              mode: legacy
-              jobName: forum-api-pipeline
-
-            argocd:
-              application: forum-api
-              namespace: argocd
-
-            kubernetes:
-              namespace: app
-              deployment: forum-api
-              service: forum-api
-              container: forum-api
-
-            health:
-              healthPath: /healthz
-              readyPath: /readyz
-
-env:
-  POSTGRES_HOST: platform-postgresql.platform.svc.cluster.local
-  POSTGRES_PORT: "5432"
-  POSTGRES_DB: platform_db
-  POSTGRES_USER: platform_user
-
-  RABBITMQ_HOST: platform-rabbitmq.platform.svc.cluster.local
-  RABBITMQ_PORT: "5672"
-  RABBITMQ_USER: platform_user
-
-  JENKINS_BASE_URL: http://jenkins.cicd.svc.cluster.local:8080
-  JENKINS_USERNAME: admin
-
-secretName: platform-server-secrets
-
 podAnnotations: {}
-
 podLabels:
   app-role: platform
 
@@ -161,5 +78,4 @@ probes:
     failureThreshold: 3
 
 tolerations: []
-
 affinity: {}

@@ -1,0 +1,27 @@
+fullnameOverride: ecampus-school
+
+image:
+  repository: k3s-platform/ecampus-school
+  tag: dev
+  digest: ""
+
+platform:
+  serviceName: school
+
+release:
+  deployId: ""
+  gitSha: ""
+  gitopsRevision: ""
+  environment: dev
+  buildNumber: ""
+
+rollout:
+  profile: controlled-bluegreen
+  ingress:
+    paths:
+      - /api/term
+      - /api/user/authentication
+      - /api/user/re_authentication
+      - /api/user/get_course_by_weeks
+      - /api/user/get_exam
+      - /api/user/get_exam_score

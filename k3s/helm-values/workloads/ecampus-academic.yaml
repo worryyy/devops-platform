@@ -1,0 +1,22 @@
+fullnameOverride: ecampus-academic
+
+image:
+  repository: k3s-platform/ecampus-academic
+  tag: dev
+  digest: ""
+
+platform:
+  serviceName: academic
+
+release:
+  deployId: ""
+  gitSha: ""
+  gitopsRevision: ""
+  environment: dev
+  buildNumber: ""
+
+rollout:
+  profile: standard-canary
+  ingress:
+    paths:
+      - /api/academic

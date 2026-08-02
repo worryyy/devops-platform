@@ -1,0 +1,22 @@
+fullnameOverride: ecampus-moderation
+
+image:
+  repository: k3s-platform/ecampus-moderation
+  tag: dev
+  digest: ""
+
+platform:
+  serviceName: moderation
+
+release:
+  deployId: ""
+  gitSha: ""
+  gitopsRevision: ""
+  environment: dev
+  buildNumber: ""
+
+rollout:
+  profile: controlled-bluegreen
+  ingress:
+    paths:
+      - /api/moderation

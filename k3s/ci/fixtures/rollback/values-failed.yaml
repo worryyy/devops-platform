@@ -1,0 +1,10 @@
+image:
+  registry: ccr.ccs.tencentyun.com
+  repository: k3s-platform/ecampus-topic
+  tag: git-eeeeeeee
+  digest: "sha256:6666666666666666666666666666666666666666666666666666666666666666"
+release:
+  gitSha: eeeeeeee1234567890eeeeeeee1234567890eeeeeeee
+  gitopsRevision: ""
+  environment: dev
+  deployId: ""

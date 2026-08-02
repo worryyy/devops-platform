@@ -1,0 +1,13 @@
+{
+  "kind": "Rollout",
+  "metadata": {"name": "ecampus-topic"},
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          {"name": "ecampus-topic", "image": "ccr.ccs.tencentyun.com/k3s-platform/ecampus-topic:git-abc12345@sha256:1111111111111111111111111111111111111111111111111111111111111111"}
+        ]
+      }
+    }
+  }
+}

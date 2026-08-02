@@ -1,0 +1,11 @@
+{
+  "apiVersion": "argoproj.io/v1alpha1",
+  "kind": "Rollout",
+  "metadata": {
+    "name": "ecampus-marketplace",
+    "namespace": "app"
+  },
+  "status": {
+    "phase": "Progressing"
+  }
+}

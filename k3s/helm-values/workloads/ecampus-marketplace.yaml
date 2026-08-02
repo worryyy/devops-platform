@@ -1,0 +1,22 @@
+fullnameOverride: ecampus-marketplace
+
+image:
+  repository: k3s-platform/ecampus-marketplace
+  tag: dev
+  digest: ""
+
+platform:
+  serviceName: marketplace
+
+release:
+  deployId: ""
+  gitSha: ""
+  gitopsRevision: ""
+  environment: dev
+  buildNumber: ""
+
+rollout:
+  profile: controlled-bluegreen
+  ingress:
+    paths:
+      - /api/marketplace

@@ -8,6 +8,10 @@ ENV/
 # Local OMX runtime state and logs
 .omx/
 
+# Local build and dependency caches
+.cache/
+.gocache/
+
 # Frontend dependencies, build output, and caches
 web/node_modules/
 web/dist/

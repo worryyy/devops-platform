@@ -1,0 +1,28 @@
+{
+  "apiVersion": "argoproj.io/v1alpha1",
+  "kind": "AnalysisRun",
+  "metadata": {
+    "name": "ecampus-user-abc-2-4",
+    "namespace": "app"
+  },
+  "status": {
+    "phase": "Failed",
+    "message": "metric canary-error-rate assessed Failed: failed (2) > failureLimit (2)",
+    "metricResults": [
+      {
+        "name": "canary-error-rate",
+        "phase": "Failed",
+        "measurements": [
+          {
+            "phase": "Failed",
+            "value": "0.041"
+          },
+          {
+            "phase": "Failed",
+            "value": "0.052"
+          }
+        ]
+      }
+    ]
+  }
+}

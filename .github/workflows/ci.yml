@@ -1,0 +1,174 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  go-checks:
+    name: go-checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: platform/server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache: true
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test ./...
+
+  golangci-lint:
+    name: golangci-lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: platform/server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache: true
+
+      - uses: golangci/golangci-lint-action@v9.3.0
+        with:
+          version: v2.12.2
+          args: --timeout=10m
+
+  pipeline-scripts:
+    name: pipeline-scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache: true
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.15.4
+
+      - uses: mikefarah/yq@v4.44.3
+
+      - name: wait-for-release fixture tests
+        run: sh k3s/ci/scripts/test-wait-release.sh
+
+      - name: rollback-release fixture tests
+        run: sh k3s/ci/scripts/test-rollback-release.sh
+
+      - name: delivery contract test
+        run: sh k3s/ci/scripts/test-delivery-contract.sh
+
+      - name: catalog CLI smoke test
+        working-directory: platform/server
+        run: |
+          set -eu
+          go run ./cmd/server catalog \
+            --catalog configs/service-catalog.yaml \
+            --services academic,topic \
+            --environment dev > /tmp/delivery.json
+          jq -e '.services | length == 2' /tmp/delivery.json
+          jq -e '.services[0].image | contains("ecampus-academic")' /tmp/delivery.json
+          jq -e '.services[0].effective_profile != ""' /tmp/delivery.json
+
+  helm-render:
+    name: helm-render
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.15.4
+
+      - name: Lint and render go-service workloads
+        run: |
+          set -eu
+          count=0
+          for values in k3s/helm-values/workloads/ecampus-*.yaml; do
+            service=$(basename "$values" .yaml)
+            helm lint k3s/charts/go-service -f "$values" >/dev/null
+            helm template "$service" k3s/charts/go-service --namespace app -f "$values" >/dev/null
+            count=$((count + 1))
+          done
+          test "$count" -eq 13
+
+      - name: Lint and render platform-server chart
+        run: |
+          set -eu
+          helm lint platform/server/charts/platform-server \
+            -f platform/server/charts/platform-server/values.yaml >/dev/null
+          helm template platform-server platform/server/charts/platform-server \
+            --namespace platform -f platform/server/charts/platform-server/values.yaml >/dev/null
+
+  deploy-gate:
+    name: deploy-gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.15.4
+
+      - uses: mikefarah/yq@v4.44.3
+
+      - name: Install kubeconform and conftest
+        run: |
+          set -eu
+          curl -fsSL -o /tmp/kubeconform.tar.gz \
+            https://github.com/yannh/kubeconform/releases/download/v0.8.0/kubeconform-linux-amd64.tar.gz
+          tar -xzf /tmp/kubeconform.tar.gz -C /usr/local/bin kubeconform
+          kubeconform -v
+          curl -fsSL -o /tmp/conftest.tar.gz \
+            https://github.com/open-policy-agent/conftest/releases/download/v0.68.2/conftest_0.68.2_Linux_x86_64.tar.gz
+          tar -xzf /tmp/conftest.tar.gz -C /usr/local/bin conftest
+          conftest --version
+
+      - name: Render final manifests with PR values
+        run: |
+          set -eu
+          rendered=$(mktemp)
+          count=0
+          for values in k3s/helm-values/workloads/ecampus-*.yaml; do
+            service=$(basename "$values" .yaml)
+            helm template "$service" k3s/charts/go-service --namespace app -f "$values" >> "$rendered"
+            count=$((count + 1))
+          done
+          test "$count" -eq 13
+          helm template platform-server platform/server/charts/platform-server \
+            --namespace platform -f platform/server/charts/platform-server/values.yaml >> "$rendered"
+          cp "$rendered" /tmp/rendered.yaml
+
+      - name: Validate Kubernetes structure with kubeconform
+        run: |
+          kubeconform -summary -verbose -kubernetes-version 1.31.0 \
+            -schema-location default \
+            -schema-location "file://$GITHUB_WORKSPACE/k3s/ci/schemas/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json" \
+            /tmp/rendered.yaml
+
+      - name: Validate resource and delivery policies with conftest
+        run: |
+          conftest test --combine --policy k3s/ci/policies /tmp/rendered.yaml
+
+      - name: Verify conftest policy tests
+        run: conftest verify --policy k3s/ci/policies
+
+      - name: Assert rendered workload composition
+        run: |
+          set -eu
+          test "$(grep -c '^kind: Rollout$' /tmp/rendered.yaml)" -eq 12
+          test "$(grep -c '^kind: Deployment$' /tmp/rendered.yaml)" -eq 2
+          test "$(grep -c '^kind: AnalysisTemplate$' /tmp/rendered.yaml)" -eq 19
+          grep -q 'delivery.platform/image-digest' /tmp/rendered.yaml

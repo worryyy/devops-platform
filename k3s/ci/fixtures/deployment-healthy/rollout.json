@@ -1,0 +1,29 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "ecampus-theme",
+    "namespace": "app",
+    "labels": {
+      "delivery.platform/git-sha": "a1b2c3d4"
+    }
+  },
+  "spec": {
+    "replicas": 1
+  },
+  "status": {
+    "replicas": 1,
+    "availableReplicas": 1,
+    "conditions": [
+      {
+        "type": "Available",
+        "status": "True"
+      },
+      {
+        "type": "Progressing",
+        "status": "True",
+        "reason": "NewReplicaSetAvailable"
+      }
+    ]
+  }
+}

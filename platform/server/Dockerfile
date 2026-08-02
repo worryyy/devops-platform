@@ -1,15 +1,5 @@
 # syntax=docker/dockerfile:1
 
-FROM node:24-bookworm-slim AS web-build
-
-WORKDIR /src/web
-
-COPY web/package.json web/package-lock.json ./
-RUN npm ci
-
-COPY web ./
-RUN npm run build
-
 FROM golang:1.26 AS build
 
 WORKDIR /src/platform/server
@@ -20,7 +10,6 @@ ENV GOSUMDB=sum.golang.google.cn
 RUN go mod download
 
 COPY platform/server ./
-COPY --from=web-build /src/platform/server/internal/app/frontend/dist ./internal/app/frontend/dist
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build \

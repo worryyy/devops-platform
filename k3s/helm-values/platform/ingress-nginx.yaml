@@ -1,0 +1,16 @@
+controller:
+  ingressClass: nginx
+  ingressClassResource:
+    enabled: true
+    name: nginx
+    controllerValue: k8s.io/ingress-nginx
+  allowSnippetAnnotations: false
+  metrics:
+    enabled: true
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "10254"
+
+defaultBackend:
+  enabled: false
