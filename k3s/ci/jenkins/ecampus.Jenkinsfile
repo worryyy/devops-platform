@@ -694,9 +694,9 @@ spec:
   environment {
     SOURCE_DIR = 'source'
     GITOPS_DIR = 'gitops'
-    GITOPS_REPO_URL = 'https://github.com/worryyy/devops-platform.git'
+    GITOPS_REPO_URL = 'https://github.com/worryyy/devops-test.git'
     GITOPS_OWNER = 'worryyy'
-    GITOPS_REPO = 'devops-platform'
+    GITOPS_REPO = 'devops-test'
     BUILDKIT_CACHE_REPO = 'ccr.ccs.tencentyun.com/k3s-platform/buildkit-cache'
     ROLLOUTS_CLI = '/cache/jenkins-tools/argo-rollouts/v1.8.3/kubectl-argo-rollouts'
     KUBECTL_CLI = '/cache/jenkins-tools/kubectl/v1.31.3/kubectl'
