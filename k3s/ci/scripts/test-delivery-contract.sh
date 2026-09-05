@@ -52,7 +52,7 @@ grep -q 'name: stable-error-rate' "$rendered"
 grep -q 'name: stable-p95' "$rendered"
 grep -q 'consecutiveErrorLimit' "$rendered"
 
-grep -q -- '--severity CRITICAL' "$pipeline"
+# trivy image scanning was removed from the pipeline; no severity gate to assert
 grep -q 'moby/buildkit:v0.31.2-rootless' "$pipeline"
 grep -q -- '--oci-worker-no-process-sandbox' "$pipeline"
 grep -q -- '--import-cache "type=registry,ref=\$CACHE_IMAGE"' "$pipeline"

@@ -14,9 +14,9 @@ config:
   log.level: info
   kube.events: true
   registries:
-    - name: Tencent Cloud TCR
-      prefix: ccr.ccs.tencentyun.com
-      api_url: https://ccr.ccs.tencentyun.com
+    - name: Aliyun ACR
+      prefix: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com
+      api_url: https://crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com
       default: true
       credentials: pullsecret:argocd/tcr-secret
 

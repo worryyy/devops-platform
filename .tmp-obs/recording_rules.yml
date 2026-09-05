@@ -1,0 +1,150 @@
+groups:
+  - name: delivery-platform-release-recording
+    rules:
+      - record: delivery_platform:pod_release_info
+        expr: |
+          max by (namespace, pod, instance, service, deploy_id, release_batch, environment, git_sha, image_digest, gitops_revision) (
+            label_replace(
+              label_replace(
+                label_replace(
+                  label_replace(
+                    label_replace(
+                      label_replace(
+                        kube_pod_labels{label_delivery_platform_deploy_id!=""},
+                        "deploy_id", "$1", "label_delivery_platform_deploy_id", "(.+)"
+                      ),
+                      "release_batch", "$1", "label_delivery_platform_release_batch", "(.*)"
+                    ),
+                    "environment", "$1", "label_delivery_platform_environment", "(.*)"
+                  ),
+                  "git_sha", "$1", "label_delivery_platform_git_sha", "(.*)"
+                ),
+                "service", "$1", "label_app_kubernetes_io_name", "(.+)"
+              ),
+              "instance", "$1", "label_app_kubernetes_io_instance", "(.+)"
+            )
+            * on (namespace, pod) group_left(image_digest)
+              label_replace(
+                kube_pod_annotations{annotation_delivery_platform_image_digest=~".+"},
+                "image_digest", "$1", "annotation_delivery_platform_image_digest", "(.*)"
+              )
+            * on (namespace, pod) group_left(gitops_revision)
+              label_replace(
+                kube_pod_annotations{annotation_delivery_platform_gitops_revision=~".+"},
+                "gitops_revision", "$1", "annotation_delivery_platform_gitops_revision", "(.*)"
+              )
+          )
+      - record: delivery_platform:release_info
+        expr: |
+          max by (namespace, service, environment, revision, deploy_id, release_batch, image_digest, git_sha, gitops_revision) (
+            label_replace(
+              label_replace(
+                label_replace(
+                  label_replace(
+                    label_replace(
+                      label_replace(
+                        label_replace(
+                          kube_pod_labels{label_delivery_platform_deploy_id!=""},
+                          "deploy_id", "$1", "label_delivery_platform_deploy_id", "(.+)"
+                        ),
+                        "release_batch", "$1", "label_delivery_platform_release_batch", "(.*)"
+                      ),
+                      "environment", "$1", "label_delivery_platform_environment", "(.*)"
+                    ),
+                    "git_sha", "$1", "label_delivery_platform_git_sha", "(.*)"
+                  ),
+                  "service", "$1", "label_app_kubernetes_io_name", "(.+)"
+                ),
+                "revision", "$1", "label_rollouts_pod_template_hash", "(.+)"
+              ),
+              "revision", "$1", "label_pod_template_hash", "(.+)"
+            )
+            * on (namespace, pod) group_left(image_digest)
+              label_replace(
+                kube_pod_annotations{annotation_delivery_platform_image_digest=~".+"},
+                "image_digest", "$1", "annotation_delivery_platform_image_digest", "(.*)"
+              )
+            * on (namespace, pod) group_left(gitops_revision)
+              label_replace(
+                kube_pod_annotations{annotation_delivery_platform_gitops_revision=~".+"},
+                "gitops_revision", "$1", "annotation_delivery_platform_gitops_revision", "(.*)"
+              )
+          )
+      - record: delivery_platform:workload_release_info
+        expr: |
+          max by (namespace, workload, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision) (
+            label_replace(
+              delivery_platform:pod_release_info,
+              "workload", "$1", "instance", "(.+)"
+            )
+          )
+      - record: delivery_platform:deployment_release_info
+        expr: |
+          max by (namespace, deployment, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision) (
+            label_replace(
+              label_replace(
+                label_replace(
+                  label_replace(
+                    label_replace(
+                      label_replace(
+                        kube_deployment_labels{label_delivery_platform_deploy_id!=""},
+                        "deploy_id", "$1", "label_delivery_platform_deploy_id", "(.+)"
+                      ),
+                      "release_batch", "$1", "label_delivery_platform_release_batch", "(.*)"
+                    ),
+                    "environment", "$1", "label_delivery_platform_environment", "(.*)"
+                  ),
+                  "git_sha", "$1", "label_delivery_platform_git_sha", "(.*)"
+                ),
+                "service", "$1", "label_app_kubernetes_io_name", "(.+)"
+              ),
+              "deployment", "$1", "label_app_kubernetes_io_instance", "(.+)"
+            )
+            * on (namespace, deployment) group_left(image_digest)
+              label_replace(
+                kube_deployment_annotations{annotation_delivery_platform_image_digest=~".+"},
+                "image_digest", "$1", "annotation_delivery_platform_image_digest", "(.*)"
+              )
+            * on (namespace, deployment) group_left(gitops_revision)
+              label_replace(
+                kube_deployment_annotations{annotation_delivery_platform_gitops_revision=~".+"},
+                "gitops_revision", "$1", "annotation_delivery_platform_gitops_revision", "(.*)"
+              )
+          )
+  - name: ecampus-http-recording
+    rules:
+      # Stable and candidate revisions are compared exactly: every rule is
+      # aggregated by revision (rollouts-pod-template-hash or
+      # pod-template-hash) and environment only. Release identity is joined
+      # at alert evaluation time from delivery_platform:release_info so a
+      # new release does not create new time series.
+      - record: ecampus:http_requests_total:rate5m
+        expr: |
+          sum by (namespace, service, environment, revision) (
+            rate(ecampus_http_requests_total[5m])
+          )
+      - record: ecampus:http_errors_total:rate5m
+        expr: |
+          sum by (namespace, service, environment, revision) (
+            rate(ecampus_http_requests_total{outcome="failure"}[5m])
+          )
+      - record: ecampus:http_error_ratio:rate5m
+        expr: |
+          ecampus:http_errors_total:rate5m
+          / clamp_min(ecampus:http_requests_total:rate5m, 0.001)
+      - record: ecampus:http_request_duration_seconds:p95:5m
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (namespace, service, environment, revision, le) (
+              rate(ecampus_http_request_duration_seconds_bucket[5m])
+            )
+          )
+      - record: ecampus:http_route_success_ratio:rate5m
+        expr: |
+          sum by (namespace, service, environment, revision, route) (
+            rate(ecampus_http_requests_total{outcome="success"}[5m])
+          )
+          / clamp_min(sum by (namespace, service, environment, revision, route) (
+            rate(ecampus_http_requests_total[5m])
+          ), 0.001)

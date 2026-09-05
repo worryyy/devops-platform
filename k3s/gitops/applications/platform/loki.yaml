@@ -21,7 +21,7 @@ spec:
         releaseName: alloy
         valueFiles:
           - $values/k3s/helm-values/platform/alloy.yaml
-    - repoURL: https://github.com/worryyy/devops-platform.git
+    - repoURL: https://github.com/worryyy/devops-test.git
       targetRevision: main
       ref: values
 

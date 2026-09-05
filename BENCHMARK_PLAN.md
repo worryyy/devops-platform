@@ -21,7 +21,7 @@
 
 | 节点 | 角色 | 说明 |
 |---|---|---|
-| node1(4c8g,建议升 4c16g) | k3s server(control-plane + etcd)+ `platform-role=control` | Jenkins controller、CI Pod(含 BuildKit/Trivy)、Argo CD、Rollouts、Prometheus、Alertmanager、Loki、PostgreSQL 全部调度到此节点(配置里已用 nodeSelector 钉死) |
+| node1(4c8g,建议升 4c16g) | k3s server(control-plane + etcd)+ `platform-role=control` | Jenkins controller、CI Pod(含 BuildKit)、Argo CD、Rollouts、Prometheus、Alertmanager、Loki、PostgreSQL 全部调度到此节点(配置里已用 nodeSelector 钉死) |
 | node2 / node3(2c4g × 2) | k3s agent | 13 个 ecampus 服务副本 + Canary 流量,吃剩余负载 |
 
 选型理由(面试可讲):
@@ -55,14 +55,14 @@ kubectl apply -f k3s/ci/jenkins/agent-cache-pvc.yaml
 kubectl apply -f k3s/ci/jenkins/buildkit-cache.yaml
 kubectl apply -f k3s/ci/jenkins/release-rbac.yaml
 
-# 4) secrets(参照 k3s/secrets/*.example.yaml):TCR 镜像凭据 + PostgreSQL auth
+# 4) secrets(参照 k3s/secrets/*.example.yaml):ACR 镜像凭据 + PostgreSQL auth
 # 5) Argo CD 安装 + GitHub webhook(参照 README「Install or upgrade public Argo CD」一节)
 # 6) Jenkins:创建 ecampus-pipeline 任务(Pipeline script from SCM → k3s/ci/jenkins/ecampus.Jenkinsfile),
 #    凭据 git-https,以及 port-forward 后跑一次全量构建做冒烟
 ```
 
 验证全链路的顺序:先手动触发一次不带 SHA 的构建(conservative full build),确认
-影响分析 → 构建 → Trivy → GitOps PR 合并 → Argo CD 同步 → Rollout 就绪 → release_record 落库
+影响分析 → 构建 → GitOps PR 合并 → Argo CD 同步 → Rollout 就绪 → release_record 落库
 整条链路绿,再开始采样。
 
 ## 4. 指标一:CI 提效(冷/热 × 全量/影响分析 三组消融)

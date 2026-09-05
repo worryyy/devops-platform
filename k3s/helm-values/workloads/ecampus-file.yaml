@@ -1,7 +1,7 @@
 fullnameOverride: ecampus-file
 
 image:
-  repository: k3s-platform/ecampus-file
+  repository: pulseops/ecampus-file
   tag: dev
   digest: ""
 

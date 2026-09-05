@@ -1,7 +1,7 @@
 fullnameOverride: ecampus-topic
 
 image:
-  repository: k3s-platform/ecampus-topic
+  repository: pulseops/ecampus-topic
   tag: dev
   digest: ""
 

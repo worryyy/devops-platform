@@ -69,7 +69,7 @@ kubectl get pods -A                    # 无 CrashLoop/Pending
 
 **验收**:所有 Application Healthy;Prometheus/Alertmanager 就绪(后续 AnalysisTemplate 依赖);13 个服务 Running。
 
-**风险**:国内拉 quay/dl.k8s.io 慢 → Phase 3 的 Prepare tools 只首次慢(缓存到 PVC);Argo CD 镜像已走 TCR。
+**风险**:国内拉 quay/dl.k8s.io 慢 → Phase 3 的 Prepare tools 只首次慢(缓存到 PVC);Argo CD 镜像已走 ACR。
 
 ## Phase 3 · CI 链路冒烟(30–60 min)
 

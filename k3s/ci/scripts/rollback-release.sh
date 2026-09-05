@@ -10,11 +10,18 @@
 #   verify-traffic         assert the running workload serves the target digest.
 #   prepare-compensation   create a GitOps branch that reverts one service's
 #                          values back to the stable digest.
+#   pause-selfheal         set the service Application's syncPolicy
+#                          automated.selfHeal=false so Argo CD does not
+#                          re-apply the failed revision over the live rollback
+#                          while the compensation PR is still open.
+#   resume-selfheal        restore automated.selfHeal=true once Git and the
+#                          cluster agree again.
 #
 # Env inputs:
 #   SERVICE_JSON_FILE      one entry of delivery-catalog.json
 #   ROLLOUTS_CLI           kubectl-argo-rollouts binary
 #   KUBECTL_CLI            kubectl binary
+#   ARGOCD_NAMESPACE       default argocd (pause/resume-selfheal)
 #   GITOPS_DIR             GitOps repository checkout
 #   RELEASE_RECORD_BIN     release-record runner (default: go run ./cmd/server
 #                          release-record inside PLATFORM_SERVER_DIR)
@@ -377,10 +384,33 @@ prepare_compensation_command() {
   echo "compensation branch $COMPENSATION_BRANCH reverts $(service_name) to $target_digest" >&2
 }
 
+selfheal_command() {
+  # $1 = "true" (resume) | "false" (pause); patches only automated.selfHeal
+  # because auto-sync itself is harmless here: Git has not changed, the race
+  # is selfHeal re-applying the failed revision over the rolled-back state.
+  app=$(service_json '.application // empty')
+  if [ -z "$app" ]; then
+    echo "service entry has no Argo CD application; nothing to $1 self-heal for" >&2
+    return 0
+  fi
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    echo "kubectl -n ${ARGOCD_NAMESPACE:-argocd} patch application ${app} --type=merge -p {\"spec\":{\"syncPolicy\":{\"automated\":{\"selfHeal\":$1}}}}"
+    return 0
+  fi
+  "$KUBECTL_CLI" -n "${ARGOCD_NAMESPACE:-argocd}" patch application "$app" \
+    --type=merge \
+    -p "{\"spec\":{\"syncPolicy\":{\"automated\":{\"selfHeal\":$1}}}}"
+}
+
+pause_selfheal_command() { selfheal_command false; }
+resume_selfheal_command() { selfheal_command true; }
+
 case "${1:-}" in
   resolve-target) resolve_target_command ;;
   abort-traffic) abort_traffic_command ;;
   verify-traffic) verify_traffic_command ;;
   prepare-compensation) prepare_compensation_command ;;
-  *) echo "usage: rollback-release.sh resolve-target|abort-traffic|verify-traffic|prepare-compensation" >&2; exit 2 ;;
+  pause-selfheal) pause_selfheal_command ;;
+  resume-selfheal) resume_selfheal_command ;;
+  *) echo "usage: rollback-release.sh resolve-target|abort-traffic|verify-traffic|prepare-compensation|pause-selfheal|resume-selfheal" >&2; exit 2 ;;
 esac

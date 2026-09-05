@@ -1,7 +1,7 @@
 fullnameOverride: ecampus-marketplace
 
 image:
-  repository: k3s-platform/ecampus-marketplace
+  repository: pulseops/ecampus-marketplace
   tag: dev
   digest: ""
 

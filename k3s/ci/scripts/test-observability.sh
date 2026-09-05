@@ -7,7 +7,10 @@ set -eu
 repo_root=$(git rev-parse --show-toplevel)
 prom_values="${repo_root}/k3s/helm-values/platform/prometheus.yaml"
 tests_dir="${repo_root}/k3s/ci/tests"
-tmpdir=$(mktemp -d)
+# The scratch dir must live under the repo (a colima-shared path): macOS
+# mktemp dirs under /var/folders are not visible to the docker VM via
+# virtiofs, and promtool would see an empty /work mount.
+tmpdir=$(mktemp -d "${repo_root}/.tmp-observability.XXXXXX")
 trap 'rm -rf "$tmpdir"' EXIT
 
 # Pinned to the versions deployed by prometheus chart 29.14.0
@@ -24,20 +27,22 @@ yq -r 'del(.alertmanager.config.enabled) | .alertmanager.config' "$prom_values" 
 cp "${tests_dir}/alerting_rules_test.yml" "$tmpdir/"
 
 echo "== promtool check rules =="
-docker run --rm -v "$tmpdir":/work -w /work "$PROMTOOL_IMAGE" \
-  promtool check rules /work/recording_rules.yml /work/alerting_rules.yml
+# --entrypoint is required: the prom/prometheus image entrypoint is the
+# prometheus server binary, otherwise "promtool" becomes its argument.
+docker run --rm -v "$tmpdir":/work -w /work --entrypoint promtool "$PROMTOOL_IMAGE" \
+  check rules /work/recording_rules.yml /work/alerting_rules.yml
 
 echo "== promtool test rules =="
-docker run --rm -v "$tmpdir":/work -w /work "$PROMTOOL_IMAGE" \
-  promtool test rules /work/alerting_rules_test.yml
+docker run --rm -v "$tmpdir":/work -w /work --entrypoint promtool "$PROMTOOL_IMAGE" \
+  test rules /work/alerting_rules_test.yml
 
 echo "== amtool check-config =="
-docker run --rm -v "$tmpdir":/work -w /work "$AMTOOL_IMAGE" \
-  amtool check-config /work/alertmanager.yml
+docker run --rm -v "$tmpdir":/work -w /work --entrypoint amtool "$AMTOOL_IMAGE" \
+  check-config /work/alertmanager.yml
 
 echo "== amtool config routes test =="
-route_out=$(docker run --rm -v "$tmpdir":/work -w /work "$AMTOOL_IMAGE" \
-  amtool config routes test --config.file=/work/alertmanager.yml \
+route_out=$(docker run --rm -v "$tmpdir":/work -w /work --entrypoint amtool "$AMTOOL_IMAGE" \
+  config routes test --config.file=/work/alertmanager.yml \
   alertname=ReleasePodRestarting signal_type=deploy_noise deploy_id=ecampus-pipeline-main-1-comment-1 \
   service=comment namespace=app environment=dev)
 printf '%s\n' "$route_out"
@@ -45,8 +50,8 @@ printf '%s' "$route_out" | grep -q 'default-receiver' || {
   echo "ReleasePodRestarting did not route to default-receiver" >&2
   exit 1
 }
-context_route_out=$(docker run --rm -v "$tmpdir":/work -w /work "$AMTOOL_IMAGE" \
-  amtool config routes test --config.file=/work/alertmanager.yml \
+context_route_out=$(docker run --rm -v "$tmpdir":/work -w /work --entrypoint amtool "$AMTOOL_IMAGE" \
+  config routes test --config.file=/work/alertmanager.yml \
   alertname=ReleaseDeployNoiseWindow signal_type=deploy_context deploy_id=ecampus-pipeline-main-1-comment-1 \
   service=comment namespace=app environment=dev)
 printf '%s\n' "$context_route_out"

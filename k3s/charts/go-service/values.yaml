@@ -1,8 +1,8 @@
 replicaCount: 1
 
 image:
-  registry: ccr.ccs.tencentyun.com
-  repository: k3s-platform/go-service
+  registry: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com
+  repository: pulseops/go-service
   tag: dev
   digest: ""
   pullPolicy: IfNotPresent

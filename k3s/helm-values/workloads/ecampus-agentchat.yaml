@@ -1,7 +1,7 @@
 fullnameOverride: ecampus-agentchat
 
 image:
-  repository: k3s-platform/ecampus-agentchat
+  repository: pulseops/ecampus-agentchat
   tag: dev
   digest: ""
 

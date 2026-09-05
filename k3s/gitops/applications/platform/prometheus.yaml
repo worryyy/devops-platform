@@ -14,7 +14,7 @@ spec:
         releaseName: prometheus
         valueFiles:
           - $values/k3s/helm-values/platform/prometheus.yaml
-    - repoURL: https://github.com/worryyy/devops-platform.git
+    - repoURL: https://github.com/worryyy/devops-test.git
       targetRevision: main
       ref: values
 

@@ -5,8 +5,8 @@ controller:
     platform-role: control
 
   image:
-    registry: ccr.ccs.tencentyun.com
-    repository: k3s-platform/jenkins
+    registry: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com
+    repository: pulseops/jenkins
     tag: "2.555.2-lts-jdk21"
     pullPolicy: IfNotPresent
 

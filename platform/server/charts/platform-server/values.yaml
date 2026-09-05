@@ -1,6 +1,6 @@
 image:
-  registry: ccr.ccs.tencentyun.com
-  repository: k3s-platform/platform-server
+  registry: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com
+  repository: pulseops/platform-server
   tag: dev
   pullPolicy: Always
   pullSecrets:

@@ -485,75 +485,83 @@ def rollbackRelease(String service, boolean undoRollout) {
   cloneGitOps(checkout)
   writeDeliveryMetadata(service)
 
-  container('rollouts') {
-    withEnv([
-      'SERVICE_JSON_FILE=' + env.WORKSPACE + '/.ci/delivery/' + service + '.json',
-      'GITOPS_DIR=' + env.WORKSPACE + '/' + checkout,
-      'ROLLBACK_OUTPUT_DIR=' + env.WORKSPACE + '/.ci/rollback',
-      'RELEASE_RECORD_BIN=/cache/jenkins-tools/platform-server release-record',
-      'ROLLBACK_SCRIPT=' + env.GITOPS_DIR + '/k3s/ci/scripts/rollback-release.sh',
-      'ROLLOUTS_CLI=' + env.ROLLOUTS_CLI,
-      'KUBECTL_CLI=' + env.KUBECTL_CLI,
-      'UNDO_ROLLOUT=' + (undoRollout ? '1' : '0'),
-      'SERVICE=' + service,
-    ]) {
-      sh '''
-        set -eu
-        sh "$ROLLBACK_SCRIPT" resolve-target
-        export EXPECTED_DIGEST=$(jq -r '.image_digest' "$WORKSPACE/.ci/rollback/$SERVICE.json")
-        sh "$ROLLBACK_SCRIPT" abort-traffic
-        attempts=30
-        while [ "$attempts" -gt 0 ]; do
-          if sh "$ROLLBACK_SCRIPT" verify-traffic; then
-            break
-          fi
-          attempts=$((attempts - 1))
-          sleep 10
-        done
-        if [ "$attempts" -eq 0 ]; then
-          echo "traffic did not return to the stable digest in time" >&2
-          exit 1
-        fi
-      '''
-    }
-  }
-
   try {
-    recordRelease(service, 'compensating', '')
-  } catch (err) {
-    echo 'failed to record compensating status for ' + service + ': ' + err
-  }
-
-  def target = readJson(".ci/rollback/${service}.json")
-  def branch = 'rollback/' + service + '/' + env.SHORT_SHA
-  def compensation = ''
-  container('rollouts') {
-    withEnv([
-      'SERVICE_JSON_FILE=' + env.WORKSPACE + '/.ci/delivery/' + service + '.json',
-      'GITOPS_DIR=' + env.WORKSPACE + '/' + checkout,
-      'ROLLBACK_TARGET_FILE=' + env.WORKSPACE + '/.ci/rollback/' + service + '.json',
-      'COMPENSATION_BRANCH=' + branch,
-      'ROLLBACK_SCRIPT=' + env.GITOPS_DIR + '/k3s/ci/scripts/rollback-release.sh',
-    ]) {
-      compensation = sh(script: 'sh "$ROLLBACK_SCRIPT" prepare-compensation', returnStdout: true).trim()
+    container('rollouts') {
+      withEnv([
+        'SERVICE_JSON_FILE=' + env.WORKSPACE + '/.ci/delivery/' + service + '.json',
+        'GITOPS_DIR=' + env.WORKSPACE + '/' + checkout,
+        'ROLLBACK_OUTPUT_DIR=' + env.WORKSPACE + '/.ci/rollback',
+        'RELEASE_RECORD_BIN=/cache/jenkins-tools/platform-server release-record',
+        'ROLLBACK_SCRIPT=' + env.GITOPS_DIR + '/k3s/ci/scripts/rollback-release.sh',
+        'ROLLOUTS_CLI=' + env.ROLLOUTS_CLI,
+        'KUBECTL_CLI=' + env.KUBECTL_CLI,
+        'UNDO_ROLLOUT=' + (undoRollout ? '1' : '0'),
+        'ROLLBACK_PAUSE_SYNC=' + (params.ROLLBACK_PAUSE_SYNC ? 'true' : 'false'),
+        'SERVICE=' + service,
+      ]) {
+        sh '''
+          set -eu
+          sh "$ROLLBACK_SCRIPT" resolve-target
+          export EXPECTED_DIGEST=$(jq -r '.image_digest' "$WORKSPACE/.ci/rollback/$SERVICE.json")
+          if [ "$ROLLBACK_PAUSE_SYNC" = "true" ]; then
+            sh "$ROLLBACK_SCRIPT" pause-selfheal
+          fi
+          sh "$ROLLBACK_SCRIPT" abort-traffic
+          attempts=30
+          while [ "$attempts" -gt 0 ]; do
+            if sh "$ROLLBACK_SCRIPT" verify-traffic; then
+              break
+            fi
+            attempts=$((attempts - 1))
+            sleep 10
+          done
+          if [ "$attempts" -eq 0 ]; then
+            echo "traffic did not return to the stable digest in time" >&2
+            exit 1
+          fi
+        '''
+      }
     }
-  }
 
-  if (compensation.contains('COMPENSATION_SKIPPED=1')) {
-    echo 'no compensation PR needed for ' + service
+    try {
+      recordRelease(service, 'compensating', '')
+    } catch (err) {
+      echo 'failed to record compensating status for ' + service + ': ' + err
+    }
+
+    def target = readJson(".ci/rollback/${service}.json")
+    def branch = 'rollback/' + service + '/' + env.SHORT_SHA
+    def compensation = ''
+    container('rollouts') {
+      withEnv([
+        'SERVICE_JSON_FILE=' + env.WORKSPACE + '/.ci/delivery/' + service + '.json',
+        'GITOPS_DIR=' + env.WORKSPACE + '/' + checkout,
+        'ROLLBACK_TARGET_FILE=' + env.WORKSPACE + '/.ci/rollback/' + service + '.json',
+        'COMPENSATION_BRANCH=' + branch,
+        'ROLLBACK_SCRIPT=' + env.GITOPS_DIR + '/k3s/ci/scripts/rollback-release.sh',
+      ]) {
+        compensation = sh(script: 'sh "$ROLLBACK_SCRIPT" prepare-compensation', returnStdout: true).trim()
+      }
+    }
+
+    if (compensation.contains('COMPENSATION_SKIPPED=1')) {
+      echo 'no compensation PR needed for ' + service
+      if (target.source == 'git-history') {
+        recordRelease(service, 'stable', target.config_revision ?: '', target.image_digest, target.git_revision ?: '')
+      }
+      return
+    }
+
+    pushBranch(checkout, branch)
+    def pr = createGitOpsPR(service, branch, 'rollback(' + service + '): ' + (target.image_tag ?: 'stable'))
+    mergeGitOpsByRisk(service, pr, false)
+    def configRevision = gitopsRevisionAfterMerge()
+    waitForRelease(service, configRevision, target.image_digest, target.git_revision ?: '')
     if (target.source == 'git-history') {
-      recordRelease(service, 'stable', target.config_revision ?: '', target.image_digest, target.git_revision ?: '')
+      recordRelease(service, 'stable', configRevision, target.image_digest, target.git_revision ?: '')
     }
-    return
-  }
-
-  pushBranch(checkout, branch)
-  def pr = createGitOpsPR(service, branch, 'rollback(' + service + '): ' + (target.image_tag ?: 'stable'))
-  mergeGitOpsByRisk(service, pr, false)
-  def configRevision = gitopsRevisionAfterMerge()
-  waitForRelease(service, configRevision, target.image_digest, target.git_revision ?: '')
-  if (target.source == 'git-history') {
-    recordRelease(service, 'stable', configRevision, target.image_digest, target.git_revision ?: '')
+  } finally {
+    syncGuard(service, 'resume-selfheal')
   }
 }
 
@@ -566,6 +574,26 @@ def promoteBlueGreen(String service) {
       'WAIT_SCRIPT=' + env.GITOPS_DIR + '/k3s/ci/scripts/wait-for-release.sh',
     ]) {
       sh 'sh "$WAIT_SCRIPT" promote-wait'
+    }
+  }
+}
+
+// Toggle automated.selfHeal on the service's Argo CD Application around a
+// rollback: while the compensation PR is still open, Git keeps the failed
+// revision and selfHeal would re-apply it over the live rollback (the
+// rollback/self-heal race). The finally block in rollbackRelease always resumes.
+def syncGuard(String service, String action) {
+  if (params.ROLLBACK_PAUSE_SYNC == false) {
+    return
+  }
+  container('rollouts') {
+    withEnv([
+      'SERVICE_JSON_FILE=' + env.WORKSPACE + '/.ci/delivery/' + service + '.json',
+      'KUBECTL_CLI=' + env.KUBECTL_CLI,
+      'ARGOCD_NAMESPACE=argocd',
+      'ROLLBACK_SCRIPT=' + env.GITOPS_DIR + '/k3s/ci/scripts/rollback-release.sh',
+    ]) {
+      sh 'sh "$ROLLBACK_SCRIPT" ' + action
     }
   }
 }
@@ -590,6 +618,13 @@ spec:
       image: golang:1.26-alpine
       command: [cat]
       tty: true
+      resources:
+        requests:
+          cpu: "1500m"
+          memory: 2Gi
+        limits:
+          cpu: "3"
+          memory: 6Gi
       env:
         - name: GOCACHE
           value: /cache/go-build
@@ -638,18 +673,46 @@ spec:
         - name: registry-secret
           mountPath: /home/user/.docker
           readOnly: true
+      resources:
+        requests:
+          cpu: "500m"
+          memory: 1Gi
+        limits:
+          cpu: "1500m"
+          memory: 3Gi
     - name: git
       image: alpine/git:2.45.2
       command: [cat]
       tty: true
+      resources:
+        requests:
+          cpu: "50m"
+          memory: 64Mi
+        limits:
+          cpu: "200m"
+          memory: 256Mi
     - name: yq
       image: mikefarah/yq:4.44.3
       command: [cat]
       tty: true
+      resources:
+        requests:
+          cpu: "50m"
+          memory: 64Mi
+        limits:
+          cpu: "200m"
+          memory: 256Mi
     - name: rollouts
       image: alpine:3.21
       command: [cat]
       tty: true
+      resources:
+        requests:
+          cpu: "100m"
+          memory: 128Mi
+        limits:
+          cpu: "500m"
+          memory: 512Mi
       env:
         - name: DATABASE_URL
           valueFrom:
@@ -663,6 +726,13 @@ spec:
       image: curlimages/curl:8.10.1
       command: [cat]
       tty: true
+      resources:
+        requests:
+          cpu: "50m"
+          memory: 64Mi
+        limits:
+          cpu: "200m"
+          memory: 256Mi
   volumes:
     - name: registry-secret
       secret:
@@ -689,6 +759,7 @@ spec:
     string(name: 'BEFORE_SHA', defaultValue: '', description: 'GitHub webhook before SHA; empty falls back to a conservative full build.')
     string(name: 'AFTER_SHA', defaultValue: '', description: 'GitHub webhook after SHA.')
     string(name: 'BUILDKIT_CACHE_TAG', defaultValue: 'main-amd64', description: 'BuildKit registry cache tag; point it at a never-used tag for cold-cache benchmark runs.')
+    booleanParam(name: 'ROLLBACK_PAUSE_SYNC', defaultValue: true, description: 'Pause Argo CD selfHeal on the target Application during rollback; disable only to reproduce the rollback/self-heal race in drills.')
   }
 
   environment {
@@ -697,7 +768,7 @@ spec:
     GITOPS_REPO_URL = 'https://github.com/worryyy/devops-test.git'
     GITOPS_OWNER = 'worryyy'
     GITOPS_REPO = 'devops-test'
-    BUILDKIT_CACHE_REPO = 'ccr.ccs.tencentyun.com/k3s-platform/buildkit-cache'
+    BUILDKIT_CACHE_REPO = 'crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/buildkit-cache'
     ROLLOUTS_CLI = '/cache/jenkins-tools/argo-rollouts/v1.8.3/kubectl-argo-rollouts'
     KUBECTL_CLI = '/cache/jenkins-tools/kubectl/v1.31.3/kubectl'
     ANALYSIS_DRY_RUN = 'false'

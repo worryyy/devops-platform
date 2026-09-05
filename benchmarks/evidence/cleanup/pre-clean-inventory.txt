@@ -1,0 +1,43 @@
+== node1 ==
+cpu=2 mem=3.4Gi disk=32G
+ha-app.service
+keepalived.service
+mysql.service
+mysqld_exporter.service
+node_exporter.service
+redis-sentinel.service
+redis-server.service
+redis_exporter.service
+keepalived
+mysql-server
+mysql-server-8.0
+mysql-server-core-8.0
+redis-server
+== node2 ==
+cpu=2 mem=3.4Gi disk=32G
+ha-app.service
+keepalived.service
+mysql.service
+mysqld_exporter.service
+node_exporter.service
+redis-sentinel.service
+redis-server.service
+redis_exporter.service
+keepalived
+mysql-server
+mysql-server-8.0
+mysql-server-core-8.0
+redis-server
+== node3 ==
+cpu=4 mem=14Gi disk=39G
+grafana-server.service
+ha-app.service
+mysql-lease-arbiter.service
+node_exporter.service
+prometheus.service
+redis-failover-demo.service
+redis-sentinel.service
+redis-server.service
+redis_exporter.service
+grafana
+redis-server

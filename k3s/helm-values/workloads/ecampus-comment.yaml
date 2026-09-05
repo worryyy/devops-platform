@@ -1,7 +1,7 @@
 fullnameOverride: ecampus-comment
 
 image:
-  repository: k3s-platform/ecampus-comment
+  repository: pulseops/ecampus-comment
   tag: dev
   digest: ""
 

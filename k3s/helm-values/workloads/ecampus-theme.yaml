@@ -1,7 +1,7 @@
 fullnameOverride: ecampus-theme
 
 image:
-  repository: k3s-platform/ecampus-theme
+  repository: pulseops/ecampus-theme
   tag: dev
   digest: ""
 

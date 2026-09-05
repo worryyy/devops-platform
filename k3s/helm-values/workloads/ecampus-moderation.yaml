@@ -1,7 +1,7 @@
 fullnameOverride: ecampus-moderation
 
 image:
-  repository: k3s-platform/ecampus-moderation
+  repository: pulseops/ecampus-moderation
   tag: dev
   digest: ""
 

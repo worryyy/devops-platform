@@ -1,7 +1,7 @@
 fullnameOverride: ecampus-chat
 
 image:
-  repository: k3s-platform/ecampus-chat
+  repository: pulseops/ecampus-chat
   tag: dev
   digest: ""
 

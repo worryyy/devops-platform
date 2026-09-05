@@ -23,3 +23,4 @@ web/npm-debug.log*
 web/yarn-debug.log*
 web/yarn-error.log*
 web/pnpm-debug.log*
+.tmp-observability.*

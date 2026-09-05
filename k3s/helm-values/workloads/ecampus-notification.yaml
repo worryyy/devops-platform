@@ -1,7 +1,7 @@
 fullnameOverride: ecampus-notification
 
 image:
-  repository: k3s-platform/ecampus-notification
+  repository: pulseops/ecampus-notification
   tag: dev
   digest: ""
 

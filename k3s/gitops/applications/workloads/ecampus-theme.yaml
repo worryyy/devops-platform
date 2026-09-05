@@ -7,7 +7,7 @@ spec:
   project: workloads
 
   source:
-    repoURL: https://github.com/worryyy/devops-platform.git
+    repoURL: https://github.com/worryyy/devops-test.git
     targetRevision: main
     path: k3s/charts/go-service
     helm:
@@ -21,7 +21,7 @@ spec:
 
   syncPolicy:
     automated:
-      prune: true
+      prune: false
       selfHeal: true
     syncOptions:
       - CreateNamespace=true

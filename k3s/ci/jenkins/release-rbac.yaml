@@ -58,6 +58,11 @@ rules:
   - apiGroups: [argoproj.io]
     resources: [applications, applications/status]
     verbs: [get, list, watch]
+  # Rollback pauses/restores automated.selfHeal on the service Application so
+  # Argo CD does not fight the live rollback while the compensation PR is open.
+  - apiGroups: [argoproj.io]
+    resources: [applications]
+    verbs: [patch]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

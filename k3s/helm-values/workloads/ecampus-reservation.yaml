@@ -1,7 +1,7 @@
 fullnameOverride: ecampus-reservation
 
 image:
-  repository: k3s-platform/ecampus-reservation
+  repository: pulseops/ecampus-reservation
   tag: dev
   digest: ""
 
