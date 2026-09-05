@@ -54,6 +54,7 @@ tests:
               gitops_revision: g1
               severity: warning
               signal_type: user_impact
+              alert_scope: revision
               failure_domain: service
             exp_annotations:
               summary: Version error rate high for comment revision rev1
@@ -75,6 +76,7 @@ tests:
               gitops_revision: g2
               severity: warning
               signal_type: user_impact
+              alert_scope: revision
               failure_domain: service
             exp_annotations:
               summary: Version error rate high for comment revision rev2
@@ -93,6 +95,7 @@ tests:
               environment: dev
               severity: critical
               signal_type: user_impact
+              alert_scope: service
               failure_domain: service
             exp_annotations:
               summary: Service error rate high for comment
@@ -159,6 +162,7 @@ tests:
               gitops_revision: g4
               severity: warning
               signal_type: user_impact
+              alert_scope: revision
               failure_domain: service
             exp_annotations:
               summary: Version p95 latency high for comment revision revp
@@ -177,6 +181,7 @@ tests:
               environment: dev
               severity: critical
               signal_type: user_impact
+              alert_scope: service
               failure_domain: service
             exp_annotations:
               summary: Service p95 latency high for comment
@@ -401,9 +406,55 @@ tests:
       - eval_time: 6m
         alertname: ReleasePodRestarting
         exp_alerts: []
+      - eval_time: 6m
+        alertname: ReleasePodCrashLooping
+        exp_alerts: []
+      - eval_time: 6m
+        alertname: ReleasePodStuckTerminating
+        exp_alerts: []
+
+  # The noise window is an internal context signal: it must fire as soon as a
+  # release pod appears, without any `for` grace period.
+  - interval: 1m
+    input_series:
+      - series: 'kube_pod_labels{namespace="app",pod="comment-pod-w",label_app_kubernetes_io_name="comment",label_app_kubernetes_io_instance="ecampus-comment",label_delivery_platform_deploy_id="ecampus-pipeline-main-19-comment-1",label_delivery_platform_release_batch="ecampus-pipeline-main-19",label_delivery_platform_environment="dev",label_delivery_platform_git_sha="1212121",label_rollouts_pod_template_hash="revw"}'
+        values: '1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-w",annotation_delivery_platform_image_digest="sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}'
+        values: '1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-w",annotation_delivery_platform_gitops_revision="gw"}'
+        values: '1 1'
+      - series: 'kube_pod_created{namespace="app",pod="comment-pod-w"}'
+        values: '0 0'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: ReleaseDeployNoiseWindow
+        exp_alerts:
+          - exp_labels:
+              alertname: ReleaseDeployNoiseWindow
+              namespace: app
+              service: comment
+              instance: ecampus-comment
+              deploy_id: ecampus-pipeline-main-19-comment-1
+              release_batch: ecampus-pipeline-main-19
+              environment: dev
+              image_digest: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+              git_sha: "1212121"
+              gitops_revision: gw
+              severity: info
+              signal_type: deploy_context
+              failure_domain: service
+            exp_annotations:
+              summary: Release noise window is active for comment
+              description: Internal context signal. Recent pods for deploy ecampus-pipeline-main-19-comment-1 (batch ecampus-pipeline-main-19) drive inhibition of transient deploy-noise alerts and are never notified directly.
+              image_digest: sha256:bbbbb
+              git_sha: "1212121"
+              rollout: ecampus-comment
+              prometheus_query: 'delivery_platform:pod_release_info{namespace="app",service="comment",deploy_id="ecampus-pipeline-main-19-comment-1"}'
+              loki_query: '{namespace="app",service="comment",environment="dev"} | json | deploy_id="ecampus-pipeline-main-19-comment-1"'
 
   # Transient pod noise carries deploy_id (the inhibition equal key) when the
-  # pod belongs to a release.
+  # pod belongs to a release. A small number of restarts stays transient and
+  # inhibitable; it must not trigger the crash-looping escalation.
   - interval: 1m
     input_series:
       - series: 'kube_pod_labels{namespace="app",pod="comment-pod-n",label_app_kubernetes_io_name="comment",label_app_kubernetes_io_instance="ecampus-comment",label_delivery_platform_deploy_id="ecampus-pipeline-main-18-comment-1",label_delivery_platform_release_batch="ecampus-pipeline-main-18",label_delivery_platform_environment="dev",label_delivery_platform_git_sha="1234567",label_rollouts_pod_template_hash="revn"}'
@@ -436,7 +487,7 @@ tests:
               failure_domain: service
             exp_annotations:
               summary: Release noise window is active for comment
-              description: Recent pods for deploy ecampus-pipeline-main-18-comment-1 (batch ecampus-pipeline-main-18) allow transient deploy-noise alerts to be grouped and inhibited without muting user-impact alerts.
+              description: Internal context signal. Recent pods for deploy ecampus-pipeline-main-18-comment-1 (batch ecampus-pipeline-main-18) drive inhibition of transient deploy-noise alerts and are never notified directly.
               image_digest: sha256:aaaaa
               git_sha: "1234567"
               rollout: ecampus-comment
@@ -463,9 +514,109 @@ tests:
               failure_domain: service
             exp_annotations:
               summary: Pod restarted during release ecampus-pipeline-main-18-comment-1
-              description: Container app in pod comment-pod-n restarted during a release noise window.
+              description: Container app in pod comment-pod-n restarted transiently during a release noise window. Sustained crash-looping is covered by ReleasePodCrashLooping and is never suppressed.
               image_digest: sha256:aaaaa
               git_sha: "1234567"
               rollout: ecampus-comment
               prometheus_query: 'kube_pod_container_status_restarts_total{namespace="app",pod="comment-pod-n"}'
               loki_query: '{namespace="app",service="comment",environment="dev"} | json | deploy_id="ecampus-pipeline-main-18-comment-1"'
+      - eval_time: 8m
+        alertname: ReleasePodCrashLooping
+        exp_alerts: []
+
+  # Sustained restarting (3+ restarts within 10 minutes) escalates to
+  # ReleasePodCrashLooping, which is never a suppression target.
+  - interval: 1m
+    input_series:
+      - series: 'kube_pod_labels{namespace="app",pod="comment-pod-c",label_app_kubernetes_io_name="comment",label_app_kubernetes_io_instance="ecampus-comment",label_delivery_platform_deploy_id="ecampus-pipeline-main-20-comment-1",label_delivery_platform_release_batch="ecampus-pipeline-main-20",label_delivery_platform_environment="dev",label_delivery_platform_git_sha="2323232",label_rollouts_pod_template_hash="revc"}'
+        values: '1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-c",annotation_delivery_platform_image_digest="sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}'
+        values: '1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-c",annotation_delivery_platform_gitops_revision="gc"}'
+        values: '1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_container_status_restarts_total{namespace="app",pod="comment-pod-c",container="app"}'
+        values: '0 1 2 3 4 5 6 7 8'
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: ReleasePodCrashLooping
+        exp_alerts:
+          - exp_labels:
+              alertname: ReleasePodCrashLooping
+              namespace: app
+              pod: comment-pod-c
+              container: app
+              instance: ecampus-comment
+              service: comment
+              deploy_id: ecampus-pipeline-main-20-comment-1
+              release_batch: ecampus-pipeline-main-20
+              environment: dev
+              image_digest: sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+              git_sha: "2323232"
+              gitops_revision: gc
+              severity: warning
+              signal_type: deploy_noise
+              failure_domain: service
+            exp_annotations:
+              summary: Pod crash-looping during release ecampus-pipeline-main-20-comment-1
+              description: Container app in pod comment-pod-c restarted 3 or more times in 10 minutes during a release and must never be suppressed by release noise windows.
+              image_digest: sha256:ccccc
+              git_sha: "2323232"
+              rollout: ecampus-comment
+              prometheus_query: 'kube_pod_container_status_restarts_total{namespace="app",pod="comment-pod-c"}'
+              loki_query: '{namespace="app",service="comment",environment="dev"} | json | deploy_id="ecampus-pipeline-main-20-comment-1"'
+
+  # Ordinary termination is not an alert. Only pods stuck terminating for more
+  # than 5 minutes fire, and that alert is never a suppression target.
+  - interval: 1m
+    input_series:
+      - series: 'kube_pod_labels{namespace="app",pod="comment-pod-t",label_app_kubernetes_io_name="comment",label_app_kubernetes_io_instance="ecampus-comment",label_delivery_platform_deploy_id="ecampus-pipeline-main-21-comment-1",label_delivery_platform_release_batch="ecampus-pipeline-main-21",label_delivery_platform_environment="dev",label_delivery_platform_git_sha="3434343",label_rollouts_pod_template_hash="revt"}'
+        values: '1 1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-t",annotation_delivery_platform_image_digest="sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}'
+        values: '1 1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-t",annotation_delivery_platform_gitops_revision="gt"}'
+        values: '1 1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_deletion_timestamp{namespace="app",pod="comment-pod-t"}'
+        values: '0 0 0 0 0 0 0 0 0 0'
+    alert_rule_test:
+      - eval_time: 9m
+        alertname: ReleasePodStuckTerminating
+        exp_alerts:
+          - exp_labels:
+              alertname: ReleasePodStuckTerminating
+              namespace: app
+              pod: comment-pod-t
+              instance: ecampus-comment
+              service: comment
+              deploy_id: ecampus-pipeline-main-21-comment-1
+              release_batch: ecampus-pipeline-main-21
+              environment: dev
+              image_digest: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+              git_sha: "3434343"
+              gitops_revision: gt
+              severity: warning
+              signal_type: deploy_noise
+              failure_domain: service
+            exp_annotations:
+              summary: Pod stuck terminating during release ecampus-pipeline-main-21-comment-1
+              description: Pod comment-pod-t has been terminating for more than 5 minutes during a release and must never be suppressed by release noise windows.
+              image_digest: sha256:ddddd
+              git_sha: "3434343"
+              rollout: ecampus-comment
+              prometheus_query: 'kube_pod_deletion_timestamp{namespace="app",pod="comment-pod-t"}'
+              loki_query: '{namespace="app",service="comment",environment="dev"} | json | deploy_id="ecampus-pipeline-main-21-comment-1"'
+
+  # Termination under 5 minutes is normal churn and must stay silent.
+  - interval: 1m
+    input_series:
+      - series: 'kube_pod_labels{namespace="app",pod="comment-pod-u",label_app_kubernetes_io_name="comment",label_app_kubernetes_io_instance="ecampus-comment",label_delivery_platform_deploy_id="ecampus-pipeline-main-22-comment-1",label_delivery_platform_release_batch="ecampus-pipeline-main-22",label_delivery_platform_environment="dev",label_delivery_platform_git_sha="4545454",label_rollouts_pod_template_hash="revu"}'
+        values: '1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-u",annotation_delivery_platform_image_digest="sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}'
+        values: '1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_annotations{namespace="app",pod="comment-pod-u",annotation_delivery_platform_gitops_revision="gu"}'
+        values: '1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_deletion_timestamp{namespace="app",pod="comment-pod-u"}'
+        values: '200 200 200 200 200 200 200 200'
+    alert_rule_test:
+      - eval_time: 7m
+        alertname: ReleasePodStuckTerminating
+        exp_alerts: []

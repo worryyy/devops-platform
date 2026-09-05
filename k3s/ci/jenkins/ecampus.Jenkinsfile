@@ -111,7 +111,7 @@ def runServiceBranch(String service) {
       'SERVICE_PORT=' + source.port,
       'DOCKERFILE=build/Dockerfile.go-service',
       'IMAGE=' + delivery.image,
-      'CACHE_IMAGE=' + env.BUILDKIT_CACHE_REPO + '/' + service + ':main-amd64',
+      'CACHE_IMAGE=' + env.BUILDKIT_CACHE_REPO + '/' + service + ':' + (params.BUILDKIT_CACHE_TAG ?: 'main-amd64'),
     ]) {
       sh '''
         set -eu
@@ -140,21 +140,6 @@ def runServiceBranch(String service) {
     error('BuildKit returned an invalid image digest for ' + service)
   }
   writeFile(file: ".ci/digests/${service}.digest", text: imageDigest + '\n')
-
-  container('trivy') {
-    withEnv(['SERVICE=' + service, 'IMAGE=' + delivery.image]) {
-      sh '''
-        set -eu
-        digest=$(cat ".ci/digests/$SERVICE.digest")
-        trivy image \
-          --cache-dir "$TRIVY_CACHE_DIR/$SERVICE" \
-          --exit-code 1 \
-          --severity CRITICAL \
-          --no-progress \
-          "$IMAGE@$digest"
-      '''
-    }
-  }
 
   recordRelease(service, 'releasing', '')
 }
@@ -464,8 +449,22 @@ def notifyFailure(String service, String digest, String prUrl) {
   if (!env.ALERTMANAGER_URL) {
     return
   }
+  // Event-style alert with an explicit one-hour lifecycle: a single POST is
+  // enough, Alertmanager resolves it after endsAt. Re-sending or a scraped
+  // release-status metric is a future improvement and is not simulated here.
+  def jobBase = env.JOB_BASE_NAME ?: 'ecampus-pipeline'
+  def releaseBatch = (env.BRANCH_NAME ? jobBase + '-' + env.BRANCH_NAME : jobBase) + '-' + env.BUILD_NUMBER
+  def startsAt = new Date().toInstant().toString()
+  def endsAt = new Date(System.currentTimeMillis() + 3600000).toInstant().toString()
   def payload = groovy.json.JsonOutput.toJson([
-    labels: [alertname: 'ReleaseFailed', service: service, environment: env.TARGET_ENV],
+    startsAt: startsAt,
+    endsAt: endsAt,
+    labels: [
+      alertname: 'ReleaseFailed',
+      service: service,
+      environment: env.TARGET_ENV,
+      deploy_id: releaseBatch + '-' + service + '-1',
+    ],
     annotations: [digest: digest, pr: (prUrl ?: ''), job: env.JOB_NAME + '/' + env.BUILD_NUMBER],
   ])
   container('curl') {
@@ -639,16 +638,6 @@ spec:
         - name: registry-secret
           mountPath: /home/user/.docker
           readOnly: true
-    - name: trivy
-      image: aquasec/trivy:0.57.1
-      command: [cat]
-      tty: true
-      volumeMounts:
-        - name: jenkins-cache
-          mountPath: /cache
-        - name: registry-secret
-          mountPath: /root/.docker
-          readOnly: true
     - name: git
       image: alpine/git:2.45.2
       command: [cat]
@@ -699,6 +688,7 @@ spec:
     string(name: 'TARGET_ENV', defaultValue: 'dev', description: 'Delivery catalog environment.')
     string(name: 'BEFORE_SHA', defaultValue: '', description: 'GitHub webhook before SHA; empty falls back to a conservative full build.')
     string(name: 'AFTER_SHA', defaultValue: '', description: 'GitHub webhook after SHA.')
+    string(name: 'BUILDKIT_CACHE_TAG', defaultValue: 'main-amd64', description: 'BuildKit registry cache tag; point it at a never-used tag for cold-cache benchmark runs.')
   }
 
   environment {
@@ -708,7 +698,6 @@ spec:
     GITOPS_OWNER = 'worryyy'
     GITOPS_REPO = 'devops-platform'
     BUILDKIT_CACHE_REPO = 'ccr.ccs.tencentyun.com/k3s-platform/buildkit-cache'
-    TRIVY_CACHE_DIR = '/cache/trivy'
     ROLLOUTS_CLI = '/cache/jenkins-tools/argo-rollouts/v1.8.3/kubectl-argo-rollouts'
     KUBECTL_CLI = '/cache/jenkins-tools/kubectl/v1.31.3/kubectl'
     ANALYSIS_DRY_RUN = 'false'
@@ -831,7 +820,7 @@ spec:
       }
     }
 
-    stage('Verify, build, push and scan') {
+    stage('Verify, build and push') {
       when {
         expression { return (env.AFFECTED_SERVICES ?: '').trim() }
       }

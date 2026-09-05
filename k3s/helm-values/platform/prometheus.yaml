@@ -20,11 +20,15 @@ alertmanager:
       group_interval: 5m
       repeat_interval: 3h
       routes:
+        # Internal context signals (deploy_context) only drive inhibition and
+        # are never notified; the receiver below is intentionally config-less.
         - receiver: deploy-context
           matchers:
-            - alertname="ReleaseDeployNoiseWindow"
+            - signal_type="deploy_context"
     receivers:
       - name: default-receiver
+      # Intentionally empty: this receiver exists only so deploy_context
+      # alerts can act as inhibit sources without producing notifications.
       - name: deploy-context
     inhibit_rules:
       - source_matchers:
@@ -32,7 +36,7 @@ alertmanager:
           - deploy_id=~".+"
         target_matchers:
           - signal_type="deploy_noise"
-          - alertname=~"ReleasePodRestarting|ReleasePodTerminating"
+          - alertname="ReleasePodRestarting"
           - deploy_id=~".+"
         equal:
           - namespace
@@ -41,13 +45,14 @@ alertmanager:
           - deploy_id
       - source_matchers:
           - signal_type="user_impact"
+          - alert_scope="revision"
           - failure_domain="service"
           - deploy_id=~".+"
           - service=~".+"
           - environment=~".+"
         target_matchers:
           - signal_type="deploy_noise"
-          - alertname=~"ReleasePodRestarting|ReleasePodTerminating"
+          - alertname="ReleasePodRestarting"
           - deploy_id=~".+"
           - service=~".+"
           - environment=~".+"
@@ -419,14 +424,13 @@ serverFiles:
                 * on (namespace, pod) group_left(service, instance, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
                   delivery_platform:pod_release_info
               )
-            for: 1m
             labels:
               severity: info
               signal_type: deploy_context
               failure_domain: service
             annotations:
               summary: Release noise window is active for {{ $labels.service }}
-              description: Recent pods for deploy {{ $labels.deploy_id }} (batch {{ $labels.release_batch }}) allow transient deploy-noise alerts to be grouped and inhibited without muting user-impact alerts.
+              description: Internal context signal. Recent pods for deploy {{ $labels.deploy_id }} (batch {{ $labels.release_batch }}) drive inhibition of transient deploy-noise alerts and are never notified directly.
               image_digest: '{{ printf "%.12s" $labels.image_digest }}'
               git_sha: '{{ $labels.git_sha }}'
               rollout: '{{ $labels.instance }}'
@@ -446,7 +450,27 @@ serverFiles:
               failure_domain: service
             annotations:
               summary: Pod restarted during release {{ $labels.deploy_id }}
-              description: Container {{ $labels.container }} in pod {{ $labels.pod }} restarted during a release noise window.
+              description: Container {{ $labels.container }} in pod {{ $labels.pod }} restarted transiently during a release noise window. Sustained crash-looping is covered by ReleasePodCrashLooping and is never suppressed.
+              image_digest: '{{ printf "%.12s" $labels.image_digest }}'
+              git_sha: '{{ $labels.git_sha }}'
+              rollout: '{{ $labels.instance }}'
+              prometheus_query: 'kube_pod_container_status_restarts_total{namespace="{{ $labels.namespace }}",pod="{{ $labels.pod }}"}'
+              loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
+          - alert: ReleasePodCrashLooping
+            expr: |
+              sum by (namespace, pod, container, instance, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision) (
+                (increase(kube_pod_container_status_restarts_total{container!="",container!="POD"}[10m]) >= 3)
+                * on (namespace, pod) group_left(instance, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
+                  delivery_platform:pod_release_info
+              ) > 0
+            for: 2m
+            labels:
+              severity: warning
+              signal_type: deploy_noise
+              failure_domain: service
+            annotations:
+              summary: Pod crash-looping during release {{ $labels.deploy_id }}
+              description: Container {{ $labels.container }} in pod {{ $labels.pod }} restarted 3 or more times in 10 minutes during a release and must never be suppressed by release noise windows.
               image_digest: '{{ printf "%.12s" $labels.image_digest }}'
               git_sha: '{{ $labels.git_sha }}'
               rollout: '{{ $labels.instance }}'
@@ -472,21 +496,21 @@ serverFiles:
               rollout: '{{ $labels.instance }}'
               prometheus_query: 'kube_pod_status_ready{namespace="{{ $labels.namespace }}",pod="{{ $labels.pod }}"}'
               loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
-          - alert: ReleasePodTerminating
+          - alert: ReleasePodStuckTerminating
             expr: |
               max by (namespace, pod, instance, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision) (
-                kube_pod_deletion_timestamp
+                (time() - kube_pod_deletion_timestamp > 300)
                 * on (namespace, pod) group_left(instance, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
                   delivery_platform:pod_release_info
               ) > 0
             for: 2m
             labels:
-              severity: info
+              severity: warning
               signal_type: deploy_noise
               failure_domain: service
             annotations:
-              summary: Pod terminating during release {{ $labels.deploy_id }}
-              description: Pod {{ $labels.pod }} is terminating during a release noise window.
+              summary: Pod stuck terminating during release {{ $labels.deploy_id }}
+              description: Pod {{ $labels.pod }} has been terminating for more than 5 minutes during a release and must never be suppressed by release noise windows.
               image_digest: '{{ printf "%.12s" $labels.image_digest }}'
               git_sha: '{{ $labels.git_sha }}'
               rollout: '{{ $labels.instance }}'
@@ -613,6 +637,7 @@ serverFiles:
             labels:
               severity: warning
               signal_type: user_impact
+              alert_scope: revision
               failure_domain: service
             annotations:
               summary: Version error rate high for {{ $labels.service }} revision {{ $labels.revision }}
@@ -638,6 +663,7 @@ serverFiles:
             labels:
               severity: warning
               signal_type: user_impact
+              alert_scope: revision
               failure_domain: service
             annotations:
               summary: Version p95 latency high for {{ $labels.service }} revision {{ $labels.revision }}
@@ -659,6 +685,7 @@ serverFiles:
             labels:
               severity: critical
               signal_type: user_impact
+              alert_scope: service
               failure_domain: service
             annotations:
               summary: Service error rate high for {{ $labels.service }}
@@ -678,6 +705,7 @@ serverFiles:
             labels:
               severity: critical
               signal_type: user_impact
+              alert_scope: service
               failure_domain: service
             annotations:
               summary: Service p95 latency high for {{ $labels.service }}
@@ -695,6 +723,7 @@ serverFiles:
             labels:
               severity: critical
               signal_type: user_impact
+              alert_scope: ingress
               failure_domain: ingress
             annotations:
               summary: High ingress 5xx error rate on {{ $labels.namespace }}/{{ $labels.ingress }}
@@ -711,6 +740,7 @@ serverFiles:
             labels:
               severity: critical
               signal_type: user_impact
+              alert_scope: ingress
               failure_domain: ingress
             annotations:
               summary: High ingress p95 latency on {{ $labels.namespace }}/{{ $labels.ingress }}

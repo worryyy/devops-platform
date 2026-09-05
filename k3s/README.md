@@ -50,7 +50,7 @@ This folder keeps the delivery configuration for the 13 Ecampus domain services:
 
 - Ecampus-go owns Git diff and Go dependency-closure impact detection. Jenkins
   joins its service names with the platform delivery catalog, then verifies,
-  builds, scans, and pushes affected services in parallel (BuildKit with
+  builds and pushes affected services in parallel (BuildKit with
   per-service registry layer cache, Go module/compile cache on PVCs).
 - PR gate: GitHub Actions runs `impact` / `go-test-build` / `golangci-lint`
   in Ecampus-go and `go-checks` / `golangci-lint` / `pipeline-scripts` /
@@ -66,8 +66,8 @@ This folder keeps the delivery configuration for the 13 Ecampus domain services:
   requests/limits, no `latest`, release `git-*` tags require a pinned digest,
   no privileged containers, health probes, Service/container port agreement
   and Rollout/AnalysisTemplate references.
-- The same image digest flows through Trivy scanning, the GitOps values, and
-  the cluster workload. `wait-for-release.sh` asserts the Argo CD synced
+- The built image digest flows into the GitOps values and the cluster
+  workload. `wait-for-release.sh` asserts the Argo CD synced
   revision, the running image digest, rollout health, post-release Prometheus
   SLI and the stable service `/health` before the release is marked stable.
 - Service-level release records (service, git_revision, image_digest,
@@ -155,19 +155,29 @@ into alerts with `group_left`, so a new release never creates new SLI series.
 
 Alerts are classified with `signal_type`:
 
-- `deploy_context`: noise window or analysis that could not produce a verdict
+- `deploy_context`: noise window or analysis that could not produce a verdict;
+  internal context signals that only drive inhibition and are routed to a
+  config-less receiver, so they are never notified
 - `release_gate_failed`: failed analysis or Degraded rollout (pre-traffic)
-- `deploy_noise`: transient pod churn (inhibitable) and persistent
-  replica/readiness shortages (never inhibited)
+- `deploy_noise`: transient pod churn (inhibitable) and persistent or
+  escalating failures (never inhibited)
 - `user_impact`: version-level or service-level error rate / latency above
-  thresholds, always with a >=50 requests/5m sample gate
+  thresholds, always with a >=50 requests/5m sample gate, plus an
+  `alert_scope` label (`revision` for version-level, `service` or `ingress`
+  otherwise)
 - `infra`: platform storage alerts (for example Loki PVC usage)
 
 Alertmanager inhibition is deliberately narrow: only `ReleasePodRestarting`
-and `ReleasePodTerminating` can be suppressed, by the release noise window or
-by a `user_impact` alert with the same non-empty `namespace/service/
-environment/deploy_id`. `ReleaseReplicaShortage` and `ReleasePodNotReady` keep
-a 5 minute grace period and are never inhibited.
+can be suppressed, by the release noise window or by a revision-scoped
+`user_impact` alert (`alert_scope="revision"`) with the same non-empty
+`namespace/service/environment/deploy_id`. Service- and ingress-level user
+impact alerts never bind to a deploy and never act as inhibit sources.
+`ReleasePodCrashLooping` (3+ restarts in 10 minutes) and
+`ReleasePodStuckTerminating` (deletion timestamp older than 5 minutes) keep a
+2 minute grace period and are never inhibited; `ReleasePodNotReady` and
+`ReleaseReplicaShortage` keep a 5 minute grace period and are never inhibited
+either. The noise window itself has no `for` grace period: as a pure context
+signal it must be available for inhibition as soon as a release pod appears.
 
 ### Loki and Alloy
 

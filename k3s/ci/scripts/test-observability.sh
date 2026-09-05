@@ -45,6 +45,15 @@ printf '%s' "$route_out" | grep -q 'default-receiver' || {
   echo "ReleasePodRestarting did not route to default-receiver" >&2
   exit 1
 }
+context_route_out=$(docker run --rm -v "$tmpdir":/work -w /work "$AMTOOL_IMAGE" \
+  amtool config routes test --config.file=/work/alertmanager.yml \
+  alertname=ReleaseDeployNoiseWindow signal_type=deploy_context deploy_id=ecampus-pipeline-main-1-comment-1 \
+  service=comment namespace=app environment=dev)
+printf '%s\n' "$context_route_out"
+printf '%s' "$context_route_out" | grep -q 'deploy-context' || {
+  echo "deploy_context alerts did not route to the config-less deploy-context receiver" >&2
+  exit 1
+}
 
 echo "== inhibition contract =="
 for rule_index in 0 1; do
@@ -60,22 +69,56 @@ target_matches=$(yq -r '[.inhibit_rules[].target_matchers[] | select(. == "deplo
 [ "$source_matches" -ge 2 ] || { echo "every inhibit source must require a non-empty deploy_id" >&2; exit 1; }
 [ "$target_matches" -ge 2 ] || { echo "every inhibit target must require a non-empty deploy_id" >&2; exit 1; }
 
-grep -q 'alertname=~"ReleasePodRestarting|ReleasePodTerminating"' "$tmpdir/alertmanager.yml" || {
-  echo "inhibit targets must be limited to transient ReleasePodRestarting/ReleasePodTerminating" >&2
+scope_ok=$(yq -r '.inhibit_rules[1].source_matchers | any_c(. == "alert_scope=\"revision\"")' "$tmpdir/alertmanager.yml")
+[ "$scope_ok" = "true" ] || {
+  echo "only revision-scoped user_impact alerts may act as inhibit sources" >&2
   exit 1
 }
-if grep -Eq 'ReleaseReplicaShortage|ReleasePodNotReady' "$tmpdir/alertmanager.yml"; then
-  echo "persistent deploy-noise alerts must never appear in inhibit targets" >&2
+
+grep -q 'alertname="ReleasePodRestarting"' "$tmpdir/alertmanager.yml" || {
+  echo "inhibit targets must be limited to transient ReleasePodRestarting" >&2
+  exit 1
+}
+if grep -Eq 'ReleasePodTerminating|ReleasePodCrashLooping|ReleasePodStuckTerminating|ReleaseReplicaShortage|ReleasePodNotReady' "$tmpdir/alertmanager.yml"; then
+  echo "persistent or escalating deploy-noise alerts must never appear in inhibit targets" >&2
   exit 1
 fi
 
+noop_receiver=$(yq -r '.route.routes[] | select(.matchers | any_c(. == "signal_type=\"deploy_context\"")) | .receiver' "$tmpdir/alertmanager.yml")
+[ -n "$noop_receiver" ] || {
+  echo "deploy_context route must exist" >&2
+  exit 1
+}
+receiver_field_count=$(yq -r ".receivers[] | select(.name == \"$noop_receiver\") | keys | length" "$tmpdir/alertmanager.yml")
+[ "$receiver_field_count" = "1" ] || {
+  echo "deploy_context receiver must have no notification configuration" >&2
+  exit 1
+}
+
 echo "== alert durations contract =="
-grep -A 2 'alert: ReleaseReplicaShortage' "$tmpdir/alerting_rules.yml" | grep -q 'for: 5m' || {
+noise_for=$(yq -r '[.groups[].rules[] | select(.alert == "ReleaseDeployNoiseWindow") | has("for")] | any' "$tmpdir/alerting_rules.yml")
+[ "$noise_for" = "false" ] || {
+  echo "ReleaseDeployNoiseWindow is an internal context signal and must not have a for grace period" >&2
+  exit 1
+}
+replica_for=$(yq -r '[.groups[].rules[] | select(.alert == "ReleaseReplicaShortage") | .for][0]' "$tmpdir/alerting_rules.yml")
+[ "$replica_for" = "5m" ] || {
   echo "ReleaseReplicaShortage must keep a 5m grace period" >&2
   exit 1
 }
-grep -A 2 'alert: ReleasePodNotReady' "$tmpdir/alerting_rules.yml" | grep -q 'for: 5m' || {
+notready_for=$(yq -r '[.groups[].rules[] | select(.alert == "ReleasePodNotReady") | .for][0]' "$tmpdir/alerting_rules.yml")
+[ "$notready_for" = "5m" ] || {
   echo "ReleasePodNotReady must keep a 5m grace period" >&2
+  exit 1
+}
+crash_for=$(yq -r '[.groups[].rules[] | select(.alert == "ReleasePodCrashLooping") | .for][0]' "$tmpdir/alerting_rules.yml")
+[ "$crash_for" = "2m" ] || {
+  echo "ReleasePodCrashLooping must keep a 2m grace period" >&2
+  exit 1
+}
+stuck_for=$(yq -r '[.groups[].rules[] | select(.alert == "ReleasePodStuckTerminating") | .for][0]' "$tmpdir/alerting_rules.yml")
+[ "$stuck_for" = "2m" ] || {
+  echo "ReleasePodStuckTerminating must keep a 2m grace period" >&2
   exit 1
 }
 
