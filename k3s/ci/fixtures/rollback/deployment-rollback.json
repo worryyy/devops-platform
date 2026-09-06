@@ -2,7 +2,7 @@
   "kind": "Deployment",
   "metadata": {"name": "ecampus-theme", "namespace": "app"},
   "spec": {
-    "template": {"spec": {"containers": [{"image": "crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-theme:git-cccc3333@sha256:5555555555555555555555555555555555555555555555555555555555555555"}]}}
+    "template": {"spec": {"containers": [{"image": "crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-theme:git-cccc3333@sha256:5555555555555555555555555555555555555555555555555555555555555555"}]}}
   },
   "status": {"replicas": 2, "availableReplicas": 2}
 }

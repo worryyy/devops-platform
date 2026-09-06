@@ -171,7 +171,7 @@ COPY --from=builder /app/user  # 层5
 **项目里怎么用(Jenkinsfile 第 106-135 行):**
 ```sh
 buildctl build \
-  --import-cache "type=registry,ref=crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/buildkit-cache/<service>:main-amd64" \
+  --import-cache "type=registry,ref=crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/buildkit-cache/<service>:main-amd64" \
   --export-cache "type=registry,ref=...,mode=max,image-manifest=true,oci-mediatypes=true" \
   ...
 ```

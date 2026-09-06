@@ -1,5 +1,5 @@
 image:
-  registry: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com
+  registry: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
   repository: pulseops/platform-server
   tag: dev
   pullPolicy: Always

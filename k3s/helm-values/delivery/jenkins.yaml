@@ -4,13 +4,63 @@ controller:
   nodeSelector:
     platform-role: control
 
+  # Port-forward is the primary access path; this internal URL keeps CLI and
+  # webhook payloads consistent when reached inside the cluster.
+  jenkinsUrl: http://jenkins.delivery.svc.cluster.local:8080
+
+  jenkinsAdminEmail: ecampus-jenkins@users.noreply.github.com
+
   image:
-    registry: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com
+    registry: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
     repository: pulseops/jenkins
-    tag: "2.555.2-lts-jdk21"
+    tag: "2.555.2-plugins-amd64"
     pullPolicy: IfNotPresent
 
   imagePullSecretName: tcr-secret
+
+  # Plugins are baked into the image (built outside the cluster): the default
+  # update center is unreachable from AliCloud and CN mirrors dropped the
+  # update-center.json, so runtime plugin installation is disabled.
+  installPlugins: []
+  initializeOnce: true
+
+  # The git-https pipeline credential is injected from this secret; the token
+  # never lands in git or helm values. JCasC resolves ${git-credentials-token} from it.
+  additionalExistingSecrets:
+    - name: git-credentials
+      keyName: token
+    - name: acr-credentials
+      keyName: username
+    - name: acr-credentials
+      keyName: password
+
+  JCasC:
+    defaultConfig: true
+    configScripts:
+      delivery-credentials: |
+        credentials:
+          system:
+            domainCredentials:
+              - credentials:
+                  - usernamePassword:
+                      scope: GLOBAL
+                      id: git-https
+                      description: "GitHub token for the GitOps repository"
+                      username: worryyy
+                      password: ${file:/run/secrets/additional/git-credentials-token}
+                  - usernamePassword:
+                      scope: GLOBAL
+                      id: acr-https
+                      description: "Aliyun ACR credentials for cache existence checks"
+                      username: ${file:/run/secrets/additional/acr-credentials-username}
+                      password: ${file:/run/secrets/additional/acr-credentials-password}
+
+  # Keep the default in-cluster kubernetes cloud (service-account based);
+  # the Jenkinsfile declares its agent pod template inline.
+  agent:
+    enabled: true
+    podName: default
+    showRawYaml: false
 
   resources:
     requests:
@@ -19,3 +69,7 @@ controller:
     limits:
       cpu: "1"
       memory: 1024Mi
+
+persistence:
+  enabled: true
+  size: 8Gi

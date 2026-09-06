@@ -165,7 +165,8 @@ Alerts are classified with `signal_type`:
   thresholds, always with a >=50 requests/5m sample gate, plus an
   `alert_scope` label (`revision` for version-level, `service` or `ingress`
   otherwise)
-- `infra`: platform storage alerts (for example Loki PVC usage)
+- `infra`: platform storage alerts (inert example: `LokiPVCUsageHigh`; see
+  the removal note under "Loki and Alloy")
 
 Alertmanager inhibition is deliberately narrow: only `ReleasePodRestarting`
 can be suppressed, by the release noise window or by a revision-scoped
@@ -179,24 +180,11 @@ impact alerts never bind to a deploy and never act as inhibit sources.
 either. The noise window itself has no `for` grace period: as a pure context
 signal it must be available for inhibition as soon as a release pod appears.
 
-### Loki and Alloy
+### Loki and Alloy (removed)
 
-The `loki` Argo CD Application installs (experimental, test/small-scale only):
-
-- Loki chart `17.3.0` (Loki app version 3.7.2): Monolithic single replica,
-  filesystem storage, 20Gi PVC, 7-day retention, NetworkPolicy-restricted
-- Alloy chart `1.9.0` (Alloy app version v1.16.1): single-replica Deployment
-  tailing pod logs through the Kubernetes API (no DaemonSet duplication; HA
-  would require Alloy Clustering)
-
-Index labels stay low-cardinality: `cluster/namespace/service/environment/
-container`. Release identity is promoted into structured metadata from JSON
-log fields (`deploy_id`, `release_batch`, `image_digest`, `git_sha`,
-`gitops_revision`) and is also queryable with `| json`:
-
-```logql
-{namespace="app", service="comment", environment="dev"} | json | deploy_id="ecampus-pipeline-main-10-comment-1"
-```
-
-Chart versions and software versions are intentionally recorded separately:
-the chart pins are fixed to the 2026-06-08 releases of both charts.
+The experimental Loki + Alloy logging stack was removed from the platform:
+none of the delivery-pipeline features depend on it, and the benchmark
+cluster reserves node3 memory for the CI build pod. Alert annotations and the
+`LokiPVCUsageHigh` rule remain as inert examples of the `infra` signal class
+(they never fire without a Loki PVC); remove them together with their
+promtool cases when consolidating the alert contract.

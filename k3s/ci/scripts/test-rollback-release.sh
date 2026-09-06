@@ -87,7 +87,7 @@ assert_contains "$canary_cmd" '/rollouts abort ecampus-topic --namespace app'
 undo_cmd=$(SERVICE_JSON_FILE="$service_json" ROLLOUTS_CLI=/rollouts KUBECTL_CLI=/kubectl UNDO_ROLLOUT=1 DRY_RUN=1 "$script" abort-traffic)
 assert_contains "$undo_cmd" '/rollouts undo ecampus-topic --namespace app'
 deploy_cmd=$(SERVICE_JSON_FILE="$fixtures/service-deployment.json" ROLLOUTS_CLI=/rollouts KUBECTL_CLI=/kubectl DRY_RUN=1 "$script" abort-traffic)
-assert_contains "$deploy_cmd" '/kubectl rollout undo deployment/ecampus-theme --namespace app'
+assert_contains "$deploy_cmd" '/kubectl set image deployment/ecampus-theme go-service='
 
 # verify-traffic: canary stable RS serves the digest and canary is scaled to 0.
 if ! FIXTURE_MODE=1 \

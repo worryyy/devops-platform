@@ -30,7 +30,7 @@ rules:
     verbs: [get, list, watch]
   - apiGroups: [apps]
     resources: [deployments]
-    verbs: [update]
+    verbs: [update, patch]
   - apiGroups: [""]
     resources: [pods, services, endpoints]
     verbs: [get, list, watch]

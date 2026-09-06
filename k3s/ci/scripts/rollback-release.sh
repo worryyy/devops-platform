@@ -248,7 +248,10 @@ abort_traffic_command() {
   : "${SERVICE_JSON_FILE:?}"
   kind=$(workload_kind)
   if [ "$kind" = "Deployment" ] || [ "$(profile)" = "fast-rolling" ]; then
-    cmd="$KUBECTL_CLI rollout undo deployment/$(resource_name) --namespace $(namespace)"
+    # rollout undo only steps back ONE revision, which may itself be the
+    # previous failed release; pin the resolved stable digest instead.
+    target_digest=$(cat "${ROLLBACK_OUTPUT_DIR:-.ci/rollback}/$(service_name).json" | jq -r '.image_digest')
+    cmd="$KUBECTL_CLI set image deployment/$(resource_name) go-service=$(image_repo)@$target_digest --namespace $(namespace) --record 2>/dev/null || $KUBECTL_CLI set image deployment/$(resource_name) go-service=$(image_repo)@$target_digest --namespace $(namespace)"
   elif [ "${UNDO_ROLLOUT:-0}" = "1" ]; then
     cmd="$ROLLOUTS_CLI undo $(rollout_name) --namespace $(namespace)"
   else

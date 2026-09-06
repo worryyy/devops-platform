@@ -88,8 +88,8 @@ services:
       - name: dev
         namespace: app
         branchPolicy: &mainBranch {defaultBranch: main, allowedBranches: [main]}
-        git: {repo: https://github.com/worryyy/devops-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-academic.yaml}
-        image: {repository: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-academic, tagPolicy: git-sha, requireDigest: true}
+        git: {repo: https://github.com/worryyy/app-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-academic.yaml}
+        image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-academic, tagPolicy: git-sha, requireDigest: true}
         jenkins: &jenkins {mode: webhook, jobName: ecampus-pipeline}
         argocd: {application: ecampus-academic, namespace: argocd}
         kubernetes: {namespace: app, rollout: ecampus-academic, service: ecampus-academic, container: ecampus-academic}
@@ -109,8 +109,8 @@ services:
       - name: dev
         namespace: app
         branchPolicy: *mainBranch
-        git: {repo: https://github.com/worryyy/devops-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-agentchat.yaml}
-        image: {repository: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-agentchat, tagPolicy: git-sha, requireDigest: true}
+        git: {repo: https://github.com/worryyy/app-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-agentchat.yaml}
+        image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-agentchat, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-agentchat, namespace: argocd}
         kubernetes: {namespace: app, rollout: ecampus-agentchat, service: ecampus-agentchat, container: ecampus-agentchat}
@@ -130,8 +130,8 @@ services:
       - name: dev
         namespace: app
         branchPolicy: *mainBranch
-        git: {repo: https://github.com/worryyy/devops-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-chat.yaml}
-        image: {repository: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-chat, tagPolicy: git-sha, requireDigest: true}
+        git: {repo: https://github.com/worryyy/app-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-chat.yaml}
+        image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-chat, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-chat, namespace: argocd}
         kubernetes: {namespace: app, rollout: ecampus-chat, service: ecampus-chat, container: ecampus-chat}
@@ -147,8 +147,8 @@ services:
       - name: dev
         namespace: app
         branchPolicy: *mainBranch
-        git: {repo: https://github.com/worryyy/devops-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-comment.yaml}
-        image: {repository: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-comment, tagPolicy: git-sha, requireDigest: true}
+        git: {repo: https://github.com/worryyy/app-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-comment.yaml}
+        image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-comment, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-comment, namespace: argocd}
         kubernetes: {namespace: app, rollout: ecampus-comment, service: ecampus-comment, container: ecampus-comment}
@@ -164,8 +164,8 @@ services:
       - name: dev
         namespace: app
         branchPolicy: *mainBranch
-        git: {repo: https://github.com/worryyy/devops-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-file.yaml}
-        image: {repository: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-file, tagPolicy: git-sha, requireDigest: true}
+        git: {repo: https://github.com/worryyy/app-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-file.yaml}
+        image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-file, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-file, namespace: argocd}
         kubernetes: {namespace: app, rollout: ecampus-file, service: ecampus-file, container: ecampus-file}
@@ -185,8 +185,8 @@ services:
       - name: dev
         namespace: app
         branchPolicy: *mainBranch
-        git: {repo: https://github.com/worryyy/devops-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-marketplace.yaml}
-        image: {repository: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-marketplace, tagPolicy: git-sha, requireDigest: true}
+        git: {repo: https://github.com/worryyy/app-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-marketplace.yaml}
+        image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-marketplace, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-marketplace, namespace: argocd}
         kubernetes: {namespace: app, rollout: ecampus-marketplace, service: ecampus-marketplace, container: ecampus-marketplace}
@@ -206,8 +206,8 @@ services:
       - name: dev
         namespace: app
         branchPolicy: *mainBranch
-        git: {repo: https://github.com/worryyy/devops-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-moderation.yaml}
-        image: {repository: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-moderation, tagPolicy: git-sha, requireDigest: true}
+        git: {repo: https://github.com/worryyy/app-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-moderation.yaml}
+        image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-moderation, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-moderation, namespace: argocd}
         kubernetes: {namespace: app, rollout: ecampus-moderation, service: ecampus-moderation, container: ecampus-moderation}
@@ -227,8 +227,8 @@ services:
       - name: dev
         namespace: app
         branchPolicy: *mainBranch
-        git: {repo: https://github.com/worryyy/devops-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-notification.yaml}
-        image: {repository: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-notification, tagPolicy: git-sha, requireDigest: true}
+        git: {repo: https://github.com/worryyy/app-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-notification.yaml}
+        image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-notification, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-notification, namespace: argocd}
         kubernetes: {namespace: app, rollout: ecampus-notification, service: ecampus-notification, container: ecampus-notification}
@@ -248,8 +248,8 @@ services:
       - name: dev
         namespace: app
         branchPolicy: *mainBranch
-        git: {repo: https://github.com/worryyy/devops-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-reservation.yaml}
-        image: {repository: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-reservation, tagPolicy: git-sha, requireDigest: true}
+        git: {repo: https://github.com/worryyy/app-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-reservation.yaml}
+        image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-reservation, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-reservation, namespace: argocd}
         kubernetes: {namespace: app, rollout: ecampus-reservation, service: ecampus-reservation, container: ecampus-reservation}
@@ -269,8 +269,8 @@ services:
       - name: dev
         namespace: app
         branchPolicy: *mainBranch
-        git: {repo: https://github.com/worryyy/devops-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-school.yaml}
-        image: {repository: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-school, tagPolicy: git-sha, requireDigest: true}
+        git: {repo: https://github.com/worryyy/app-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-school.yaml}
+        image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-school, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-school, namespace: argocd}
         kubernetes: {namespace: app, rollout: ecampus-school, service: ecampus-school, container: ecampus-school}
@@ -286,8 +286,8 @@ services:
       - name: dev
         namespace: app
         branchPolicy: *mainBranch
-        git: {repo: https://github.com/worryyy/devops-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-theme.yaml}
-        image: {repository: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-theme, tagPolicy: git-sha, requireDigest: true}
+        git: {repo: https://github.com/worryyy/app-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-theme.yaml}
+        image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-theme, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-theme, namespace: argocd}
         kubernetes: {namespace: app, rollout: ecampus-theme, service: ecampus-theme, container: ecampus-theme}
@@ -303,8 +303,8 @@ services:
       - name: dev
         namespace: app
         branchPolicy: *mainBranch
-        git: {repo: https://github.com/worryyy/devops-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-topic.yaml}
-        image: {repository: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-topic, tagPolicy: git-sha, requireDigest: true}
+        git: {repo: https://github.com/worryyy/app-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-topic.yaml}
+        image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-topic, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-topic, namespace: argocd}
         kubernetes: {namespace: app, rollout: ecampus-topic, service: ecampus-topic, container: ecampus-topic}
@@ -320,8 +320,8 @@ services:
       - name: dev
         namespace: app
         branchPolicy: *mainBranch
-        git: {repo: https://github.com/worryyy/devops-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-user.yaml}
-        image: {repository: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-user, tagPolicy: git-sha, requireDigest: true}
+        git: {repo: https://github.com/worryyy/app-test.git, chartPath: k3s/charts/go-service, valuesFile: k3s/helm-values/workloads/ecampus-user.yaml}
+        image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-user, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-user, namespace: argocd}
         kubernetes: {namespace: app, rollout: ecampus-user, service: ecampus-user, container: ecampus-user}

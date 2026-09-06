@@ -2,7 +2,7 @@ package main
 
 valid_deployment := {"kind": "Deployment", "metadata": {"name": "valid"}, "spec": {"template": {"spec": {"containers": [{
   "name": "app",
-  "image": "crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/app:git-abc12345@sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "image": "crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/app:git-abc12345@sha256:1111111111111111111111111111111111111111111111111111111111111111",
   "ports": [{"name": "http", "containerPort": 8080}],
   "readinessProbe": {"httpGet": {"path": "/health", "port": "http"}},
   "livenessProbe": {"httpGet": {"path": "/health", "port": "http"}},
@@ -31,14 +31,14 @@ test_latest_image_denied if {
 }
 
 test_git_tag_without_digest_denied if {
-  git_tag := object.union(container, {"image": "crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/app:git-abc12345"})
+  git_tag := object.union(container, {"image": "crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/app:git-abc12345"})
   doc := {"kind": "Deployment", "metadata": {"name": "bad"}, "spec": {"template": {"spec": {"containers": [git_tag]}}}}
   result := deny with input as [doc]
   count(result) > 0
 }
 
 test_dev_tag_allowed if {
-  dev := object.union(container, {"image": "crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/app:dev"})
+  dev := object.union(container, {"image": "crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/app:dev"})
   doc := {"kind": "Deployment", "metadata": {"name": "dev"}, "spec": {"template": {"spec": {"containers": [dev]}}}}
   result := deny with input as [doc]
   count(result) == 0

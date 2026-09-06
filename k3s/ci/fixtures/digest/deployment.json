@@ -5,7 +5,7 @@
     "template": {
       "spec": {
         "containers": [
-          {"name": "ecampus-theme", "image": "crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-theme:git-def45678@sha256:2222222222222222222222222222222222222222222222222222222222222222"}
+          {"name": "ecampus-theme", "image": "crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-theme:git-def45678@sha256:2222222222222222222222222222222222222222222222222222222222222222"}
         ]
       }
     }

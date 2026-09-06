@@ -1,8 +1,10 @@
 alertmanager:
   enabled: true
+  nodeSelector:
+    platform-role: worker
   persistence:
     enabled: true
-    size: 2Gi
+    size: 1Gi
   config:
     enabled: true
     global: {}
@@ -66,6 +68,8 @@ prometheus-pushgateway:
   enabled: false
 
 server:
+  nodeSelector:
+    platform-role: worker
   global:
     scrape_interval: 30s
     evaluation_interval: 30s
@@ -257,6 +261,10 @@ kube-state-metrics:
   metricLabelsAllowlist:
     - pods=[app.kubernetes.io/name,app.kubernetes.io/instance,delivery.platform/deploy-id,delivery.platform/git-sha,delivery.platform/environment,delivery.platform/release-batch,rollouts-pod-template-hash,pod-template-hash]
     - deployments=[app.kubernetes.io/name,app.kubernetes.io/instance,delivery.platform/deploy-id,delivery.platform/git-sha,delivery.platform/environment,delivery.platform/release-batch]
+  # both spellings: the bundled sub-chart version decides (4.x AllowList / 5.x Allowlist)
+  metricAnnotationsAllowList:
+    - pods=[delivery.platform/image-digest,delivery.platform/gitops-revision]
+    - deployments=[delivery.platform/image-digest,delivery.platform/gitops-revision]
   metricAnnotationsAllowlist:
     - pods=[delivery.platform/image-digest,delivery.platform/gitops-revision]
     - deployments=[delivery.platform/image-digest,delivery.platform/gitops-revision]

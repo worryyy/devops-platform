@@ -1,0 +1,3049 @@
+Started by user Jenkins Admin
+Obtained k3s/ci/jenkins/ecampus.Jenkinsfile from git https://github.com/worryyy/app-test.git
+[Pipeline] Start of Pipeline
+[Pipeline] podTemplate
+[Pipeline] {
+[Pipeline] node
+Created Pod: kubernetes delivery/ecampus-pipeline-70-rmqj3-9rlc7-32mpm
+[PodInfo] delivery/ecampus-pipeline-70-rmqj3-9rlc7-32mpm
+	Container [buildkitd] waiting [ContainerCreating] No message
+	Container [curl] waiting [ContainerCreating] No message
+	Container [git] waiting [ContainerCreating] No message
+	Container [go] waiting [ContainerCreating] No message
+	Container [jnlp] waiting [ContainerCreating] No message
+	Container [rollouts] waiting [ContainerCreating] No message
+	Container [yq] waiting [ContainerCreating] No message
+	Pod [Pending][ContainersNotReady] containers with unready status: [go buildkitd git yq rollouts curl jnlp]
+[PodInfo] delivery/ecampus-pipeline-70-rmqj3-9rlc7-32mpm
+	Pod [Running][ContainersNotReady] containers with unready status: [buildkitd]
+[PodInfo] delivery/ecampus-pipeline-70-rmqj3-9rlc7-32mpm
+	Pod [Running][ContainersNotReady] containers with unready status: [buildkitd]
+Agent ecampus-pipeline-70-rmqj3-9rlc7-32mpm is provisioned from template ecampus-pipeline_70-rmqj3-9rlc7
+---
+apiVersion: "v1"
+kind: "Pod"
+metadata:
+  annotations:
+    kubernetes.jenkins.io/last-refresh: "1788691957643"
+    buildUrl: "http://jenkins.delivery.svc.cluster.local:8080/job/ecampus-pipeline/70/"
+    runUrl: "job/ecampus-pipeline/70/"
+  labels:
+    jenkins/jenkins-jenkins-agent: "true"
+    jenkins/label-digest: "b43adb481a20d85d9c72b54fe26013049916cfcb"
+    jenkins/label: "ecampus-pipeline_70-rmqj3"
+    kubernetes.jenkins.io/controller: "http___jenkins_delivery_svc_cluster_local_8080x"
+  name: "ecampus-pipeline-70-rmqj3-9rlc7-32mpm"
+  namespace: "delivery"
+spec:
+  containers:
+  - command:
+    - "cat"
+    env:
+    - name: "GOCACHE"
+      value: "/cache/go-build"
+    - name: "GOMODCACHE"
+      value: "/cache/go-mod"
+    - name: "GOPROXY"
+      value: "https://goproxy.cn,https://mirrors.aliyun.com/goproxy/,direct"
+    - name: "GODEBUG"
+      value: "netdns=go"
+    - name: "DATABASE_URL"
+      valueFrom:
+        secretKeyRef:
+          key: "database-url"
+          name: "platform-postgresql-auth"
+    image: "crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/golang-ci:1.26"
+    name: "go"
+    resources:
+      limits:
+        cpu: "3"
+        memory: "8Gi"
+      requests:
+        cpu: "1500m"
+        memory: "2Gi"
+    tty: true
+    volumeMounts:
+    - mountPath: "/cache"
+      name: "jenkins-cache"
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - args:
+    - "--oci-worker-no-process-sandbox"
+    env:
+    - name: "DOCKER_CONFIG"
+      value: "/home/user/.docker"
+    image: "moby/buildkit:v0.31.2-rootless"
+    livenessProbe:
+      exec:
+        command:
+        - "buildctl"
+        - "debug"
+        - "workers"
+      failureThreshold: 6
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 10
+    name: "buildkitd"
+    readinessProbe:
+      exec:
+        command:
+        - "buildctl"
+        - "debug"
+        - "workers"
+      failureThreshold: 6
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 10
+    resources:
+      limits:
+        cpu: "2"
+        memory: "6Gi"
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+    securityContext:
+      appArmorProfile:
+        type: "Unconfined"
+      runAsGroup: 1000
+      runAsUser: 1000
+      seccompProfile:
+        type: "Unconfined"
+    volumeMounts:
+    - mountPath: "/home/user/.local/share/buildkit"
+      name: "buildkit-cache"
+    - mountPath: "/home/user/.config/buildkit"
+      name: "buildkit-config"
+      readOnly: true
+    - mountPath: "/home/user/.docker"
+      name: "registry-secret"
+      readOnly: true
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - command:
+    - "cat"
+    image: "alpine/git:2.45.2"
+    name: "git"
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+    tty: true
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - command:
+    - "cat"
+    image: "mikefarah/yq:4.44.3"
+    name: "yq"
+    resources:
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+    securityContext:
+      runAsUser: 0
+    tty: true
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - command:
+    - "cat"
+    env:
+    - name: "DATABASE_URL"
+      valueFrom:
+        secretKeyRef:
+          key: "database-url"
+          name: "platform-postgresql-auth"
+    image: "crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/alpine-tools:3.21"
+    name: "rollouts"
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+    tty: true
+    volumeMounts:
+    - mountPath: "/cache"
+      name: "jenkins-cache"
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - command:
+    - "cat"
+    image: "curlimages/curl:8.10.1"
+    name: "curl"
+    resources:
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+    securityContext:
+      runAsGroup: 1000
+      runAsUser: 1000
+    tty: true
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - env:
+    - name: "JENKINS_SECRET"
+      value: "********"
+    - name: "JENKINS_TUNNEL"
+      value: "jenkins-agent.delivery.svc.cluster.local:50000"
+    - name: "JENKINS_AGENT_NAME"
+      value: "ecampus-pipeline-70-rmqj3-9rlc7-32mpm"
+    - name: "REMOTING_OPTS"
+      value: "-noReconnectAfter 1d"
+    - name: "JENKINS_NAME"
+      value: "ecampus-pipeline-70-rmqj3-9rlc7-32mpm"
+    - name: "JENKINS_AGENT_WORKDIR"
+      value: "/home/jenkins/agent"
+    - name: "JENKINS_URL"
+      value: "http://jenkins.delivery.svc.cluster.local:8080/"
+    image: "jenkins/inbound-agent:3383.vc8881d4b_0e76-1-jdk25"
+    name: "jnlp"
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  imagePullSecrets:
+  - name: "tcr-secret"
+  nodeSelector:
+    platform-role: "control"
+  restartPolicy: "Never"
+  securityContext:
+    fsGroup: 1000
+    fsGroupChangePolicy: "OnRootMismatch"
+  serviceAccountName: "ecampus-release"
+  volumes:
+  - configMap:
+      name: "buildkitd-config"
+    name: "buildkit-config"
+  - name: "jenkins-cache"
+    persistentVolumeClaim:
+      claimName: "jenkins-agent-cache"
+  - name: "registry-secret"
+    secret:
+      items:
+      - key: ".dockerconfigjson"
+        path: "config.json"
+      secretName: "tcr-kaniko-secret"
+  - name: "buildkit-cache"
+    persistentVolumeClaim:
+      claimName: "buildkit-cache"
+  - emptyDir:
+      medium: ""
+    name: "workspace-volume"
+
+Running on ecampus-pipeline-70-rmqj3-9rlc7-32mpm in /home/jenkins/agent/workspace/ecampus-pipeline
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] timestamps
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Checkout main)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:52:50.421Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:52:51.020Z] + set -eu
+[2026-09-06T10:52:51.020Z] + rm -rf source gitops .ci impact.json delivery-catalog.json
+[2026-09-06T10:52:51.020Z] + source_repo=https://github.com/worryyy/app-test.git
+[2026-09-06T10:52:51.020Z] + echo https://github.com/worryyy/app-test.git
+[2026-09-06T10:52:51.020Z] + sed 's#https://##'
+[2026-09-06T10:52:51.020Z] + clean_source=github.com/worryyy/app-test.git
+[2026-09-06T10:52:51.020Z] + n=0
+[2026-09-06T10:52:51.020Z] + '[' 0 -ge 3 ]
+[2026-09-06T10:52:51.020Z] + git clone --depth 20 --branch main https://worryyy:****@github.com/worryyy/app-test.git source
+[2026-09-06T10:52:51.020Z] Cloning into 'source'...
+[2026-09-06T10:52:52.908Z] + break
+[2026-09-06T10:52:52.908Z] + echo https://github.com/worryyy/app-test.git
+[2026-09-06T10:52:52.908Z] + sed 's#https://##'
+[2026-09-06T10:52:52.908Z] + clean_repo=github.com/worryyy/app-test.git
+[2026-09-06T10:52:52.908Z] + n=0
+[2026-09-06T10:52:52.908Z] + '[' 0 -ge 3 ]
+[2026-09-06T10:52:52.908Z] + git clone https://worryyy:****@github.com/worryyy/app-test.git gitops
+[2026-09-06T10:52:52.908Z] Cloning into 'gitops'...
+[2026-09-06T10:53:39.522Z] + break
+[2026-09-06T10:53:39.522Z] + git -C gitops remote set-url origin https://github.com/worryyy/app-test.git
+[2026-09-06T10:53:39.522Z] + git -C source branch --show-current
+[2026-09-06T10:53:39.522Z] + test main '=' main
+[2026-09-06T10:53:39.522Z] + git -C source rev-parse HEAD
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] script
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Detect affected services)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:53:40.357Z] + set -eu
+[2026-09-06T10:53:40.357Z] + cd source
+[2026-09-06T10:53:40.357Z] + '[' -n cbaa452ee64102d3f0307017cc06c0282b92fa0e ]
+[2026-09-06T10:53:40.357Z] + '[' -n aef98f2a557f7ec6da1436b4fa725226e0afdbfc ]
+[2026-09-06T10:53:40.357Z] + git cat-file -e 'cbaa452ee64102d3f0307017cc06c0282b92fa0e^{commit}'
+[2026-09-06T10:53:40.357Z] + git cat-file -e 'aef98f2a557f7ec6da1436b4fa725226e0afdbfc^{commit}'
+[2026-09-06T10:53:40.357Z] + git merge-base --is-ancestor cbaa452ee64102d3f0307017cc06c0282b92fa0e aef98f2a557f7ec6da1436b4fa725226e0afdbfc
+[2026-09-06T10:53:40.357Z] + go run ./cmd/ecampus-impact --base cbaa452ee64102d3f0307017cc06c0282b92fa0e --head aef98f2a557f7ec6da1436b4fa725226e0afdbfc
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] script
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] echo
+[2026-09-06T10:53:48.624Z] test services: theme
+[Pipeline] echo
+[2026-09-06T10:53:48.635Z] build services: theme
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Resolve delivery catalog)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:53:49.311Z] + set -eu
+[2026-09-06T10:53:49.311Z] + cd gitops/platform/server
+[2026-09-06T10:53:49.311Z] + go run ./cmd/server catalog --catalog configs/service-catalog.yaml --services theme --environment dev
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] script
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] echo
+[2026-09-06T10:53:49.804Z] blue-green services: (none)
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Verify agent generated code)
+Stage "Verify agent generated code" skipped due to when conditional
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Verify, build and push)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] parallel
+[Pipeline] { (Branch: theme)
+[Pipeline] readFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:53:50.673Z] + set -eu
+[2026-09-06T10:53:50.673Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests
+[2026-09-06T10:53:50.673Z] + chmod -R 777 /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:53:50.673Z] + '[' false '=' true ]
+[2026-09-06T10:53:50.673Z] + cd source
+[2026-09-06T10:53:50.673Z] + ./scripts/ci/run-service-checks.sh --service theme
+[2026-09-06T10:53:51.619Z] ?   	github.com/Milchstrassse/Ecampus-go/cmd/ecampus-theme	[no test files]
+[2026-09-06T10:53:51.619Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/bootstrap	[no test files]
+[2026-09-06T10:53:51.619Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampus/themeapp	[no test files]
+[2026-09-06T10:53:51.619Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusruntime	[no test files]
+[2026-09-06T10:53:51.619Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/moderationadapter	[no test files]
+[2026-09-06T10:53:51.619Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/useradapter	[no test files]
+[2026-09-06T10:53:51.619Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/integration/wxutil	(cached)
+[2026-09-06T10:53:52.543Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/middleware	0.010s
+[2026-09-06T10:53:52.543Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/moderation	(cached)
+[2026-09-06T10:53:52.543Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/adminjwt	(cached)
+[2026-09-06T10:53:52.543Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/bizerr	[no test files]
+[2026-09-06T10:53:52.543Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/config	0.005s
+[2026-09-06T10:53:52.543Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/encrypt	(cached)
+[2026-09-06T10:53:52.543Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/jwtutil	[no test files]
+[2026-09-06T10:53:52.543Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/pagination	[no test files]
+[2026-09-06T10:53:52.543Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/rediskey	[no test files]
+[2026-09-06T10:53:52.543Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/responses	(cached)
+[2026-09-06T10:53:52.543Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/snowflake	[no test files]
+[2026-09-06T10:53:52.543Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/theme	[no test files]
+[2026-09-06T10:53:52.543Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/user	(cached)
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:53:53.217Z] + set -eu
+[2026-09-06T10:53:53.217Z] + metadata=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/theme.json
+[2026-09-06T10:53:53.217Z] + import_cache=
+[2026-09-06T10:53:53.217Z] + '[' -d /home/user/.local/share/buildkit/local-cache ]
+[2026-09-06T10:53:53.217Z] + ls -A /home/user/.local/share/buildkit/local-cache
+[2026-09-06T10:53:53.217Z] + '[' -n 'blobs
+[2026-09-06T10:53:53.217Z] index.json
+[2026-09-06T10:53:53.217Z] ingest
+[2026-09-06T10:53:53.217Z] oci-layout' ]
+[2026-09-06T10:53:53.217Z] + import_cache='--import-cache type=local,src=/home/user/.local/share/buildkit/local-cache'
+[2026-09-06T10:53:53.217Z] + '[' false '=' true ]
+[2026-09-06T10:53:53.217Z] + buildctl build '--frontend=dockerfile.v0' --local 'context=/home/jenkins/agent/workspace/ecampus-pipeline/source' --local 'dockerfile=/home/jenkins/agent/workspace/ecampus-pipeline/source' --opt 'filename=build/Dockerfile.go-service' --opt 'platform=linux/amd64' --opt 'build-arg:SERVICE_PATH=./cmd/ecampus-theme' --opt 'build-arg:CONFIG_DIR=configs/ecampus' --opt 'build-arg:SERVICE_PORT=8080' --import-cache 'type=local,src=/home/user/.local/share/buildkit/local-cache' --export-cache 'type=local,dest=/home/user/.local/share/buildkit/local-cache,mode=max' --output 'type=image,name=crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-theme:git-abd3e6c7,push=true' '--metadata-file=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/theme.json'
+[2026-09-06T10:53:53.217Z] #1 [internal] load build definition from build/Dockerfile.go-service
+[2026-09-06T10:53:53.217Z] #1 transferring dockerfile: 1.45kB done
+[2026-09-06T10:53:53.217Z] #1 DONE 0.0s
+[2026-09-06T10:53:53.217Z] 
+[2026-09-06T10:53:53.217Z] #2 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+[2026-09-06T10:53:56.478Z] #2 DONE 2.9s
+[2026-09-06T10:53:56.478Z] 
+[2026-09-06T10:53:56.478Z] #3 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+[2026-09-06T10:53:56.478Z] #3 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+[2026-09-06T10:53:56.478Z] #3 CACHED
+[2026-09-06T10:53:56.478Z] 
+[2026-09-06T10:53:56.478Z] #4 [internal] load metadata for docker.io/library/golang:1.26-alpine
+[2026-09-06T10:53:56.478Z] #4 ...
+[2026-09-06T10:53:56.478Z] 
+[2026-09-06T10:53:56.478Z] #5 [internal] load metadata for docker.io/library/alpine:3.20
+[2026-09-06T10:53:56.478Z] #5 DONE 0.2s
+[2026-09-06T10:53:56.478Z] 
+[2026-09-06T10:53:56.478Z] #4 [internal] load metadata for docker.io/library/golang:1.26-alpine
+[2026-09-06T10:53:56.478Z] #4 DONE 0.2s
+[2026-09-06T10:53:56.478Z] 
+[2026-09-06T10:53:56.478Z] #6 [internal] load .dockerignore
+[2026-09-06T10:53:56.478Z] #6 transferring context: 124B done
+[2026-09-06T10:53:56.478Z] #6 DONE 0.0s
+[2026-09-06T10:53:56.478Z] 
+[2026-09-06T10:53:56.478Z] #7 importing cache manifest from local:11007128863034215098
+[2026-09-06T10:53:56.478Z] #7 inferred cache manifest type: application/vnd.oci.image.manifest.v1+json done
+[2026-09-06T10:53:56.478Z] #7 DONE 0.0s
+[2026-09-06T10:53:56.478Z] 
+[2026-09-06T10:53:56.478Z] #8 [builder 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-06T10:53:56.478Z] #8 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628 0.0s done
+[2026-09-06T10:53:56.478Z] #8 DONE 0.0s
+[2026-09-06T10:53:56.478Z] 
+[2026-09-06T10:53:56.478Z] #9 [stage-1 1/5] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-06T10:53:56.478Z] #9 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc 0.0s done
+[2026-09-06T10:53:56.478Z] #9 DONE 0.0s
+[2026-09-06T10:53:56.478Z] 
+[2026-09-06T10:53:56.478Z] #10 [internal] load build context
+[2026-09-06T10:53:56.478Z] #10 transferring context: 2.35MB 0.1s done
+[2026-09-06T10:53:56.478Z] #10 DONE 0.1s
+[2026-09-06T10:53:56.478Z] 
+[2026-09-06T10:53:56.478Z] #11 [builder 2/6] WORKDIR /src
+[2026-09-06T10:53:56.478Z] #11 CACHED
+[2026-09-06T10:53:56.478Z] 
+[2026-09-06T10:53:56.478Z] #12 [builder 3/6] COPY go.mod go.sum ./
+[2026-09-06T10:53:56.478Z] #12 CACHED
+[2026-09-06T10:53:56.478Z] 
+[2026-09-06T10:53:56.478Z] #13 [builder 4/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     go mod download
+[2026-09-06T10:53:56.478Z] #13 CACHED
+[2026-09-06T10:53:56.478Z] 
+[2026-09-06T10:53:56.478Z] #14 [builder 5/6] COPY . .
+[2026-09-06T10:53:56.478Z] #14 DONE 0.1s
+[2026-09-06T10:53:56.733Z] 
+[2026-09-06T10:53:56.734Z] #15 [builder 6/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     --mount=type=cache,id=ecampus-go-build-linux-amd64,target=/root/.cache/go-build,sharing=shared     test -n "./cmd/ecampus-theme" &&     test -d "configs/ecampus" &&     CGO_ENABLED=0 GOOS="linux" GOARCH="amd64"       go build -trimpath -o /out/app "./cmd/ecampus-theme" &&     mkdir -p /out/configs &&     cp -R "configs/ecampus" /out/configs/
+[2026-09-06T10:53:58.620Z] #15 DONE 2.1s
+[2026-09-06T10:53:58.875Z] 
+[2026-09-06T10:53:58.875Z] #16 [stage-1 3/5] WORKDIR /app
+[2026-09-06T10:53:58.875Z] #16 CACHED
+[2026-09-06T10:53:58.875Z] 
+[2026-09-06T10:53:58.875Z] #17 [stage-1 4/5] COPY --from=builder /out/app /app/app
+[2026-09-06T10:53:58.875Z] #17 CACHED
+[2026-09-06T10:53:58.875Z] 
+[2026-09-06T10:53:58.876Z] #18 [stage-1 2/5] RUN sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#' /etc/apk/repositories     && apk --no-cache add ca-certificates tzdata
+[2026-09-06T10:53:58.876Z] #18 CACHED
+[2026-09-06T10:53:58.876Z] 
+[2026-09-06T10:53:58.876Z] #19 [stage-1 5/5] COPY --from=builder /out/configs /app/configs
+[2026-09-06T10:53:59.132Z] #19 CACHED
+[2026-09-06T10:53:59.132Z] 
+[2026-09-06T10:53:59.132Z] #20 exporting to image
+[2026-09-06T10:53:59.132Z] #20 exporting layers done
+[2026-09-06T10:53:59.132Z] #20 exporting manifest sha256:ce84d695ce883fdbe3e43e293cc07ce04aef8a332454d768fd1d94ea55854626 done
+[2026-09-06T10:53:59.132Z] #20 exporting config sha256:73bedfbec9f721171246d1bf592efcbffd6421b5f0bc00879898162b7b84ed83 done
+[2026-09-06T10:53:59.132Z] #20 pushing layers
+[2026-09-06T10:53:59.132Z] #20 ...
+[2026-09-06T10:53:59.132Z] 
+[2026-09-06T10:53:59.132Z] #21 [auth] pulseops/ecampus-theme:pull,push token for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+[2026-09-06T10:53:59.133Z] #21 DONE 0.0s
+[2026-09-06T10:53:59.388Z] 
+[2026-09-06T10:53:59.388Z] #22 exporting cache to client directory
+[2026-09-06T10:53:59.388Z] #22 preparing build cache for export
+[2026-09-06T10:54:00.314Z] #22 ...
+[2026-09-06T10:54:00.314Z] 
+[2026-09-06T10:54:00.314Z] #20 exporting to image
+[2026-09-06T10:54:00.314Z] #20 pushing layers 1.1s done
+[2026-09-06T10:54:00.314Z] #20 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-theme:git-abd3e6c7@sha256:ce84d695ce883fdbe3e43e293cc07ce04aef8a332454d768fd1d94ea55854626 0.3s done
+[2026-09-06T10:54:00.314Z] #20 DONE 1.4s
+[2026-09-06T10:54:00.569Z] 
+[2026-09-06T10:54:00.569Z] #22 exporting cache to client directory
+[2026-09-06T10:54:00.825Z] #22 preparing build cache for export 1.9s done
+[2026-09-06T10:54:00.825Z] #22 sending cache export
+[2026-09-06T10:54:00.825Z] #22 writing layer sha256:2cb3e687d353c47479f7eb82d6cc1b230f1d252bfefaddbeec9d3de57edf5d49 done
+[2026-09-06T10:54:00.825Z] #22 writing layer sha256:054452aafa7bd1b2ddd04ed7f6f5cf4f3e6a5347d316266623d8d63a198b8401 done
+[2026-09-06T10:54:00.825Z] #22 writing layer sha256:0878406f1baadcda024f14e2e133c3572ce6953772c9c73aec4e15a0d1c16c90 done
+[2026-09-06T10:54:00.825Z] #22 writing layer sha256:25f1d6b1951ac8eb3740558fe94cb83d377bdadf95fd9f98b50d2e1b96130471 done
+[2026-09-06T10:54:00.826Z] #22 writing layer sha256:2e6f55d4393a61aa1a7175213b54355f160afc90de987f981804323711dcd75c done
+[2026-09-06T10:54:00.826Z] #22 writing layer sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 done
+[2026-09-06T10:54:00.826Z] #22 writing layer sha256:55afa1ecc21d2bb5e5045f32dafee56272ffd89860bac26f6c32123439af26a4 done
+[2026-09-06T10:54:00.826Z] #22 writing layer sha256:7c3a144dfd2227e5e4aec126921061520351642741e8d4756e18775005b628b1 done
+[2026-09-06T10:54:00.826Z] #22 writing layer sha256:91ad8118effac7c09b8e2526b81ce899f1fe4c474e17a419d3eae8f6460162ff done
+[2026-09-06T10:54:00.826Z] #22 writing layer sha256:a01ef6a6016004d114c97cf04a9708d71f6bb95e2b482f829ae547874376d5c7 done
+[2026-09-06T10:54:00.826Z] #22 writing layer sha256:ba2bdd303b1fd8d27cc6f99738e3b191885ba34b55cb78827ae2b67b21a0dfea done
+[2026-09-06T10:54:00.826Z] #22 writing layer sha256:d739b30831b81ef37b8e1a4fce5701a2452b36668583561d3bdaa404593c3f74 done
+[2026-09-06T10:54:00.826Z] #22 writing layer sha256:e31cf350af64d6ccf4c24760a68a605136a865984c01d1ed488ecae90b6290e4
+[2026-09-06T10:54:00.826Z] #22 writing layer sha256:ed93fb058b3e00a37387d2bd5336a88431c99e683caa02c1536b1fbdcbc32433 done
+[2026-09-06T10:54:00.826Z] #22 writing layer sha256:ff90f129352d98bd5300618fdd46df1a02f89c379a170bc65a35af5e8292bc83 0.0s done
+[2026-09-06T10:54:01.081Z] #22 writing layer sha256:e31cf350af64d6ccf4c24760a68a605136a865984c01d1ed488ecae90b6290e4 0.3s done
+[2026-09-06T10:54:01.081Z] #22 sending cache export 0.3s done
+[2026-09-06T10:54:01.081Z] #22 writing config sha256:40f67960757a7d191cbd60a7405ac263b40fe9b717beccdb48c002f4e70aa98f done
+[2026-09-06T10:54:01.081Z] #22 writing cache image manifest sha256:9580914ec1a689e87c658785d4a01b2059b214f70f87befc6d6dbea6dc3bfcbe done
+[2026-09-06T10:54:01.081Z] #22 DONE 2.2s
+[2026-09-06T10:54:01.081Z] + test -s /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/theme.json
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] writeFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:54:01.866Z] + set -eu
+[2026-09-06T10:54:01.866Z] + cd gitops/platform/server
+[2026-09-06T10:54:01.867Z] + go run ./cmd/server release-record --service theme --environment dev --record --status releasing --git-revision abd3e6c7576c20f7201b5385eae376b266e0b4d7 --image-digest sha256:ce84d695ce883fdbe3e43e293cc07ce04aef8a332454d768fd1d94ea55854626 --config-revision  --rollout-strategy rolling
+[2026-09-06T10:54:01.867Z] recorded theme dev as releasing
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // parallel
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Prepare tools)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:54:02.648Z] + set -eu
+[2026-09-06T10:54:02.648Z] + '[' '!' -x /cache/jenkins-tools/argo-rollouts/v1.8.3/kubectl-argo-rollouts ]
+[2026-09-06T10:54:02.648Z] + /cache/jenkins-tools/argo-rollouts/v1.8.3/kubectl-argo-rollouts version
+[2026-09-06T10:54:02.648Z] kubectl-argo-rollouts: v1.8.3+49fa151
+[2026-09-06T10:54:02.648Z]   BuildDate: 2025-06-04T22:26:13Z
+[2026-09-06T10:54:02.648Z]   GitCommit: 49fa1516cf71672b69e265267da4e1d16e1fe114
+[2026-09-06T10:54:02.648Z]   GitTreeState: clean
+[2026-09-06T10:54:02.648Z]   GoVersion: go1.23.9
+[2026-09-06T10:54:02.648Z]   Compiler: gc
+[2026-09-06T10:54:02.648Z]   Platform: linux/amd64
+[2026-09-06T10:54:02.648Z] + '[' '!' -x /cache/jenkins-tools/kubectl/v1.31.3/kubectl ]
+[2026-09-06T10:54:02.648Z] + /cache/jenkins-tools/kubectl/v1.31.3/kubectl version --client
+[2026-09-06T10:54:02.648Z] Client Version: v1.31.3
+[2026-09-06T10:54:02.648Z] Kustomize Version: v5.4.2
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:54:03.211Z] + set -eu
+[2026-09-06T10:54:03.211Z] + sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#' /etc/apk/repositories
+[2026-09-06T10:54:03.211Z] + mkdir -p /cache/jenkins-tools
+[2026-09-06T10:54:03.211Z] + cd gitops/platform/server
+[2026-09-06T10:54:03.211Z] + go build -o /cache/jenkins-tools/platform-server ./cmd/server
+[2026-09-06T10:54:04.136Z] + /cache/jenkins-tools/platform-server catalog --help
+[2026-09-06T10:54:04.136Z] + true
+[2026-09-06T10:54:04.136Z] + /cache/jenkins-tools/platform-server release-record --help
+[2026-09-06T10:54:04.136Z] + true
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Publish GitOps PRs)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] parallel
+[Pipeline] { (Branch: theme)
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:54:04.456Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:54:05.037Z] + set -eu
+[2026-09-06T10:54:05.037Z] + rm -rf gitops-theme
+[2026-09-06T10:54:05.037Z] + echo https://github.com/worryyy/app-test.git
+[2026-09-06T10:54:05.037Z] + sed 's#https://##'
+[2026-09-06T10:54:05.037Z] + clean_repo=github.com/worryyy/app-test.git
+[2026-09-06T10:54:05.037Z] + git clone --depth 1 https://worryyy:****@github.com/worryyy/app-test.git gitops-theme
+[2026-09-06T10:54:05.037Z] Cloning into 'gitops-theme'...
+[2026-09-06T10:54:07.546Z] + git -C gitops-theme remote set-url origin https://github.com/worryyy/app-test.git
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:54:08.274Z] + git -C gitops-theme checkout -b release/theme/abd3e6c7 origin/main
+[2026-09-06T10:54:08.274Z] branch 'release/theme/abd3e6c7' set up to track 'origin/main'.
+[2026-09-06T10:54:08.274Z] Switched to a new branch 'release/theme/abd3e6c7'
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:54:08.922Z] + git -C gitops-theme rev-parse HEAD
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:54:09.642Z] + set -eu
+[2026-09-06T10:54:09.642Z] + yq eval -i '
+[2026-09-06T10:54:09.642Z]           .image.digest = strenv(DIGEST) |
+[2026-09-06T10:54:09.642Z]           .image.tag = strenv(TAG) |
+[2026-09-06T10:54:09.642Z]           .release.releaseBatch = strenv(RELEASE_BATCH) |
+[2026-09-06T10:54:09.642Z]           .release.deployId = strenv(DEPLOY_ID) |
+[2026-09-06T10:54:09.642Z]           .release.gitSha = strenv(GIT_SHA) |
+[2026-09-06T10:54:09.642Z]           .release.gitopsRevision = strenv(CONFIG_REVISION) |
+[2026-09-06T10:54:09.642Z]           .release.environment = strenv(TARGET_ENV) |
+[2026-09-06T10:54:09.642Z]           .release.buildNumber = strenv(BUILD_NUMBER) |
+[2026-09-06T10:54:09.642Z]           .release.rolloutProfile = strenv(PROFILE) |
+[2026-09-06T10:54:09.642Z]           .rollout.profile = strenv(PROFILE) |
+[2026-09-06T10:54:09.642Z]           .rollout.strategy = strenv(STRATEGY) |
+[2026-09-06T10:54:09.642Z]           .rollout.autoPromotion = (strenv(AUTO_PROMOTION) == "true") |
+[2026-09-06T10:54:09.642Z]           .rollout.previewReplicaCount = (strenv(PREVIEW_REPLICAS) | tonumber) |
+[2026-09-06T10:54:09.642Z]           .rollout.scaleDownDelaySeconds = (strenv(SCALE_DOWN_DELAY) | tonumber) |
+[2026-09-06T10:54:09.642Z]           .rollout.analysis.dryRun = (strenv(ANALYSIS_DRY_RUN) == "true") |
+[2026-09-06T10:54:09.642Z]           .rollout.analysis.interval = strenv(ANALYSIS_INTERVAL) |
+[2026-09-06T10:54:09.642Z]           .rollout.analysis.count = (strenv(ANALYSIS_COUNT) | tonumber) |
+[2026-09-06T10:54:09.642Z]           .rollout.analysis.consecutiveSuccessLimit = (strenv(ANALYSIS_CONSECUTIVE) | tonumber) |
+[2026-09-06T10:54:09.642Z]           .rollout.analysis.failureLimit = (strenv(ANALYSIS_FAILURE_LIMIT) | tonumber) |
+[2026-09-06T10:54:09.642Z]           .rollout.analysis.inconclusiveLimit = (strenv(ANALYSIS_INCONCLUSIVE_LIMIT) | tonumber) |
+[2026-09-06T10:54:09.642Z]           .rollout.analysis.consecutiveErrorLimit = (strenv(ANALYSIS_CONSECUTIVE_ERROR_LIMIT) | tonumber) |
+[2026-09-06T10:54:09.642Z]           .rollout.analysis.minSamples = (strenv(ANALYSIS_MIN_SAMPLES) | tonumber) |
+[2026-09-06T10:54:09.642Z]           .rollout.analysis.stableMinSamples = (strenv(ANALYSIS_STABLE_MIN_SAMPLES) | tonumber) |
+[2026-09-06T10:54:09.642Z]           .rollout.analysis.maxErrorRate = (strenv(ANALYSIS_MAX_ERROR_RATE) | tonumber) |
+[2026-09-06T10:54:09.642Z]           .rollout.analysis.maxErrorRateIncrease = (strenv(ANALYSIS_MAX_ERROR_INCREASE) | tonumber) |
+[2026-09-06T10:54:09.642Z]           .rollout.analysis.maxP95Ratio = (strenv(ANALYSIS_MAX_P95_RATIO) | tonumber) |
+[2026-09-06T10:54:09.642Z]           .rollout.analysis.maxP95Seconds = (strenv(ANALYSIS_MAX_P95_SECONDS) | tonumber) |
+[2026-09-06T10:54:09.643Z]           .rollout.analysis.minOperationSuccessRate = (strenv(ANALYSIS_MIN_OP_SUCCESS) | tonumber) |
+[2026-09-06T10:54:09.643Z]           .rollout.analysis.requestRouteRegex = strenv(REQUEST_ROUTE_REGEX) |
+[2026-09-06T10:54:09.643Z]           .rollout.analysis.operationRouteRegex = strenv(OPERATION_ROUTE_REGEX)
+[2026-09-06T10:54:09.643Z]         ' gitops-theme/k3s/helm-values/workloads/ecampus-theme.yaml
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:54:10.315Z] + set -eu
+[2026-09-06T10:54:10.315Z] + cd gitops-theme
+[2026-09-06T10:54:10.315Z] + git config user.name ecampus-jenkins
+[2026-09-06T10:54:10.315Z] + git config user.email ecampus-jenkins@users.noreply.github.com
+[2026-09-06T10:54:10.315Z] + git add k3s/helm-values/workloads
+[2026-09-06T10:54:10.315Z] + git diff --cached --quiet
+[2026-09-06T10:54:10.315Z] + git commit -m 'release(theme): git-abd3e6c7'
+[2026-09-06T10:54:10.315Z] [release/theme/abd3e6c7 4cc6e42] release(theme): git-abd3e6c7
+[2026-09-06T10:54:10.315Z]  1 file changed, 6 insertions(+), 6 deletions(-)
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:54:10.444Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:54:11.024Z] + set -eu
+[2026-09-06T10:54:11.024Z] + echo https://github.com/worryyy/app-test.git
+[2026-09-06T10:54:11.024Z] + sed 's#https://##'
+[2026-09-06T10:54:11.024Z] + clean_repo=github.com/worryyy/app-test.git
+[2026-09-06T10:54:11.024Z] + n=0
+[2026-09-06T10:54:11.024Z] + '[' 0 -ge 5 ]
+[2026-09-06T10:54:11.024Z] + git -C gitops-theme push https://worryyy:****@github.com/worryyy/app-test.git HEAD:release/theme/abd3e6c7
+[2026-09-06T10:54:13.537Z] remote: 
+[2026-09-06T10:54:13.537Z] remote: Create a pull request for 'release/theme/abd3e6c7' on GitHub by visiting:        
+[2026-09-06T10:54:13.537Z] remote:      https://github.com/worryyy/app-test/pull/new/release/theme/abd3e6c7        
+[2026-09-06T10:54:13.537Z] remote: 
+[2026-09-06T10:54:13.537Z] To https://github.com/worryyy/app-test.git
+[2026-09-06T10:54:13.537Z]  * [new branch]      HEAD -> release/theme/abd3e6c7
+[2026-09-06T10:54:13.537Z] + break
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:54:13.700Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:54:14.250Z] + set -eu
+[2026-09-06T10:54:14.250Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-release/theme/abd3e6c7.json
+[2026-09-06T10:54:14.250Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-release/theme
+[2026-09-06T10:54:14.250Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -X POST -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' -H 'Content-Type: application/json' --data-binary '{"title":"release(theme): git-abd3e6c7","head":"release/theme/abd3e6c7","base":"main","body":"Automated by ecampus-jenkins. Affected service: theme"}' https://api.github.com/repos/worryyy/app-test/pulls
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] echo
+[2026-09-06T10:54:16.249Z] GitOps PR created: https://github.com/worryyy/app-test/pull/6
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:54:16.338Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:54:16.873Z] + set -eu
+[2026-09-06T10:54:16.873Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -X POST -H 'Authorization: Bearer ****' -H 'Content-Type: application/json' --data-binary '{"query": "mutation { enablePullRequestAutoMerge(input:{pullRequestId:\"PR_kwDOUO8kQc8AAAABCZX-ZQ\", mergeMethod: MERGE}) { clientMutationId } }"}' https://api.github.com/graphql
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:54:17.558Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:54:18.105Z] + set -eu
+[2026-09-06T10:54:18.105Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:54:18.105Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:54:18.105Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:54:18.785Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:54:28.838Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:54:29.386Z] + set -eu
+[2026-09-06T10:54:29.386Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:54:29.386Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:54:29.386Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:54:30.449Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:54:40.498Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:54:41.055Z] + set -eu
+[2026-09-06T10:54:41.055Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:54:41.055Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:54:41.056Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:54:42.099Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:54:52.150Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:54:52.681Z] + set -eu
+[2026-09-06T10:54:52.681Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:54:52.681Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:54:52.681Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:54:54.689Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:55:04.739Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:55:05.254Z] + set -eu
+[2026-09-06T10:55:05.254Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:55:05.254Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:55:05.254Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:55:06.292Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:55:16.342Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:55:16.896Z] + set -eu
+[2026-09-06T10:55:16.896Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:55:16.897Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:55:16.897Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:55:18.895Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:55:28.944Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:55:29.457Z] + set -eu
+[2026-09-06T10:55:29.457Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:55:29.457Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:55:29.457Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:55:31.517Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:55:41.567Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:55:42.140Z] + set -eu
+[2026-09-06T10:55:42.140Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:55:42.140Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:55:42.140Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:55:43.188Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:55:53.236Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:55:53.791Z] + set -eu
+[2026-09-06T10:55:53.791Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:55:53.791Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:55:53.791Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:55:54.831Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:56:04.882Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:56:05.421Z] + set -eu
+[2026-09-06T10:56:05.421Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:56:05.421Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:56:05.421Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:56:06.464Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:56:16.513Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:56:17.061Z] + set -eu
+[2026-09-06T10:56:17.061Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:56:17.061Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:56:17.061Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:56:18.098Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:56:28.147Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:56:28.696Z] + set -eu
+[2026-09-06T10:56:28.696Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:56:28.696Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:56:28.696Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:56:29.738Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:56:39.788Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:56:40.316Z] + set -eu
+[2026-09-06T10:56:40.317Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:56:40.317Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:56:40.317Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:56:41.361Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:56:51.418Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:56:51.964Z] + set -eu
+[2026-09-06T10:56:51.964Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:56:51.964Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:56:51.964Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:56:53.001Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:57:03.052Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:57:03.600Z] + set -eu
+[2026-09-06T10:57:03.600Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:57:03.600Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:57:03.600Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:57:04.644Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:57:14.693Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:57:15.223Z] + set -eu
+[2026-09-06T10:57:15.223Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:57:15.223Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:57:15.223Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:57:16.262Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:57:26.314Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:57:26.861Z] + set -eu
+[2026-09-06T10:57:26.861Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:57:26.861Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:57:26.861Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:57:28.335Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:57:38.385Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:57:38.933Z] + set -eu
+[2026-09-06T10:57:38.933Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:57:38.933Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:57:38.933Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:57:45.569Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:57:55.618Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:57:56.169Z] + set -eu
+[2026-09-06T10:57:56.169Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:57:56.169Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:57:56.169Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:58:02.808Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:58:12.860Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:58:13.397Z] + set -eu
+[2026-09-06T10:58:13.397Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:58:13.397Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:58:13.397Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:58:14.440Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:58:24.493Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:58:25.046Z] + set -eu
+[2026-09-06T10:58:25.046Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:58:25.046Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:58:25.046Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:58:25.728Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:58:35.779Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:58:36.326Z] + set -eu
+[2026-09-06T10:58:36.327Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:58:36.327Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:58:36.327Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:58:37.377Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:58:47.426Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:58:47.976Z] + set -eu
+[2026-09-06T10:58:47.976Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:58:47.977Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:58:47.977Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:58:49.016Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:58:59.067Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:58:59.621Z] + set -eu
+[2026-09-06T10:58:59.621Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:58:59.621Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:58:59.621Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:59:01.105Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:59:11.156Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:59:11.667Z] + set -eu
+[2026-09-06T10:59:11.668Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:59:11.668Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:59:11.668Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:59:12.709Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:59:22.785Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:59:23.321Z] + set -eu
+[2026-09-06T10:59:23.321Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:59:23.321Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:59:23.321Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:59:24.357Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:59:34.409Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:59:34.953Z] + set -eu
+[2026-09-06T10:59:34.953Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:59:34.953Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:59:34.954Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:59:36.002Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:59:46.052Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:59:46.603Z] + set -eu
+[2026-09-06T10:59:46.603Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:59:46.603Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:59:46.603Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T10:59:47.641Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:59:57.691Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:59:58.239Z] + set -eu
+[2026-09-06T10:59:58.239Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-6.json
+[2026-09-06T10:59:58.239Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T10:59:58.240Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/6
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] echo
+[2026-09-06T10:59:59.276Z] GitOps PR 6 merged
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T10:59:59.332Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T10:59:59.879Z] + set -eu
+[2026-09-06T10:59:59.879Z] + sed 's#https://##'
+[2026-09-06T10:59:59.879Z] + echo https://github.com/worryyy/app-test.git
+[2026-09-06T10:59:59.879Z] + clean_repo=github.com/worryyy/app-test.git
+[2026-09-06T10:59:59.879Z] + git ls-remote https://worryyy:****@github.com/worryyy/app-test.git refs/heads/main
+[2026-09-06T10:59:59.879Z] + awk '{print $1}'
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:00:01.522Z] + set -eu
+[2026-09-06T11:00:01.522Z] + cd gitops/platform/server
+[2026-09-06T11:00:01.522Z] + go run ./cmd/server release-record --service theme --environment dev --record --status releasing --git-revision abd3e6c7576c20f7201b5385eae376b266e0b4d7 --image-digest sha256:ce84d695ce883fdbe3e43e293cc07ce04aef8a332454d768fd1d94ea55854626 --config-revision dcd41399d890e1e5f7113d945a3d546b99c11b13 --rollout-strategy rolling
+[2026-09-06T11:00:01.522Z] recorded theme dev as releasing
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // parallel
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Wait for rollout and health)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] parallel
+[Pipeline] { (Branch: theme)
+[Pipeline] readFile
+[Pipeline] readFile
+[Pipeline] readFile
+[Pipeline] writeFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:00:02.516Z] + sh gitops/k3s/ci/scripts/wait-for-release.sh wait
+[2026-09-06T11:00:02.516Z] gitops/k3s/ci/scripts/wait-for-release.sh: line 178: FIXTURE_MODE: parameter not set
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] echo
+[2026-09-06T11:00:02.641Z] release failed for theme: hudson.AbortException: script returned exit code 2
+[Pipeline] echo
+[2026-09-06T11:00:02.660Z] rolling back failed release for theme
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:00:03.320Z] + set -eu
+[2026-09-06T11:00:03.320Z] + cd gitops/platform/server
+[2026-09-06T11:00:03.320Z] + go run ./cmd/server release-record --service theme --environment dev --record --status failed --git-revision abd3e6c7576c20f7201b5385eae376b266e0b4d7 --image-digest sha256:ce84d695ce883fdbe3e43e293cc07ce04aef8a332454d768fd1d94ea55854626 --config-revision  --rollout-strategy rolling
+[2026-09-06T11:00:03.320Z] recorded theme dev as failed
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:00:03.451Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:00:03.990Z] + set -eu
+[2026-09-06T11:00:03.990Z] + rm -rf gitops-theme
+[2026-09-06T11:00:03.990Z] + echo https://github.com/worryyy/app-test.git
+[2026-09-06T11:00:03.990Z] + sed 's#https://##'
+[2026-09-06T11:00:03.990Z] + clean_repo=github.com/worryyy/app-test.git
+[2026-09-06T11:00:03.990Z] + git clone --depth 1 https://worryyy:****@github.com/worryyy/app-test.git gitops-theme
+[2026-09-06T11:00:03.990Z] Cloning into 'gitops-theme'...
+[2026-09-06T11:00:05.871Z] + git -C gitops-theme remote set-url origin https://github.com/worryyy/app-test.git
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] writeFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:00:06.679Z] + set -eu
+[2026-09-06T11:00:06.679Z] + sh gitops/k3s/ci/scripts/rollback-release.sh resolve-target
+[2026-09-06T11:00:06.679Z] rollback target: sha256:ca5d49767290bb71c15e4585b18ec4ba0cb87c5a117e5b36cade56eaea2b7ede (source: postgres)
+[2026-09-06T11:00:06.679Z] + jq -r .image_digest /home/jenkins/agent/workspace/ecampus-pipeline/.ci/rollback/theme.json
+[2026-09-06T11:00:06.679Z] + export 'EXPECTED_DIGEST=sha256:ca5d49767290bb71c15e4585b18ec4ba0cb87c5a117e5b36cade56eaea2b7ede'
+[2026-09-06T11:00:06.679Z] + '[' true '=' true ]
+[2026-09-06T11:00:06.679Z] + sh gitops/k3s/ci/scripts/rollback-release.sh pause-selfheal
+[2026-09-06T11:00:06.941Z] application.argoproj.io/ecampus-theme patched
+[2026-09-06T11:00:06.941Z] + sh gitops/k3s/ci/scripts/rollback-release.sh abort-traffic
+[2026-09-06T11:00:06.941Z] deployment.apps/ecampus-theme image updated
+[2026-09-06T11:00:06.941Z] + attempts=30
+[2026-09-06T11:00:06.941Z] + '[' 30 -gt 0 ]
+[2026-09-06T11:00:06.941Z] + sh gitops/k3s/ci/scripts/rollback-release.sh verify-traffic
+[2026-09-06T11:00:07.197Z] deployment ecampus-theme does not serve sha256:ca5d49767290bb71c15e4585b18ec4ba0cb87c5a117e5b36cade56eaea2b7ede (image=crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-theme@sha256:ca5d49767290bb71c15e4585b18ec4ba0cb87c5a117e5b36cade56eaea2b7ede replicas=2 available=1)
+[2026-09-06T11:00:07.198Z] + attempts=29
+[2026-09-06T11:00:07.198Z] + sleep 10
+[2026-09-06T11:00:19.346Z] + '[' 29 -gt 0 ]
+[2026-09-06T11:00:19.346Z] + sh gitops/k3s/ci/scripts/rollback-release.sh verify-traffic
+[2026-09-06T11:00:19.346Z] deployment ecampus-theme does not serve sha256:ca5d49767290bb71c15e4585b18ec4ba0cb87c5a117e5b36cade56eaea2b7ede (image=crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-theme@sha256:ca5d49767290bb71c15e4585b18ec4ba0cb87c5a117e5b36cade56eaea2b7ede replicas=2 available=1)
+[2026-09-06T11:00:19.346Z] + attempts=28
+[2026-09-06T11:00:19.346Z] + sleep 10
+[2026-09-06T11:00:27.417Z] + '[' 28 -gt 0 ]
+[2026-09-06T11:00:27.417Z] + sh gitops/k3s/ci/scripts/rollback-release.sh verify-traffic
+[2026-09-06T11:00:27.671Z] verified deployment ecampus-theme serves sha256:ca5d49767290bb71c15e4585b18ec4ba0cb87c5a117e5b36cade56eaea2b7ede
+[2026-09-06T11:00:27.671Z] + break
+[2026-09-06T11:00:27.671Z] + '[' 28 -eq 0 ]
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:00:28.405Z] + set -eu
+[2026-09-06T11:00:28.405Z] + cd gitops/platform/server
+[2026-09-06T11:00:28.405Z] + go run ./cmd/server release-record --service theme --environment dev --record --status compensating --git-revision abd3e6c7576c20f7201b5385eae376b266e0b4d7 --image-digest sha256:ce84d695ce883fdbe3e43e293cc07ce04aef8a332454d768fd1d94ea55854626 --config-revision  --rollout-strategy rolling
+[2026-09-06T11:00:28.405Z] recorded theme dev as compensating
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:00:29.194Z] + sh gitops/k3s/ci/scripts/rollback-release.sh prepare-compensation
+[2026-09-06T11:00:29.194Z] Switched to a new branch 'rollback/theme/abd3e6c7'
+[2026-09-06T11:00:29.194Z] compensation branch rollback/theme/abd3e6c7 reverts theme to sha256:ca5d49767290bb71c15e4585b18ec4ba0cb87c5a117e5b36cade56eaea2b7ede
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:00:29.326Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:00:29.911Z] + set -eu
+[2026-09-06T11:00:29.911Z] + echo https://github.com/worryyy/app-test.git
+[2026-09-06T11:00:29.911Z] + sed 's#https://##'
+[2026-09-06T11:00:29.911Z] + clean_repo=github.com/worryyy/app-test.git
+[2026-09-06T11:00:29.911Z] + n=0
+[2026-09-06T11:00:29.911Z] + '[' 0 -ge 5 ]
+[2026-09-06T11:00:29.911Z] + git -C gitops-theme push https://worryyy:****@github.com/worryyy/app-test.git HEAD:rollback/theme/abd3e6c7
+[2026-09-06T11:00:31.791Z] remote: 
+[2026-09-06T11:00:31.791Z] remote: Create a pull request for 'rollback/theme/abd3e6c7' on GitHub by visiting:        
+[2026-09-06T11:00:31.791Z] remote:      https://github.com/worryyy/app-test/pull/new/rollback/theme/abd3e6c7        
+[2026-09-06T11:00:31.791Z] remote: 
+[2026-09-06T11:00:31.791Z] To https://github.com/worryyy/app-test.git
+[2026-09-06T11:00:31.791Z]  * [new branch]      HEAD -> rollback/theme/abd3e6c7
+[2026-09-06T11:00:31.791Z] + break
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:00:31.969Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:00:32.523Z] + set -eu
+[2026-09-06T11:00:32.523Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-rollback/theme/abd3e6c7.json
+[2026-09-06T11:00:32.523Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-rollback/theme
+[2026-09-06T11:00:32.523Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -X POST -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' -H 'Content-Type: application/json' --data-binary '{"title":"rollback(theme): git-7e920c40","head":"rollback/theme/abd3e6c7","base":"main","body":"Automated by ecampus-jenkins. Affected service: theme"}' https://api.github.com/repos/worryyy/app-test/pulls
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] echo
+[2026-09-06T11:00:34.519Z] GitOps PR created: https://github.com/worryyy/app-test/pull/7
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:00:34.603Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:00:35.151Z] + set -eu
+[2026-09-06T11:00:35.151Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -X POST -H 'Authorization: Bearer ****' -H 'Content-Type: application/json' --data-binary '{"query": "mutation { enablePullRequestAutoMerge(input:{pullRequestId:\"PR_kwDOUO8kQc8AAAABCZZNZQ\", mergeMethod: MERGE}) { clientMutationId } }"}' https://api.github.com/graphql
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:00:36.198Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:00:36.746Z] + set -eu
+[2026-09-06T11:00:36.746Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:00:36.746Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:00:36.746Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:00:37.789Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:00:47.840Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:00:48.385Z] + set -eu
+[2026-09-06T11:00:48.385Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:00:48.385Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:00:48.385Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:00:49.859Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:00:59.909Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:01:00.465Z] + set -eu
+[2026-09-06T11:01:00.465Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:01:00.465Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:01:00.465Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:01:01.506Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:01:11.554Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:01:12.103Z] + set -eu
+[2026-09-06T11:01:12.103Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:01:12.103Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:01:12.103Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:01:13.145Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:01:23.196Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:01:23.744Z] + set -eu
+[2026-09-06T11:01:23.744Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:01:23.744Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:01:23.744Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:01:24.783Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:01:34.834Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:01:35.357Z] + set -eu
+[2026-09-06T11:01:35.357Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:01:35.357Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:01:35.357Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:01:36.396Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:01:46.448Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:01:46.992Z] + set -eu
+[2026-09-06T11:01:46.992Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:01:46.992Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:01:46.992Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:01:48.034Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:01:58.084Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:01:58.633Z] + set -eu
+[2026-09-06T11:01:58.633Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:01:58.633Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:01:58.634Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:01:59.670Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:02:09.722Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:02:10.259Z] + set -eu
+[2026-09-06T11:02:10.259Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:02:10.259Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:02:10.259Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:02:11.296Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:02:21.349Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:02:21.896Z] + set -eu
+[2026-09-06T11:02:21.896Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:02:21.896Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:02:21.896Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:02:22.948Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:02:33.003Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:02:33.551Z] + set -eu
+[2026-09-06T11:02:33.551Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:02:33.551Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:02:33.551Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:02:34.240Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:02:44.292Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:02:44.828Z] + set -eu
+[2026-09-06T11:02:44.828Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:02:44.828Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:02:44.828Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:02:45.868Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:02:55.921Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:02:56.470Z] + set -eu
+[2026-09-06T11:02:56.470Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:02:56.470Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:02:56.470Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:02:57.525Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:03:07.575Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:03:08.127Z] + set -eu
+[2026-09-06T11:03:08.127Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:03:08.127Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:03:08.127Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:03:09.174Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:03:19.230Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:03:19.740Z] + set -eu
+[2026-09-06T11:03:19.740Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:03:19.740Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:03:19.740Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:03:20.782Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:03:30.833Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:03:31.353Z] + set -eu
+[2026-09-06T11:03:31.353Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:03:31.353Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:03:31.353Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:03:32.396Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:03:42.445Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:03:43.003Z] + set -eu
+[2026-09-06T11:03:43.003Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:03:43.003Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:03:43.003Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:03:44.043Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:03:54.102Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:03:54.651Z] + set -eu
+[2026-09-06T11:03:54.651Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:03:54.651Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:03:54.651Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:03:55.690Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:04:05.742Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:04:06.290Z] + set -eu
+[2026-09-06T11:04:06.290Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:04:06.290Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:04:06.290Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:04:07.339Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:04:17.389Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:04:17.936Z] + set -eu
+[2026-09-06T11:04:17.936Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:04:17.936Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:04:17.936Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:04:18.974Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:04:29.026Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:04:29.580Z] + set -eu
+[2026-09-06T11:04:29.580Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:04:29.580Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:04:29.580Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:04:30.619Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:04:40.668Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:04:41.214Z] + set -eu
+[2026-09-06T11:04:41.214Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:04:41.214Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:04:41.214Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:04:42.261Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:04:52.311Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:04:52.862Z] + set -eu
+[2026-09-06T11:04:52.862Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:04:52.862Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:04:52.862Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:04:53.927Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:05:03.983Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:05:04.502Z] + set -eu
+[2026-09-06T11:05:04.502Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:05:04.502Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:05:04.502Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:05:05.539Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:05:15.588Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:05:16.097Z] + set -eu
+[2026-09-06T11:05:16.097Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:05:16.097Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:05:16.097Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:05:17.142Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:05:27.192Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:05:27.741Z] + set -eu
+[2026-09-06T11:05:27.741Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:05:27.741Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:05:27.741Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:05:30.362Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:05:40.423Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:05:40.969Z] + set -eu
+[2026-09-06T11:05:40.969Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:05:40.969Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:05:40.969Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:05:42.076Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:05:52.126Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:05:52.683Z] + set -eu
+[2026-09-06T11:05:52.683Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:05:52.683Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:05:52.683Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:05:53.726Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:06:03.778Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:06:04.327Z] + set -eu
+[2026-09-06T11:06:04.327Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:06:04.327Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:06:04.327Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:06:05.367Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:06:15.427Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:06:15.974Z] + set -eu
+[2026-09-06T11:06:15.974Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:06:15.974Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:06:15.974Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:06:17.015Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:06:27.064Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:06:27.611Z] + set -eu
+[2026-09-06T11:06:27.611Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:06:27.611Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:06:27.611Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:06:28.658Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:06:38.711Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:06:39.259Z] + set -eu
+[2026-09-06T11:06:39.259Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:06:39.259Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:06:39.259Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:06:40.296Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:06:50.353Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:06:50.867Z] + set -eu
+[2026-09-06T11:06:50.868Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:06:50.868Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:06:50.868Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:06:51.910Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:07:01.961Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:07:02.512Z] + set -eu
+[2026-09-06T11:07:02.512Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:07:02.512Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:07:02.512Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:07:03.555Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:07:13.608Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:07:14.153Z] + set -eu
+[2026-09-06T11:07:14.153Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:07:14.153Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:07:14.153Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:07:15.190Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:07:25.247Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:07:25.795Z] + set -eu
+[2026-09-06T11:07:25.795Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:07:25.795Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:07:25.795Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:07:27.272Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:07:37.322Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:07:37.870Z] + set -eu
+[2026-09-06T11:07:37.870Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:07:37.870Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:07:37.871Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:07:39.353Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:07:49.402Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:07:49.949Z] + set -eu
+[2026-09-06T11:07:49.950Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:07:49.950Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:07:49.950Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:07:50.988Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:08:01.040Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:08:01.590Z] + set -eu
+[2026-09-06T11:08:01.590Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:08:01.590Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:08:01.590Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:08:02.632Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:08:12.682Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:08:13.230Z] + set -eu
+[2026-09-06T11:08:13.230Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:08:13.230Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:08:13.230Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:08:13.907Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:08:23.957Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:08:24.504Z] + set -eu
+[2026-09-06T11:08:24.504Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:08:24.504Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:08:24.504Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:08:25.180Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:08:35.235Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:08:35.783Z] + set -eu
+[2026-09-06T11:08:35.783Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:08:35.783Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:08:35.783Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:08:36.822Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:08:46.874Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:08:47.419Z] + set -eu
+[2026-09-06T11:08:47.419Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:08:47.419Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:08:47.419Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:08:48.465Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:08:58.514Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:08:59.061Z] + set -eu
+[2026-09-06T11:08:59.061Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:08:59.061Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:08:59.061Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:09:00.536Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:09:10.592Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:09:11.140Z] + set -eu
+[2026-09-06T11:09:11.140Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:09:11.140Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:09:11.140Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:09:12.178Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:09:22.232Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:09:22.757Z] + set -eu
+[2026-09-06T11:09:22.757Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:09:22.757Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:09:22.757Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:09:23.804Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:09:33.854Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:09:34.401Z] + set -eu
+[2026-09-06T11:09:34.402Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:09:34.402Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:09:34.402Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:09:35.441Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:09:45.496Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:09:46.043Z] + set -eu
+[2026-09-06T11:09:46.043Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:09:46.043Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:09:46.043Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:09:47.081Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:09:57.130Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:09:57.679Z] + set -eu
+[2026-09-06T11:09:57.679Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:09:57.679Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:09:57.679Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:09:59.679Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:10:09.729Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:10:10.273Z] + set -eu
+[2026-09-06T11:10:10.273Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:10:10.273Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:10:10.274Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:10:11.311Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:10:21.365Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:10:21.916Z] + set -eu
+[2026-09-06T11:10:21.916Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:10:21.916Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:10:21.916Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:10:22.967Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:10:33.017Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:10:33.568Z] + set -eu
+[2026-09-06T11:10:33.568Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:10:33.568Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:10:33.568Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:10:35.045Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:10:45.095Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:10:45.642Z] + set -eu
+[2026-09-06T11:10:45.642Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:10:45.643Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:10:45.643Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:10:46.681Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:10:56.731Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:10:57.239Z] + set -eu
+[2026-09-06T11:10:57.239Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:10:57.239Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:10:57.239Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:10:58.714Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:11:08.764Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:11:09.311Z] + set -eu
+[2026-09-06T11:11:09.311Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:11:09.311Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:11:09.311Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:11:10.790Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:11:20.842Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:11:21.386Z] + set -eu
+[2026-09-06T11:11:21.387Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:11:21.387Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:11:21.387Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:11:22.425Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:11:32.480Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:11:33.027Z] + set -eu
+[2026-09-06T11:11:33.027Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:11:33.027Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:11:33.027Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:11:34.505Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:11:44.558Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:11:45.103Z] + set -eu
+[2026-09-06T11:11:45.103Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:11:45.103Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:11:45.103Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:11:46.147Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:11:56.200Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:11:56.744Z] + set -eu
+[2026-09-06T11:11:56.744Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:11:56.744Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:11:56.744Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:11:57.789Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:12:07.842Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:12:08.391Z] + set -eu
+[2026-09-06T11:12:08.391Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:12:08.391Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:12:08.391Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:12:09.444Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:12:19.498Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:12:20.086Z] + set -eu
+[2026-09-06T11:12:20.086Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:12:20.086Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:12:20.086Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:12:21.149Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:12:31.197Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:12:31.745Z] + set -eu
+[2026-09-06T11:12:31.745Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:12:31.745Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:12:31.745Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:12:32.783Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:12:42.833Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:12:43.382Z] + set -eu
+[2026-09-06T11:12:43.382Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:12:43.382Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:12:43.382Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:12:44.421Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:12:54.471Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:12:55.001Z] + set -eu
+[2026-09-06T11:12:55.002Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:12:55.002Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:12:55.002Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:12:56.048Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:13:06.098Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:13:06.648Z] + set -eu
+[2026-09-06T11:13:06.648Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:13:06.648Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:13:06.648Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:13:07.697Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:13:17.749Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:13:18.295Z] + set -eu
+[2026-09-06T11:13:18.295Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:13:18.295Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:13:18.295Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:13:19.333Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:13:29.395Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:13:29.940Z] + set -eu
+[2026-09-06T11:13:29.940Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:13:29.940Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:13:29.940Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:13:30.978Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:13:41.032Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:13:41.582Z] + set -eu
+[2026-09-06T11:13:41.582Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:13:41.582Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:13:41.582Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:13:42.624Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:13:52.675Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:13:53.225Z] + set -eu
+[2026-09-06T11:13:53.225Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:13:53.225Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:13:53.225Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:13:54.261Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:14:04.317Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:14:04.866Z] + set -eu
+[2026-09-06T11:14:04.866Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:14:04.866Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:14:04.866Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:14:05.910Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:14:15.961Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:14:16.510Z] + set -eu
+[2026-09-06T11:14:16.510Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:14:16.510Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:14:16.510Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:14:17.560Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:14:27.610Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:14:28.162Z] + set -eu
+[2026-09-06T11:14:28.162Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:14:28.162Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:14:28.162Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:14:29.202Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:14:39.252Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:14:39.780Z] + set -eu
+[2026-09-06T11:14:39.780Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:14:39.780Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:14:39.780Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:14:40.820Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:14:50.871Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:14:51.420Z] + set -eu
+[2026-09-06T11:14:51.420Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:14:51.420Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:14:51.420Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:14:52.464Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:15:02.515Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:15:03.062Z] + set -eu
+[2026-09-06T11:15:03.063Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:15:03.063Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:15:03.063Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:15:04.099Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:15:14.158Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:15:14.711Z] + set -eu
+[2026-09-06T11:15:14.711Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:15:14.711Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:15:14.711Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:15:15.750Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:15:25.804Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:15:26.355Z] + set -eu
+[2026-09-06T11:15:26.355Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:15:26.355Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:15:26.355Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:15:27.412Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:15:37.461Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:15:38.008Z] + set -eu
+[2026-09-06T11:15:38.008Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:15:38.008Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:15:38.008Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:15:39.047Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:15:49.104Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:15:49.637Z] + set -eu
+[2026-09-06T11:15:49.637Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:15:49.637Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:15:49.637Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:15:50.676Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:16:00.728Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:16:01.273Z] + set -eu
+[2026-09-06T11:16:01.273Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:16:01.273Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:16:01.273Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:16:02.318Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:16:12.372Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:16:12.919Z] + set -eu
+[2026-09-06T11:16:12.919Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:16:12.919Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:16:12.919Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:16:13.957Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:16:24.006Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:16:24.562Z] + set -eu
+[2026-09-06T11:16:24.562Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:16:24.562Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:16:24.563Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:16:25.598Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:16:35.647Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:16:36.171Z] + set -eu
+[2026-09-06T11:16:36.171Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:16:36.171Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:16:36.171Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:16:37.215Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:16:47.267Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:16:47.815Z] + set -eu
+[2026-09-06T11:16:47.815Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:16:47.815Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:16:47.815Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:16:48.854Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:16:58.910Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:16:59.458Z] + set -eu
+[2026-09-06T11:16:59.458Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:16:59.458Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:16:59.458Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:17:00.499Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:17:10.550Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:17:11.096Z] + set -eu
+[2026-09-06T11:17:11.096Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:17:11.096Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:17:11.096Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:17:12.146Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:17:22.196Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:17:22.744Z] + set -eu
+[2026-09-06T11:17:22.744Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:17:22.744Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:17:22.744Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:17:24.218Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:17:34.269Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:17:34.824Z] + set -eu
+[2026-09-06T11:17:34.824Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:17:34.825Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:17:34.825Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:17:35.870Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:17:45.925Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:17:46.470Z] + set -eu
+[2026-09-06T11:17:46.470Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:17:46.470Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:17:46.471Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:17:47.513Z] Sleeping for 10 sec
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-06T11:17:57.562Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:17:58.110Z] + set -eu
+[2026-09-06T11:17:58.110Z] + dirname /home/jenkins/agent/workspace/ecampus-pipeline/.ci/pr-7.json
+[2026-09-06T11:17:58.110Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-06T11:17:58.110Z] + curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -H 'Authorization: Bearer ****' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/worryyy/app-test/pulls/7
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] sleep
+[2026-09-06T11:17:58.784Z] Sleeping for 10 sec
+[Pipeline] error
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-06T11:18:09.405Z] + sh gitops/k3s/ci/scripts/rollback-release.sh resume-selfheal
+[2026-09-06T11:18:09.405Z] application.argoproj.io/ecampus-theme patched
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] echo
+[2026-09-06T11:18:09.502Z] rollback failed for theme: hudson.AbortException: GitOps PR 7 was not merged within 900 seconds
+[Pipeline] readFile
+[Pipeline] }
+[2026-09-06T11:18:09.547Z] Failed in branch theme
+[Pipeline] // parallel
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Approve blue-green promotion)
+Stage "Approve blue-green promotion" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Promote blue-green and wait post-promotion)
+Stage "Promote blue-green and wait post-promotion" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // timestamps
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] }
+[Pipeline] // podTemplate
+[Pipeline] End of Pipeline
+ERROR: script returned exit code 2
+Finished: FAILURE

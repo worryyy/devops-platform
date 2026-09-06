@@ -14,7 +14,7 @@ spec:
         releaseName: argo-rollouts
         valueFiles:
           - $values/k3s/helm-values/platform/argo-rollouts.yaml
-    - repoURL: https://github.com/worryyy/devops-test.git
+    - repoURL: https://github.com/worryyy/app-test.git
       targetRevision: main
       ref: values
 

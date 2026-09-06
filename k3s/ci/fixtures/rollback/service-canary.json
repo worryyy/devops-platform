@@ -1,6 +1,6 @@
 {
   "service": "topic",
-  "image": "crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-topic",
+  "image": "crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-topic",
   "values_file": "k3s/helm-values/workloads/ecampus-topic.yaml",
   "environment": "dev",
   "namespace": "app",

@@ -1,5 +1,7 @@
 global:
   domain: ""
+  nodeSelector:
+    platform-role: control
 
 configs:
   params:
@@ -10,8 +12,11 @@ configs:
 server:
   service:
     type: ClusterIP
+  # Ingress stays off until a public host is wired (webhook step); until then
+  # the shorter controller reconciliation timeout below keeps sync detection
+  # snappy without webhooks.
   ingress:
-    enabled: true
+    enabled: false
     controller: generic
     ingressClassName: nginx
     annotations:
@@ -23,6 +28,8 @@ server:
     tls: false
 
 controller:
+  # GitOps repo polling fallback while GitHub webhooks are not wired.
+  reconciliationTimeout: 15s
   resources:
     requests:
       cpu: 100m

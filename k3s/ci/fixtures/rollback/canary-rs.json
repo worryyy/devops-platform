@@ -1,6 +1,6 @@
 {
   "kind": "ReplicaSet",
   "metadata": {"name": "ecampus-topic-def456"},
-  "spec": {"replicas": 0, "template": {"spec": {"containers": [{"image": "crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-topic:git-eeee2222@sha256:9999999999999999999999999999999999999999999999999999999999999999"}]}}},
+  "spec": {"replicas": 0, "template": {"spec": {"containers": [{"image": "crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-topic:git-eeee2222@sha256:9999999999999999999999999999999999999999999999999999999999999999"}]}}},
   "status": {"replicas": 0, "availableReplicas": 0}
 }

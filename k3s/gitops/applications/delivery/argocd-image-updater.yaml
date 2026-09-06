@@ -14,7 +14,7 @@ spec:
         releaseName: argocd-image-updater
         valueFiles:
           - $values/k3s/helm-values/delivery/argocd-image-updater.yaml
-    - repoURL: https://github.com/worryyy/devops-test.git
+    - repoURL: https://github.com/worryyy/app-test.git
       targetRevision: main
       ref: values
 

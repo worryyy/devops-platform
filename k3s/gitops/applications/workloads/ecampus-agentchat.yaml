@@ -7,7 +7,7 @@ spec:
   project: workloads
 
   source:
-    repoURL: https://github.com/worryyy/devops-test.git
+    repoURL: https://github.com/worryyy/app-test.git
     targetRevision: main
     path: k3s/charts/go-service
     helm:

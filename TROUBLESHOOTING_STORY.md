@@ -119,6 +119,70 @@
 
 ---
 
+## 实战排障案例库（2026-09 三节点部署与首次端到端运行实录）
+
+> 以下全部来自把这套平台第一次真正跑通的过程（22+ 个问题中的精选）,每个都有 git 提交或 benchmarks/evidence 证据。格式:症状→根因→修复→一句话沉淀。面试讲法:挑 2-3 个与岗位相关的,按"发现→定位命令→根因→修复→防回归"展开。
+
+### 案例 1:安全组掐断阿里云系统服务,DNS 全灭但"看起来像 Tailscale 的锅"
+- **症状**:节点 Ready 但 Pod 无法解析任何外网域名;`dig @100.100.2.138` 超时。第一反应是 Tailscale 劫持了 CGNAT 段(100.64/10)——`ip route get` 证明路由其实走 eth0,排除。
+- **定位**:`ip route get 100.100.2.138`(路由正确)→ `dig @223.5.5.5`(公共 DNS 正常)→ 差异只在阿里云内网 DNS。
+- **根因**:安全组出方向没放行到阿里云系统服务段(100.100.2.136/138 DNS、100.100.100.200 元数据),VPC 内 egress 策略一刀切。
+- **修复**:节点 systemd-resolved 全局切换公共 AliDNS(223.5.5.5/119.29.29.29, Domains=~.),ACR VPC 端点同样被挡→镜像地址全改公网端点。
+- **一句话**:overlay 网络和 CGNAT 段重叠时先看路由再看安全组,"最常见的嫌疑人不是真凶"。
+
+### 案例 2:镜像加速的三层漏配——containerd/ctr/wget 各走各的路
+- **症状**:配了 k3s registries.yaml 镜像加速,Pod 拉镜像还是超时;更怪的是同一个 docker.io 镜像,kubelet 拉得动、`ctr pull` 拉不动、Pod 里 `wget quay.io` 也挂。
+- **根因**:三个组件三套解析——registries.yaml 只作用于 CRI 镜像拉取;ctr CLI 默认连另一个 socket 且不走 mirror;构建容器里的 wget 是裸 HTTP 请求谁也帮不了。
+- **修复**:分层治——containerd 加 mirror(1ms.run 主+daocloud 备);CI 容器改用预烘焙镜像(golang-ci/alpine-tools,零运行时 apk);外部二进制工具(kubectl)Mac 下载后直接预置进 PVC。
+- **一句话**:"配了镜像加速"要能说清加速的是哪一层的流量——镜像拉取、CLI 操作、构建内网络是三条独立通路。
+
+### 案例 3:buildkitd 在高负载下被 kubelet"误杀"
+- **症状**:4 服务并行构建时整个 agent Pod 突然消失,构建中止。事件里是 liveness probe failed: `buildctl debug workers` timed out。
+- **根因**:探针默认 1s exec 超时,而 buildkitd 忙于 4 路构建时连本地 socket 响应都超过 1s,连续 3 次失败触发重启,级联杀死整个构建 Pod。
+- **修复**:liveness/readiness timeout 10s + failureThreshold 6 + initialDelay 30s;注释写明"负载下探针误杀健康的 busy 进程"。
+- **一句话**:给重负载守护进程配探针,超时必须按"最忙时刻"而不是"空闲时刻"定。
+
+### 案例 4:两层 OOM 的先后误诊——先修显性的,再抓隐藏的
+- **症状**:13 服务并行编译,go 容器 OOM(6Gi 上限);改 4 个一批后过,几轮后 buildkitd 又 OOM(3Gi)。
+- **根因**:第一批修的是 go 编译器内存(cgo 下单编译进程 300-800MB);第二层是 buildkitd 自身缓存 4 路构建状态的内存,初始 3Gi 上限拍脑袋定的。
+- **修复**:go 8Gi + buildkitd 6Gi + 批次 4→1(本地缓存导出器不支持并发写,详见案例 5)。
+- **一句话**:并行度×单实例内存才是真实预算,逐层 OOM 是分批暴露的——第一次修完不代表没有第二层。
+
+### 案例 5:buildkit 本地缓存的"不对称 API"和并发踩踏
+- **症状**:换本地缓存后先报 `local cache exporter requires dest`(参数叫 dir),改完又报 `importer requires src`(导入叫 src);再改对又出现 ingest 目录 rename 失败。
+- **根因**:buildctl 的 local exporter/importer 参数名不对称(dest/src);且 local 目录导出对多进程并发写不安全——4 个并行 buildctl 同时往一个目录写 ingest 互相覆盖。
+- **修复**:导出 dest/导入 src + 批次降为 1(构建串行)。
+- **一句话**:读文档要看参数表而不是想当然;共享目录型缓存的并发安全性要看实现,不能假设。
+
+### 案例 6:ACR 个人版的三连击——Bearer 流程、仓库名层级、cacheconfig 清单
+- **症状**:(a) curl 带 basic auth 打 /v2/ 返回 401;(b) 推送 `pulseops/buildkit-cache/comment` 报 insufficient_scope;(c) 缓存导出报 `unknown manifest class for application/vnd.buildkit.cacheconfig.v0`。
+- **根因**:(a) ACR 走 registry Bearer token 协议,basic 只在换 token 时用;(b) 个人版仓库名不允许斜杠,只有命名空间/仓库单层;(c) 个人版清单校验白名单不认 buildkit 的 cacheconfig 媒体类型。
+- **修复**:(a) 探测脚本实现 token 舞步(probe-registry-cache.sh);(b) 缓存仓库拍平成 `buildkit-cache-<svc>`;(c) registry 层缓存整体改走 PVC 本地目录。
+- **一句话**:云厂商 registry 的"兼容 Docker Registry API"都有方言——鉴权流、命名规则、清单白名单三处都可能不兼容,选型前用真实工作流压一遍。
+
+### 案例 7:Jenkins 的四个"反直觉"行为连环坑
+- **症状与根因**:
+  - withEnv 给变量赋**空字符串等于删除该变量** → 下游 set -u 直接爆 "parameter not set";
+  - 流水线 parameters{} 的 defaultValue **只在参数首次注册时生效**,之后改 Jenkinsfile 不更新任务里存的旧默认值;
+  - Groovy ''' 字符串里 `\(` 是非法转义,shell 正则原样写会编译失败——复杂 shell 挪进 .sh 文件;
+  - Go flag 包对 `--help` 打印用法后**以退出码 2 退出**,拿它当健康断言必挂。
+- **修复**:空值 shell 侧 `${VAR:-}` 兜底;重建任务或触发时显式传参;复杂 shell 独立脚本化;--help 断言加 `|| true`。
+- **一句话**:CI 系统的"文档化行为"和"实际行为"之间隔着 N 个 JIRA——踩过的每个坑都要沉淀成团队 wiki。
+
+### 案例 8:DNS 解析的地址族陷阱——goproxy.cn 的 AAAA 记录
+- **症状**:go mod download 全量报 `dial tcp [240e:...]: network is unreachable`,但同一镜像里 curl 同域名正常。
+- **根因**:goproxy.cn 双栈解析,Go 的模块下载路径优先选了 AAAA,而 Pod 网络无 IPv6 出口;curl 走 Happy Eyeballs 回退了 v4 所以没事。
+- **修复**:GODEBUG=netdns=go 强制纯 Go 解析器(带回退)+ GOPROXY 多代理链(goproxy.cn 主、aliyun 备——备用源还救过一次阿里云镜像返回损坏 zip 的问题)。
+- **一句话**:无 IPv6 的网络里,任何"偶尔挂"的下载问题先查 AAAA 记录和解析器行为。
+
+### 案例 9:"从未跑过"的幽灵配置——`--impact` 旗标不存在
+- **症状**:流水线在 catalog 解析处报 `flag provided but not defined: -impact`。
+- **根因**:Jenkinsfile 调用了一个**代码里从未实现过的旗标**——这套流水线此前从未端到端执行过,纸面设计和代码实现从未对齐(同类还有:服务目录的 PG Service 名用的旧 bitnami 命名、Dockerfile 内 apk 用境外源)。
+- **修复**:删旗标(impact 数据流水线直接读 impact.json);PG URL 改实际 Service 名。
+- **一句话**:面试被问"你这流水线跑过吗"时,能回答"我把从未跑通的它跑通了,并修了 22 个这样的裂缝"比"跑过"有力得多。
+
+---
+
 ## 使用建议
 
 1. **只主推一个故事**(抑制范围),备选 B/C 是同一面试里被要求"再讲一个"时的储备;

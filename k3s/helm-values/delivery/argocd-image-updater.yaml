@@ -15,8 +15,8 @@ config:
   kube.events: true
   registries:
     - name: Aliyun ACR
-      prefix: crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com
-      api_url: https://crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com
+      prefix: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+      api_url: https://crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
       default: true
       credentials: pullsecret:argocd/tcr-secret
 

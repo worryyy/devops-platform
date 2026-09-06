@@ -36,7 +36,7 @@ func TestLoadServiceCatalog(t *testing.T) {
 	if service.Kind != "go-service" {
 		t.Fatalf("Kind = %q, want go-service", service.Kind)
 	}
-	if environment.Image.Repository != "crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-topic" {
+	if environment.Image.Repository != "crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-topic" {
 		t.Fatalf("Image.Repository = %q", environment.Image.Repository)
 	}
 }

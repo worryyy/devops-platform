@@ -16,7 +16,7 @@ func TestExportDeliveryServices(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(result.Services) != 2 || result.Services[0].Image != "crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-topic" {
+	if len(result.Services) != 2 || result.Services[0].Image != "crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-topic" {
 		t.Fatalf("unexpected export: %#v", result)
 	}
 	if result.Services[0].Rollout != "ecampus-topic" || result.Services[0].HealthPath != "/health" {

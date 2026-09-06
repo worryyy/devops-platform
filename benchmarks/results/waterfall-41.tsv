@@ -1,0 +1,10 @@
+Checkout main	87s
+Detect affected services	1s
+Resolve delivery catalog	1s
+Verify agent generated code	skipped
+Verify, build and push	110s
+Prepare tools	0s
+Publish GitOps PRs	skipped
+Wait for rollout and health	skipped
+Approve blue-green promotion	skipped
+Promote blue-green and wait post-promotion	0s

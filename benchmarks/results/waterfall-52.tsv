@@ -1,0 +1,11 @@
+heckout main	-16385s
+etect affected services	-16472s
+esolve delivery catalog	-16485s
+erify agent generated code	0s
+erify, build and push	0s
+ranch: theme	-16486s
+repare tools	-16497s
+ublish GitOps PRs	0s
+ait for rollout and health	0s
+pprove blue-green promotion	0s
+romote blue-green and wait post-promotion	0s

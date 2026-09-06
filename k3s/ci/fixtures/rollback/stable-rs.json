@@ -3,7 +3,7 @@
   "metadata": {"name": "ecampus-topic-abc123"},
   "spec": {
     "replicas": 2,
-    "template": {"spec": {"containers": [{"image": "crpi-gfwwpdquc14b7w22-vpc.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-topic:git-aaaa1111@sha256:1111111111111111111111111111111111111111111111111111111111111111"}]}}
+    "template": {"spec": {"containers": [{"image": "crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-topic:git-aaaa1111@sha256:1111111111111111111111111111111111111111111111111111111111111111"}]}}
   },
   "status": {"replicas": 2, "availableReplicas": 2}
 }

@@ -1,0 +1,2852 @@
+Started by user Jenkins Admin
+Obtained k3s/ci/jenkins/ecampus.Jenkinsfile from git https://github.com/worryyy/app-test.git
+[Pipeline] Start of Pipeline
+[Pipeline] podTemplate
+[Pipeline] {
+[Pipeline] node
+[PodInfo] delivery/ecampus-pipeline-41-8m5tt-lhw90-tgjsg
+	Container [buildkitd] waiting [ContainerCreating] No message
+	Container [curl] waiting [ContainerCreating] No message
+	Container [git] waiting [ContainerCreating] No message
+	Container [go] waiting [ContainerCreating] No message
+	Container [jnlp] waiting [ContainerCreating] No message
+	Container [rollouts] waiting [ContainerCreating] No message
+	Container [yq] waiting [ContainerCreating] No message
+	Pod [Pending][ContainersNotReady] containers with unready status: [go buildkitd git yq rollouts curl jnlp]
+Created Pod: kubernetes delivery/ecampus-pipeline-41-8m5tt-lhw90-tgjsg
+[PodInfo] delivery/ecampus-pipeline-41-8m5tt-lhw90-tgjsg
+	Pod [Running][ContainersNotReady] containers with unready status: [buildkitd]
+[PodInfo] delivery/ecampus-pipeline-41-8m5tt-lhw90-tgjsg
+	Pod [Running][ContainersNotReady] containers with unready status: [buildkitd]
+Agent ecampus-pipeline-41-8m5tt-lhw90-tgjsg is provisioned from template ecampus-pipeline_41-8m5tt-lhw90
+---
+apiVersion: "v1"
+kind: "Pod"
+metadata:
+  annotations:
+    kubernetes.jenkins.io/last-refresh: "1788631296027"
+    buildUrl: "http://jenkins.delivery.svc.cluster.local:8080/job/ecampus-pipeline/41/"
+    runUrl: "job/ecampus-pipeline/41/"
+  labels:
+    jenkins/jenkins-jenkins-agent: "true"
+    jenkins/label-digest: "1bf2b6fa39b9f1aac539a233fda468317229d054"
+    jenkins/label: "ecampus-pipeline_41-8m5tt"
+    kubernetes.jenkins.io/controller: "http___jenkins_delivery_svc_cluster_local_8080x"
+  name: "ecampus-pipeline-41-8m5tt-lhw90-tgjsg"
+  namespace: "delivery"
+spec:
+  containers:
+  - command:
+    - "cat"
+    env:
+    - name: "GOCACHE"
+      value: "/cache/go-build"
+    - name: "GOMODCACHE"
+      value: "/cache/go-mod"
+    - name: "GOPROXY"
+      value: "https://goproxy.cn,direct"
+    - name: "DATABASE_URL"
+      valueFrom:
+        secretKeyRef:
+          key: "database-url"
+          name: "platform-postgresql-auth"
+    image: "crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/golang-ci:1.26"
+    name: "go"
+    resources:
+      limits:
+        cpu: "3"
+        memory: "8Gi"
+      requests:
+        cpu: "1500m"
+        memory: "2Gi"
+    tty: true
+    volumeMounts:
+    - mountPath: "/cache"
+      name: "jenkins-cache"
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - args:
+    - "--oci-worker-no-process-sandbox"
+    env:
+    - name: "DOCKER_CONFIG"
+      value: "/home/user/.docker"
+    image: "moby/buildkit:v0.31.2-rootless"
+    livenessProbe:
+      exec:
+        command:
+        - "buildctl"
+        - "debug"
+        - "workers"
+      failureThreshold: 6
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 10
+    name: "buildkitd"
+    readinessProbe:
+      exec:
+        command:
+        - "buildctl"
+        - "debug"
+        - "workers"
+      failureThreshold: 6
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 10
+    resources:
+      limits:
+        cpu: "2"
+        memory: "6Gi"
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+    securityContext:
+      appArmorProfile:
+        type: "Unconfined"
+      runAsGroup: 1000
+      runAsUser: 1000
+      seccompProfile:
+        type: "Unconfined"
+    volumeMounts:
+    - mountPath: "/home/user/.local/share/buildkit"
+      name: "buildkit-cache"
+    - mountPath: "/home/user/.config/buildkit"
+      name: "buildkit-config"
+      readOnly: true
+    - mountPath: "/home/user/.docker"
+      name: "registry-secret"
+      readOnly: true
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - command:
+    - "cat"
+    image: "alpine/git:2.45.2"
+    name: "git"
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+    tty: true
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - command:
+    - "cat"
+    image: "mikefarah/yq:4.44.3"
+    name: "yq"
+    resources:
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+    tty: true
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - command:
+    - "cat"
+    env:
+    - name: "DATABASE_URL"
+      valueFrom:
+        secretKeyRef:
+          key: "database-url"
+          name: "platform-postgresql-auth"
+    image: "crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/alpine-tools:3.21"
+    name: "rollouts"
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+    tty: true
+    volumeMounts:
+    - mountPath: "/cache"
+      name: "jenkins-cache"
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - command:
+    - "cat"
+    image: "curlimages/curl:8.10.1"
+    name: "curl"
+    resources:
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+    securityContext:
+      runAsGroup: 1000
+      runAsUser: 1000
+    tty: true
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  - env:
+    - name: "JENKINS_SECRET"
+      value: "********"
+    - name: "JENKINS_TUNNEL"
+      value: "jenkins-agent.delivery.svc.cluster.local:50000"
+    - name: "JENKINS_AGENT_NAME"
+      value: "ecampus-pipeline-41-8m5tt-lhw90-tgjsg"
+    - name: "REMOTING_OPTS"
+      value: "-noReconnectAfter 1d"
+    - name: "JENKINS_NAME"
+      value: "ecampus-pipeline-41-8m5tt-lhw90-tgjsg"
+    - name: "JENKINS_AGENT_WORKDIR"
+      value: "/home/jenkins/agent"
+    - name: "JENKINS_URL"
+      value: "http://jenkins.delivery.svc.cluster.local:8080/"
+    image: "jenkins/inbound-agent:3383.vc8881d4b_0e76-1-jdk25"
+    name: "jnlp"
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+    volumeMounts:
+    - mountPath: "/home/jenkins/agent"
+      name: "workspace-volume"
+      readOnly: false
+  imagePullSecrets:
+  - name: "tcr-secret"
+  nodeSelector:
+    platform-role: "control"
+  restartPolicy: "Never"
+  securityContext:
+    fsGroup: 1000
+    fsGroupChangePolicy: "OnRootMismatch"
+  serviceAccountName: "ecampus-release"
+  volumes:
+  - configMap:
+      name: "buildkitd-config"
+    name: "buildkit-config"
+  - name: "jenkins-cache"
+    persistentVolumeClaim:
+      claimName: "jenkins-agent-cache"
+  - name: "registry-secret"
+    secret:
+      items:
+      - key: ".dockerconfigjson"
+        path: "config.json"
+      secretName: "tcr-kaniko-secret"
+  - name: "buildkit-cache"
+    persistentVolumeClaim:
+      claimName: "buildkit-cache"
+  - emptyDir:
+      medium: ""
+    name: "workspace-volume"
+
+Running on ecampus-pipeline-41-8m5tt-lhw90-tgjsg in /home/jenkins/agent/workspace/ecampus-pipeline
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] timestamps
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Checkout main)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withCredentials
+[2026-09-05T18:01:49.543Z] Masking supported pattern matches of $GIT_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:01:50.175Z] + set -eu
+[2026-09-05T18:01:50.175Z] + rm -rf source gitops .ci impact.json delivery-catalog.json
+[2026-09-05T18:01:50.175Z] + source_repo=https://github.com/worryyy/app-test.git
+[2026-09-05T18:01:50.175Z] + echo https://github.com/worryyy/app-test.git
+[2026-09-05T18:01:50.175Z] + sed 's#https://##'
+[2026-09-05T18:01:50.175Z] + clean_source=github.com/worryyy/app-test.git
+[2026-09-05T18:01:50.175Z] + git clone --branch main https://worryyy:****@github.com/worryyy/app-test.git source
+[2026-09-05T18:01:50.175Z] Cloning into 'source'...
+[2026-09-05T18:02:28.846Z] + echo https://github.com/worryyy/app-test.git
+[2026-09-05T18:02:28.846Z] + sed 's#https://##'
+[2026-09-05T18:02:28.846Z] + clean_repo=github.com/worryyy/app-test.git
+[2026-09-05T18:02:28.846Z] + git clone https://worryyy:****@github.com/worryyy/app-test.git gitops
+[2026-09-05T18:02:28.846Z] Cloning into 'gitops'...
+[2026-09-05T18:03:15.473Z] + git -C gitops remote set-url origin https://github.com/worryyy/app-test.git
+[2026-09-05T18:03:15.473Z] + git -C source branch --show-current
+[2026-09-05T18:03:15.473Z] + test main '=' main
+[2026-09-05T18:03:15.473Z] + git -C source rev-parse HEAD
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] script
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Detect affected services)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:03:16.375Z] + set -eu
+[2026-09-05T18:03:16.376Z] + cd source
+[2026-09-05T18:03:16.376Z] + '[' -n  ]
+[2026-09-05T18:03:16.376Z] + go run ./cmd/ecampus-impact --all
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] script
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] echo
+[2026-09-05T18:03:16.535Z] test services: academic,agentchat,chat,comment,file,marketplace,moderation,notification,reservation,school,theme,topic,user
+[Pipeline] echo
+[2026-09-05T18:03:16.551Z] build services: academic,agentchat,chat,comment,file,marketplace,moderation,notification,reservation,school,theme,topic,user
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Resolve delivery catalog)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:03:17.277Z] + set -eu
+[2026-09-05T18:03:17.277Z] + cd gitops/platform/server
+[2026-09-05T18:03:17.277Z] + go run ./cmd/server catalog --catalog configs/service-catalog.yaml --services academic,agentchat,chat,comment,file,marketplace,moderation,notification,reservation,school,theme,topic,user --environment dev
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] script
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] echo
+[2026-09-05T18:03:17.453Z] blue-green services: agentchat,chat,marketplace,moderation,notification,reservation,school
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Verify agent generated code)
+Stage "Verify agent generated code" skipped due to when conditional
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Verify, build and push)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] parallel
+[Pipeline] { (Branch: academic)
+[Pipeline] readFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:03:18.444Z] + set -eu
+[2026-09-05T18:03:18.444Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests
+[2026-09-05T18:03:18.444Z] + chmod -R 777 /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-05T18:03:18.444Z] + cd source
+[2026-09-05T18:03:18.444Z] + ./scripts/ci/run-service-checks.sh --service academic
+[2026-09-05T18:03:19.377Z] ?   	github.com/Milchstrassse/Ecampus-go/cmd/ecampus-academic	[no test files]
+[2026-09-05T18:03:19.377Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/academic	(cached)
+[2026-09-05T18:03:19.377Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/bootstrap	[no test files]
+[2026-09-05T18:03:19.377Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampus/academicapp	[no test files]
+[2026-09-05T18:03:19.377Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusruntime	[no test files]
+[2026-09-05T18:03:19.377Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/moderationadapter	[no test files]
+[2026-09-05T18:03:19.377Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/useradapter	[no test files]
+[2026-09-05T18:03:19.377Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/file	(cached)
+[2026-09-05T18:03:19.377Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/integration/cosutil	[no test files]
+[2026-09-05T18:03:19.377Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/integration/wxutil	(cached)
+[2026-09-05T18:03:20.304Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/middleware	0.011s
+[2026-09-05T18:03:20.305Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/moderation	(cached)
+[2026-09-05T18:03:20.305Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/adminjwt	(cached)
+[2026-09-05T18:03:20.305Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/bizerr	[no test files]
+[2026-09-05T18:03:20.305Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/config	0.004s
+[2026-09-05T18:03:20.305Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/encrypt	(cached)
+[2026-09-05T18:03:20.305Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/jwtutil	[no test files]
+[2026-09-05T18:03:20.305Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/pagination	[no test files]
+[2026-09-05T18:03:20.305Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/rediskey	[no test files]
+[2026-09-05T18:03:20.305Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/responses	(cached)
+[2026-09-05T18:03:20.305Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/snowflake	[no test files]
+[2026-09-05T18:03:20.305Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/sensitive	(cached)
+[2026-09-05T18:03:20.305Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/user	(cached)
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:03:21.002Z] + set -eu
+[2026-09-05T18:03:21.002Z] + metadata=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/academic.json
+[2026-09-05T18:03:21.002Z] + import_cache=
+[2026-09-05T18:03:21.002Z] + '[' -d /home/user/.local/share/buildkit/local-cache ]
+[2026-09-05T18:03:21.002Z] + ls -A /home/user/.local/share/buildkit/local-cache
+[2026-09-05T18:03:21.002Z] + '[' -n 'blobs
+[2026-09-05T18:03:21.002Z] index.json
+[2026-09-05T18:03:21.002Z] ingest
+[2026-09-05T18:03:21.002Z] oci-layout' ]
+[2026-09-05T18:03:21.002Z] + import_cache='--import-cache type=local,src=/home/user/.local/share/buildkit/local-cache'
+[2026-09-05T18:03:21.002Z] + buildctl build '--frontend=dockerfile.v0' --local 'context=/home/jenkins/agent/workspace/ecampus-pipeline/source' --local 'dockerfile=/home/jenkins/agent/workspace/ecampus-pipeline/source' --opt 'filename=build/Dockerfile.go-service' --opt 'platform=linux/amd64' --opt 'build-arg:SERVICE_PATH=./cmd/ecampus-academic' --opt 'build-arg:CONFIG_DIR=configs/ecampus' --opt 'build-arg:SERVICE_PORT=8080' --import-cache 'type=local,src=/home/user/.local/share/buildkit/local-cache' --export-cache 'type=local,dest=/home/user/.local/share/buildkit/local-cache,mode=max' --output 'type=image,name=crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-academic:git-94c062c5,push=true' '--metadata-file=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/academic.json'
+[2026-09-05T18:03:21.002Z] #1 [internal] load build definition from build/Dockerfile.go-service
+[2026-09-05T18:03:21.002Z] #1 transferring dockerfile: 1.39kB done
+[2026-09-05T18:03:21.002Z] #1 DONE 0.0s
+[2026-09-05T18:03:21.002Z] 
+[2026-09-05T18:03:21.002Z] #2 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+[2026-09-05T18:03:22.887Z] #2 DONE 2.0s
+[2026-09-05T18:03:23.145Z] 
+[2026-09-05T18:03:23.145Z] #3 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+[2026-09-05T18:03:23.145Z] #3 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+[2026-09-05T18:03:23.145Z] #3 CACHED
+[2026-09-05T18:03:23.145Z] 
+[2026-09-05T18:03:23.145Z] #4 [internal] load metadata for docker.io/library/golang:1.26-alpine
+[2026-09-05T18:03:23.145Z] #4 ...
+[2026-09-05T18:03:23.145Z] 
+[2026-09-05T18:03:23.145Z] #5 [internal] load metadata for docker.io/library/alpine:3.20
+[2026-09-05T18:03:23.145Z] #5 DONE 0.2s
+[2026-09-05T18:03:23.145Z] 
+[2026-09-05T18:03:23.145Z] #4 [internal] load metadata for docker.io/library/golang:1.26-alpine
+[2026-09-05T18:03:23.145Z] #4 DONE 0.2s
+[2026-09-05T18:03:23.145Z] 
+[2026-09-05T18:03:23.145Z] #6 [internal] load .dockerignore
+[2026-09-05T18:03:23.145Z] #6 transferring context: 124B done
+[2026-09-05T18:03:23.145Z] #6 DONE 0.0s
+[2026-09-05T18:03:23.145Z] 
+[2026-09-05T18:03:23.145Z] #7 [internal] load build context
+[2026-09-05T18:03:23.145Z] #7 DONE 0.0s
+[2026-09-05T18:03:23.145Z] 
+[2026-09-05T18:03:23.145Z] #8 importing cache manifest from local:18043072566587139762
+[2026-09-05T18:03:23.145Z] #8 inferred cache manifest type: application/vnd.oci.image.manifest.v1+json done
+[2026-09-05T18:03:23.145Z] #8 DONE 0.0s
+[2026-09-05T18:03:23.145Z] 
+[2026-09-05T18:03:23.145Z] #9 [builder 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:03:23.145Z] #9 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628 0.0s done
+[2026-09-05T18:03:23.145Z] #9 DONE 0.0s
+[2026-09-05T18:03:23.145Z] 
+[2026-09-05T18:03:23.145Z] #10 [stage-1 1/5] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:03:23.145Z] #10 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:03:23.404Z] #10 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc 0.0s done
+[2026-09-05T18:03:23.404Z] #10 DONE 0.0s
+[2026-09-05T18:03:23.404Z] 
+[2026-09-05T18:03:23.404Z] #7 [internal] load build context
+[2026-09-05T18:03:23.404Z] #7 transferring context: 2.35MB 0.1s done
+[2026-09-05T18:03:23.404Z] #7 DONE 0.1s
+[2026-09-05T18:03:23.404Z] 
+[2026-09-05T18:03:23.404Z] #11 [builder 3/6] COPY go.mod go.sum ./
+[2026-09-05T18:03:23.404Z] #11 CACHED
+[2026-09-05T18:03:23.404Z] 
+[2026-09-05T18:03:23.404Z] #12 [builder 2/6] WORKDIR /src
+[2026-09-05T18:03:23.404Z] #12 CACHED
+[2026-09-05T18:03:23.404Z] 
+[2026-09-05T18:03:23.404Z] #13 [builder 4/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     go mod download
+[2026-09-05T18:03:23.404Z] #13 CACHED
+[2026-09-05T18:03:23.404Z] 
+[2026-09-05T18:03:23.404Z] #14 [builder 5/6] COPY . .
+[2026-09-05T18:03:23.404Z] #14 DONE 0.1s
+[2026-09-05T18:03:23.675Z] 
+[2026-09-05T18:03:23.675Z] #15 [builder 6/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     --mount=type=cache,id=ecampus-go-build-linux-amd64,target=/root/.cache/go-build,sharing=shared     test -n "./cmd/ecampus-academic" &&     test -d "configs/ecampus" &&     CGO_ENABLED=0 GOOS="linux" GOARCH="amd64"       go build -trimpath -o /out/app "./cmd/ecampus-academic" &&     mkdir -p /out/configs &&     cp -R "configs/ecampus" /out/configs/
+[2026-09-05T18:03:26.189Z] #15 DONE 2.4s
+[2026-09-05T18:03:26.189Z] 
+[2026-09-05T18:03:26.189Z] #16 [stage-1 3/5] WORKDIR /app
+[2026-09-05T18:03:26.189Z] #16 CACHED
+[2026-09-05T18:03:26.189Z] 
+[2026-09-05T18:03:26.189Z] #17 [stage-1 4/5] COPY --from=builder /out/app /app/app
+[2026-09-05T18:03:26.189Z] #17 CACHED
+[2026-09-05T18:03:26.189Z] 
+[2026-09-05T18:03:26.189Z] #18 [stage-1 2/5] RUN sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#' /etc/apk/repositories     && apk --no-cache add ca-certificates tzdata
+[2026-09-05T18:03:26.189Z] #18 CACHED
+[2026-09-05T18:03:26.189Z] 
+[2026-09-05T18:03:26.189Z] #19 [stage-1 5/5] COPY --from=builder /out/configs /app/configs
+[2026-09-05T18:03:26.189Z] #19 CACHED
+[2026-09-05T18:03:26.189Z] 
+[2026-09-05T18:03:26.189Z] #20 exporting to image
+[2026-09-05T18:03:26.189Z] #20 exporting layers done
+[2026-09-05T18:03:26.189Z] #20 exporting manifest sha256:0a4522fdc26144f99192ffc6d049cc766964aba3fb3ac82807579a19956b31d1 done
+[2026-09-05T18:03:26.189Z] #20 exporting config sha256:628a8daac5bbefedb5529d3caafed0fb800511f8ae4522837ec2562370706a61 done
+[2026-09-05T18:03:26.189Z] #20 pushing layers
+[2026-09-05T18:03:26.445Z] #20 ...
+[2026-09-05T18:03:26.445Z] 
+[2026-09-05T18:03:26.445Z] #21 [auth] pulseops/ecampus-academic:pull,push token for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+[2026-09-05T18:03:26.445Z] #21 DONE 0.0s
+[2026-09-05T18:03:26.445Z] 
+[2026-09-05T18:03:26.445Z] #22 exporting cache to client directory
+[2026-09-05T18:03:26.445Z] #22 preparing build cache for export
+[2026-09-05T18:03:28.331Z] #22 preparing build cache for export 2.1s done
+[2026-09-05T18:03:28.332Z] #22 sending cache export
+[2026-09-05T18:03:28.332Z] #22 writing layer sha256:2cb3e687d353c47479f7eb82d6cc1b230f1d252bfefaddbeec9d3de57edf5d49 done
+[2026-09-05T18:03:28.332Z] #22 writing layer sha256:042661aeb5c69dd0452694703e1bcda91e6086e4cf3ae186e367a9cd60abcd7d done
+[2026-09-05T18:03:28.332Z] #22 writing layer sha256:064fa59a616396e5e634c6b983ed9148a6337b2994b78c8eaf85dcfaf73777e5 done
+[2026-09-05T18:03:28.332Z] #22 writing layer sha256:25f1d6b1951ac8eb3740558fe94cb83d377bdadf95fd9f98b50d2e1b96130471 done
+[2026-09-05T18:03:28.332Z] #22 writing layer sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 done
+[2026-09-05T18:03:28.332Z] #22 writing layer sha256:55afa1ecc21d2bb5e5045f32dafee56272ffd89860bac26f6c32123439af26a4 done
+[2026-09-05T18:03:28.332Z] #22 writing layer sha256:7c3a144dfd2227e5e4aec126921061520351642741e8d4756e18775005b628b1 done
+[2026-09-05T18:03:28.332Z] #22 writing layer sha256:9631d7dfcdff651a26266473b942eb90ce3f0d7ca30f8abb047952278a7e5c47 done
+[2026-09-05T18:03:28.332Z] #22 writing layer sha256:97899feefcfabb3437175a0fccfa863ec04cf4d64f9e42467712588180f88e72 done
+[2026-09-05T18:03:28.332Z] #22 writing layer sha256:a01ef6a6016004d114c97cf04a9708d71f6bb95e2b482f829ae547874376d5c7 done
+[2026-09-05T18:03:28.332Z] #22 writing layer sha256:aeab970a1c0e5bc09c03f583433261a55b822055c791062cebda2c691b04bee6
+[2026-09-05T18:03:28.332Z] #22 writing layer sha256:bba1b8482d9a01c11df25e07330410aa90a96a13d050644a4f259d25a387c4d9 0.0s done
+[2026-09-05T18:03:28.332Z] #22 writing layer sha256:c023d63c4a5bc658f0a860ac595ad386804f7f891c5a2149f4a8270eb855ed59 done
+[2026-09-05T18:03:28.332Z] #22 writing layer sha256:da88a28d0710b41958a88a7c9ca11eb6253af9feb82491d04678dfd99bdd32aa done
+[2026-09-05T18:03:28.332Z] #22 writing layer sha256:e5ee7da0307b89156ec739187daa2d6a1d45ec8063b39d7b33810fa12979cc5d done
+[2026-09-05T18:03:28.332Z] #22 ...
+[2026-09-05T18:03:28.332Z] 
+[2026-09-05T18:03:28.332Z] #20 exporting to image
+[2026-09-05T18:03:28.332Z] #20 pushing layers 2.1s done
+[2026-09-05T18:03:28.332Z] #20 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-academic:git-94c062c5@sha256:0a4522fdc26144f99192ffc6d049cc766964aba3fb3ac82807579a19956b31d1 0.3s done
+[2026-09-05T18:03:28.332Z] #20 DONE 2.4s
+[2026-09-05T18:03:28.587Z] 
+[2026-09-05T18:03:28.587Z] #22 exporting cache to client directory
+[2026-09-05T18:03:28.587Z] #22 sending cache export 0.4s done
+[2026-09-05T18:03:28.587Z] #22 writing layer sha256:aeab970a1c0e5bc09c03f583433261a55b822055c791062cebda2c691b04bee6 0.3s done
+[2026-09-05T18:03:28.587Z] #22 writing config sha256:e2f6c5c164db951cc581287ac4e1158ecf85c91805e570758671f3cd1760a821 0.0s done
+[2026-09-05T18:03:28.587Z] #22 writing cache image manifest sha256:392e91194d8d0eb9aaac603a4e76c44ad29b427ebdd4d2cc71ca338911e3c3d8 done
+[2026-09-05T18:03:28.587Z] #22 DONE 2.4s
+[2026-09-05T18:03:28.587Z] + test -s /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/academic.json
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] writeFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:03:29.403Z] + set -eu
+[2026-09-05T18:03:29.403Z] + cd gitops/platform/server
+[2026-09-05T18:03:29.403Z] + go run ./cmd/server release-record --service academic --environment dev --record --status releasing --git-revision 94c062c50bb8e34d53953085806b8ff1151f053b --image-digest sha256:0a4522fdc26144f99192ffc6d049cc766964aba3fb3ac82807579a19956b31d1 --config-revision  --rollout-strategy canary
+[2026-09-05T18:03:29.403Z] recorded academic dev as releasing
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // parallel
+[Pipeline] parallel
+[Pipeline] { (Branch: agentchat)
+[Pipeline] readFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:03:30.297Z] + set -eu
+[2026-09-05T18:03:30.298Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests
+[2026-09-05T18:03:30.298Z] + chmod -R 777 /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-05T18:03:30.298Z] + cd source
+[2026-09-05T18:03:30.298Z] + ./scripts/ci/run-service-checks.sh --service agentchat
+[2026-09-05T18:03:31.227Z] ?   	github.com/Milchstrassse/Ecampus-go/cmd/ecampus-agentchat	[no test files]
+[2026-09-05T18:03:31.227Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/agentchat	(cached)
+[2026-09-05T18:03:31.227Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/agentchat/agentv1	[no test files]
+[2026-09-05T18:03:31.227Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/bootstrap	[no test files]
+[2026-09-05T18:03:31.227Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampus/agentchatapp	[no test files]
+[2026-09-05T18:03:31.227Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusruntime	[no test files]
+[2026-09-05T18:03:31.227Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/moderationadapter	[no test files]
+[2026-09-05T18:03:31.227Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/useradapter	[no test files]
+[2026-09-05T18:03:31.227Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/integration/wxutil	(cached)
+[2026-09-05T18:03:31.227Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/middleware	(cached)
+[2026-09-05T18:03:31.227Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/moderation	(cached)
+[2026-09-05T18:03:31.227Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/adminjwt	(cached)
+[2026-09-05T18:03:31.227Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/bizerr	[no test files]
+[2026-09-05T18:03:31.227Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/config	(cached)
+[2026-09-05T18:03:31.227Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/encrypt	(cached)
+[2026-09-05T18:03:31.227Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/ginutil	[no test files]
+[2026-09-05T18:03:31.227Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/jwtutil	[no test files]
+[2026-09-05T18:03:31.227Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/pagination	[no test files]
+[2026-09-05T18:03:31.227Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/rediskey	[no test files]
+[2026-09-05T18:03:31.227Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/responses	(cached)
+[2026-09-05T18:03:31.227Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/snowflake	[no test files]
+[2026-09-05T18:03:31.227Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/user	(cached)
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:03:32.150Z] + set -eu
+[2026-09-05T18:03:32.150Z] + metadata=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/agentchat.json
+[2026-09-05T18:03:32.151Z] + import_cache=
+[2026-09-05T18:03:32.151Z] + '[' -d /home/user/.local/share/buildkit/local-cache ]
+[2026-09-05T18:03:32.151Z] + ls -A /home/user/.local/share/buildkit/local-cache
+[2026-09-05T18:03:32.151Z] + '[' -n 'blobs
+[2026-09-05T18:03:32.151Z] index.json
+[2026-09-05T18:03:32.151Z] ingest
+[2026-09-05T18:03:32.151Z] oci-layout' ]
+[2026-09-05T18:03:32.151Z] + import_cache='--import-cache type=local,src=/home/user/.local/share/buildkit/local-cache'
+[2026-09-05T18:03:32.151Z] + buildctl build '--frontend=dockerfile.v0' --local 'context=/home/jenkins/agent/workspace/ecampus-pipeline/source' --local 'dockerfile=/home/jenkins/agent/workspace/ecampus-pipeline/source' --opt 'filename=build/Dockerfile.go-service' --opt 'platform=linux/amd64' --opt 'build-arg:SERVICE_PATH=./cmd/ecampus-agentchat' --opt 'build-arg:CONFIG_DIR=configs/ecampus' --opt 'build-arg:SERVICE_PORT=8080' --import-cache 'type=local,src=/home/user/.local/share/buildkit/local-cache' --export-cache 'type=local,dest=/home/user/.local/share/buildkit/local-cache,mode=max' --output 'type=image,name=crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-agentchat:git-94c062c5,push=true' '--metadata-file=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/agentchat.json'
+[2026-09-05T18:03:32.151Z] #1 [internal] load build definition from build/Dockerfile.go-service
+[2026-09-05T18:03:32.151Z] #1 transferring dockerfile: 1.39kB done
+[2026-09-05T18:03:32.151Z] #1 DONE 0.0s
+[2026-09-05T18:03:32.151Z] 
+[2026-09-05T18:03:32.151Z] #2 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+[2026-09-05T18:03:32.151Z] #2 DONE 0.0s
+[2026-09-05T18:03:32.151Z] 
+[2026-09-05T18:03:32.151Z] #3 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+[2026-09-05T18:03:32.151Z] #3 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+[2026-09-05T18:03:32.151Z] #3 CACHED
+[2026-09-05T18:03:32.151Z] 
+[2026-09-05T18:03:32.151Z] #4 [internal] load metadata for docker.io/library/golang:1.26-alpine
+[2026-09-05T18:03:32.416Z] #4 DONE 0.1s
+[2026-09-05T18:03:32.416Z] 
+[2026-09-05T18:03:32.416Z] #5 [internal] load metadata for docker.io/library/alpine:3.20
+[2026-09-05T18:03:32.416Z] #5 DONE 0.0s
+[2026-09-05T18:03:32.416Z] 
+[2026-09-05T18:03:32.416Z] #6 [internal] load .dockerignore
+[2026-09-05T18:03:32.416Z] #6 transferring context: 124B done
+[2026-09-05T18:03:32.416Z] #6 DONE 0.0s
+[2026-09-05T18:03:32.416Z] 
+[2026-09-05T18:03:32.416Z] #7 [internal] load build context
+[2026-09-05T18:03:32.416Z] #7 DONE 0.0s
+[2026-09-05T18:03:32.416Z] 
+[2026-09-05T18:03:32.416Z] #8 [builder 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:03:32.416Z] #8 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:03:32.416Z] #8 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628 0.0s done
+[2026-09-05T18:03:32.416Z] #8 DONE 0.0s
+[2026-09-05T18:03:32.416Z] 
+[2026-09-05T18:03:32.416Z] #9 importing cache manifest from local:7091315659182191455
+[2026-09-05T18:03:32.416Z] #9 inferred cache manifest type: application/vnd.oci.image.manifest.v1+json done
+[2026-09-05T18:03:32.416Z] #9 DONE 0.0s
+[2026-09-05T18:03:32.416Z] 
+[2026-09-05T18:03:32.416Z] #10 [stage-1 1/5] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:03:32.416Z] #10 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc 0.0s done
+[2026-09-05T18:03:32.416Z] #10 DONE 0.0s
+[2026-09-05T18:03:32.416Z] 
+[2026-09-05T18:03:32.416Z] #7 [internal] load build context
+[2026-09-05T18:03:32.416Z] #7 transferring context: 35.95kB 0.0s done
+[2026-09-05T18:03:32.416Z] #7 DONE 0.0s
+[2026-09-05T18:03:32.416Z] 
+[2026-09-05T18:03:32.416Z] #11 [builder 2/6] WORKDIR /src
+[2026-09-05T18:03:32.416Z] #11 CACHED
+[2026-09-05T18:03:32.416Z] 
+[2026-09-05T18:03:32.416Z] #12 [builder 4/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     go mod download
+[2026-09-05T18:03:32.416Z] #12 CACHED
+[2026-09-05T18:03:32.416Z] 
+[2026-09-05T18:03:32.416Z] #13 [builder 3/6] COPY go.mod go.sum ./
+[2026-09-05T18:03:32.416Z] #13 CACHED
+[2026-09-05T18:03:32.416Z] 
+[2026-09-05T18:03:32.416Z] #14 [builder 5/6] COPY . .
+[2026-09-05T18:03:32.416Z] #14 CACHED
+[2026-09-05T18:03:32.416Z] 
+[2026-09-05T18:03:32.416Z] #15 [builder 6/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     --mount=type=cache,id=ecampus-go-build-linux-amd64,target=/root/.cache/go-build,sharing=shared     test -n "./cmd/ecampus-agentchat" &&     test -d "configs/ecampus" &&     CGO_ENABLED=0 GOOS="linux" GOARCH="amd64"       go build -trimpath -o /out/app "./cmd/ecampus-agentchat" &&     mkdir -p /out/configs &&     cp -R "configs/ecampus" /out/configs/
+[2026-09-05T18:03:34.952Z] #15 DONE 2.3s
+[2026-09-05T18:03:34.952Z] 
+[2026-09-05T18:03:34.952Z] #16 [stage-1 2/5] RUN sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#' /etc/apk/repositories     && apk --no-cache add ca-certificates tzdata
+[2026-09-05T18:03:34.952Z] #16 CACHED
+[2026-09-05T18:03:34.952Z] 
+[2026-09-05T18:03:34.952Z] #17 [stage-1 3/5] WORKDIR /app
+[2026-09-05T18:03:34.952Z] #17 CACHED
+[2026-09-05T18:03:34.952Z] 
+[2026-09-05T18:03:34.952Z] #18 [stage-1 4/5] COPY --from=builder /out/app /app/app
+[2026-09-05T18:03:34.952Z] #18 CACHED
+[2026-09-05T18:03:34.952Z] 
+[2026-09-05T18:03:34.952Z] #19 [stage-1 5/5] COPY --from=builder /out/configs /app/configs
+[2026-09-05T18:03:34.952Z] #19 CACHED
+[2026-09-05T18:03:34.952Z] 
+[2026-09-05T18:03:34.953Z] #20 [auth] pulseops/ecampus-agentchat:pull,push token for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+[2026-09-05T18:03:34.953Z] #20 DONE 0.0s
+[2026-09-05T18:03:34.953Z] 
+[2026-09-05T18:03:34.953Z] #21 exporting to image
+[2026-09-05T18:03:34.953Z] #21 exporting layers done
+[2026-09-05T18:03:34.953Z] #21 exporting manifest sha256:a57d1025dbfb616bd937da0b8faa5ceca4d31734c6d51060c52f34dc24bb5c5c done
+[2026-09-05T18:03:34.953Z] #21 exporting config sha256:4c77806fcc8a3b67aecc04e4525ca965d1be8a6b0926081209e6a22b78b19f7d done
+[2026-09-05T18:03:34.953Z] #21 pushing layers
+[2026-09-05T18:03:35.513Z] #21 pushing layers 0.7s done
+[2026-09-05T18:03:35.514Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-agentchat:git-94c062c5@sha256:a57d1025dbfb616bd937da0b8faa5ceca4d31734c6d51060c52f34dc24bb5c5c
+[2026-09-05T18:03:35.769Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-agentchat:git-94c062c5@sha256:a57d1025dbfb616bd937da0b8faa5ceca4d31734c6d51060c52f34dc24bb5c5c 0.3s done
+[2026-09-05T18:03:35.769Z] #21 DONE 1.0s
+[2026-09-05T18:03:35.769Z] 
+[2026-09-05T18:03:35.769Z] #22 exporting cache to client directory
+[2026-09-05T18:03:35.769Z] #22 preparing build cache for export
+[2026-09-05T18:03:37.135Z] #22 preparing build cache for export 2.0s done
+[2026-09-05T18:03:37.135Z] #22 sending cache export
+[2026-09-05T18:03:37.135Z] #22 writing layer sha256:2cb3e687d353c47479f7eb82d6cc1b230f1d252bfefaddbeec9d3de57edf5d49 done
+[2026-09-05T18:03:37.135Z] #22 writing layer sha256:064fa59a616396e5e634c6b983ed9148a6337b2994b78c8eaf85dcfaf73777e5 done
+[2026-09-05T18:03:37.135Z] #22 writing layer sha256:25f1d6b1951ac8eb3740558fe94cb83d377bdadf95fd9f98b50d2e1b96130471 done
+[2026-09-05T18:03:37.135Z] #22 writing layer sha256:042661aeb5c69dd0452694703e1bcda91e6086e4cf3ae186e367a9cd60abcd7d done
+[2026-09-05T18:03:37.135Z] #22 writing layer sha256:3fb02be8e364839d93c007e112d8557088b206a30f6078492b8e731897e570c8 done
+[2026-09-05T18:03:37.135Z] #22 writing layer sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 done
+[2026-09-05T18:03:37.135Z] #22 writing layer sha256:55afa1ecc21d2bb5e5045f32dafee56272ffd89860bac26f6c32123439af26a4 done
+[2026-09-05T18:03:37.135Z] #22 writing layer sha256:7c3a144dfd2227e5e4aec126921061520351642741e8d4756e18775005b628b1 done
+[2026-09-05T18:03:37.135Z] #22 writing layer sha256:9631d7dfcdff651a26266473b942eb90ce3f0d7ca30f8abb047952278a7e5c47 done
+[2026-09-05T18:03:37.136Z] #22 writing layer sha256:97899feefcfabb3437175a0fccfa863ec04cf4d64f9e42467712588180f88e72 done
+[2026-09-05T18:03:37.136Z] #22 writing layer sha256:a01ef6a6016004d114c97cf04a9708d71f6bb95e2b482f829ae547874376d5c7 done
+[2026-09-05T18:03:37.136Z] #22 writing layer sha256:ad68c0904536af6da07f125bc19ff4c8deb0e1959bec715b1d08732676a39a10
+[2026-09-05T18:03:37.136Z] #22 writing layer sha256:bba1b8482d9a01c11df25e07330410aa90a96a13d050644a4f259d25a387c4d9 done
+[2026-09-05T18:03:37.136Z] #22 writing layer sha256:c023d63c4a5bc658f0a860ac595ad386804f7f891c5a2149f4a8270eb855ed59 done
+[2026-09-05T18:03:37.136Z] #22 writing layer sha256:e5ee7da0307b89156ec739187daa2d6a1d45ec8063b39d7b33810fa12979cc5d done
+[2026-09-05T18:03:37.136Z] #22 writing layer sha256:ad68c0904536af6da07f125bc19ff4c8deb0e1959bec715b1d08732676a39a10 0.3s done
+[2026-09-05T18:03:37.392Z] #22 sending cache export 0.3s done
+[2026-09-05T18:03:37.392Z] #22 writing config sha256:d4ed85ff4e634d01a5d9d4751e2328f909dcd5472612d19f3935078746e39763 0.0s done
+[2026-09-05T18:03:37.392Z] #22 writing cache image manifest sha256:bf3c194b2dc073a44ce020cb768ad46c95e6a409c0690d8a8e9bc4c48b38bcbb done
+[2026-09-05T18:03:37.392Z] #22 DONE 2.4s
+[2026-09-05T18:03:37.392Z] + test -s /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/agentchat.json
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] writeFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:03:38.169Z] + set -eu
+[2026-09-05T18:03:38.169Z] + cd gitops/platform/server
+[2026-09-05T18:03:38.169Z] + go run ./cmd/server release-record --service agentchat --environment dev --record --status releasing --git-revision 94c062c50bb8e34d53953085806b8ff1151f053b --image-digest sha256:a57d1025dbfb616bd937da0b8faa5ceca4d31734c6d51060c52f34dc24bb5c5c --config-revision  --rollout-strategy bluegreen
+[2026-09-05T18:03:38.169Z] recorded agentchat dev as releasing
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // parallel
+[Pipeline] parallel
+[Pipeline] { (Branch: chat)
+[Pipeline] readFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:03:39.010Z] + set -eu
+[2026-09-05T18:03:39.010Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests
+[2026-09-05T18:03:39.010Z] + chmod -R 777 /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-05T18:03:39.010Z] + cd source
+[2026-09-05T18:03:39.010Z] + ./scripts/ci/run-service-checks.sh --service chat
+[2026-09-05T18:03:39.938Z] ?   	github.com/Milchstrassse/Ecampus-go/cmd/ecampus-chat	[no test files]
+[2026-09-05T18:03:39.938Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/bootstrap	[no test files]
+[2026-09-05T18:03:39.938Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampus/chatapp	[no test files]
+[2026-09-05T18:03:39.938Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusruntime	[no test files]
+[2026-09-05T18:03:39.938Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/moderationadapter	[no test files]
+[2026-09-05T18:03:39.938Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/useradapter	[no test files]
+[2026-09-05T18:03:39.938Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/chat	(cached)
+[2026-09-05T18:03:39.938Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/integration/wxutil	(cached)
+[2026-09-05T18:03:39.938Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/middleware	(cached)
+[2026-09-05T18:03:39.938Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/moderation	(cached)
+[2026-09-05T18:03:39.938Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/notification	(cached)
+[2026-09-05T18:03:39.938Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/adminjwt	(cached)
+[2026-09-05T18:03:39.938Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/bizerr	[no test files]
+[2026-09-05T18:03:39.938Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/config	(cached)
+[2026-09-05T18:03:39.938Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/encrypt	(cached)
+[2026-09-05T18:03:39.938Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/jwtutil	[no test files]
+[2026-09-05T18:03:39.938Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/pagination	[no test files]
+[2026-09-05T18:03:39.938Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/rediskey	[no test files]
+[2026-09-05T18:03:39.938Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/responses	(cached)
+[2026-09-05T18:03:39.938Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/snowflake	[no test files]
+[2026-09-05T18:03:39.938Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/user	(cached)
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:03:40.632Z] + set -eu
+[2026-09-05T18:03:40.633Z] + metadata=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/chat.json
+[2026-09-05T18:03:40.633Z] + import_cache=
+[2026-09-05T18:03:40.633Z] + '[' -d /home/user/.local/share/buildkit/local-cache ]
+[2026-09-05T18:03:40.633Z] + ls -A /home/user/.local/share/buildkit/local-cache
+[2026-09-05T18:03:40.633Z] + '[' -n 'blobs
+[2026-09-05T18:03:40.633Z] index.json
+[2026-09-05T18:03:40.633Z] ingest
+[2026-09-05T18:03:40.633Z] oci-layout' ]
+[2026-09-05T18:03:40.633Z] + import_cache='--import-cache type=local,src=/home/user/.local/share/buildkit/local-cache'
+[2026-09-05T18:03:40.633Z] + buildctl build '--frontend=dockerfile.v0' --local 'context=/home/jenkins/agent/workspace/ecampus-pipeline/source' --local 'dockerfile=/home/jenkins/agent/workspace/ecampus-pipeline/source' --opt 'filename=build/Dockerfile.go-service' --opt 'platform=linux/amd64' --opt 'build-arg:SERVICE_PATH=./cmd/ecampus-chat' --opt 'build-arg:CONFIG_DIR=configs/ecampus' --opt 'build-arg:SERVICE_PORT=8080' --import-cache 'type=local,src=/home/user/.local/share/buildkit/local-cache' --export-cache 'type=local,dest=/home/user/.local/share/buildkit/local-cache,mode=max' --output 'type=image,name=crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-chat:git-94c062c5,push=true' '--metadata-file=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/chat.json'
+[2026-09-05T18:03:40.633Z] #1 [internal] load build definition from build/Dockerfile.go-service
+[2026-09-05T18:03:40.633Z] #1 transferring dockerfile: 1.39kB done
+[2026-09-05T18:03:40.633Z] #1 DONE 0.0s
+[2026-09-05T18:03:40.633Z] 
+[2026-09-05T18:03:40.633Z] #2 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+[2026-09-05T18:03:40.633Z] #2 DONE 0.0s
+[2026-09-05T18:03:40.633Z] 
+[2026-09-05T18:03:40.633Z] #3 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+[2026-09-05T18:03:40.633Z] #3 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+[2026-09-05T18:03:40.633Z] #3 CACHED
+[2026-09-05T18:03:40.633Z] 
+[2026-09-05T18:03:40.633Z] #4 [internal] load metadata for docker.io/library/golang:1.26-alpine
+[2026-09-05T18:03:40.903Z] #4 DONE 0.1s
+[2026-09-05T18:03:40.903Z] 
+[2026-09-05T18:03:40.903Z] #5 [internal] load metadata for docker.io/library/alpine:3.20
+[2026-09-05T18:03:40.903Z] #5 DONE 0.0s
+[2026-09-05T18:03:40.903Z] 
+[2026-09-05T18:03:40.903Z] #6 [internal] load .dockerignore
+[2026-09-05T18:03:40.903Z] #6 transferring context: 124B done
+[2026-09-05T18:03:40.903Z] #6 DONE 0.0s
+[2026-09-05T18:03:40.903Z] 
+[2026-09-05T18:03:40.903Z] #7 [internal] load build context
+[2026-09-05T18:03:40.903Z] #7 DONE 0.0s
+[2026-09-05T18:03:40.903Z] 
+[2026-09-05T18:03:40.903Z] #8 importing cache manifest from local:15414600588130572228
+[2026-09-05T18:03:40.903Z] #8 inferred cache manifest type: application/vnd.oci.image.manifest.v1+json done
+[2026-09-05T18:03:40.903Z] #8 DONE 0.0s
+[2026-09-05T18:03:40.903Z] 
+[2026-09-05T18:03:40.903Z] #9 [stage-1 1/5] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:03:40.903Z] #9 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc 0.0s done
+[2026-09-05T18:03:40.903Z] #9 DONE 0.0s
+[2026-09-05T18:03:40.903Z] 
+[2026-09-05T18:03:40.903Z] #10 [builder 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:03:40.903Z] #10 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:03:40.903Z] #10 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628 0.0s done
+[2026-09-05T18:03:40.903Z] #10 DONE 0.0s
+[2026-09-05T18:03:40.903Z] 
+[2026-09-05T18:03:40.903Z] #7 [internal] load build context
+[2026-09-05T18:03:40.903Z] #7 transferring context: 35.95kB 0.0s done
+[2026-09-05T18:03:40.903Z] #7 DONE 0.0s
+[2026-09-05T18:03:40.903Z] 
+[2026-09-05T18:03:40.903Z] #11 [builder 2/6] WORKDIR /src
+[2026-09-05T18:03:40.903Z] #11 CACHED
+[2026-09-05T18:03:40.903Z] 
+[2026-09-05T18:03:40.903Z] #12 [builder 3/6] COPY go.mod go.sum ./
+[2026-09-05T18:03:40.903Z] #12 CACHED
+[2026-09-05T18:03:40.903Z] 
+[2026-09-05T18:03:40.903Z] #13 [builder 4/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     go mod download
+[2026-09-05T18:03:40.904Z] #13 CACHED
+[2026-09-05T18:03:40.904Z] 
+[2026-09-05T18:03:40.904Z] #14 [builder 5/6] COPY . .
+[2026-09-05T18:03:40.904Z] #14 CACHED
+[2026-09-05T18:03:40.904Z] 
+[2026-09-05T18:03:40.904Z] #15 [builder 6/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     --mount=type=cache,id=ecampus-go-build-linux-amd64,target=/root/.cache/go-build,sharing=shared     test -n "./cmd/ecampus-chat" &&     test -d "configs/ecampus" &&     CGO_ENABLED=0 GOOS="linux" GOARCH="amd64"       go build -trimpath -o /out/app "./cmd/ecampus-chat" &&     mkdir -p /out/configs &&     cp -R "configs/ecampus" /out/configs/
+[2026-09-05T18:03:43.417Z] #15 DONE 2.2s
+[2026-09-05T18:03:43.417Z] 
+[2026-09-05T18:03:43.417Z] #16 [stage-1 4/5] COPY --from=builder /out/app /app/app
+[2026-09-05T18:03:43.417Z] #16 CACHED
+[2026-09-05T18:03:43.417Z] 
+[2026-09-05T18:03:43.417Z] #17 [stage-1 2/5] RUN sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#' /etc/apk/repositories     && apk --no-cache add ca-certificates tzdata
+[2026-09-05T18:03:43.417Z] #17 CACHED
+[2026-09-05T18:03:43.417Z] 
+[2026-09-05T18:03:43.417Z] #18 [stage-1 3/5] WORKDIR /app
+[2026-09-05T18:03:43.417Z] #18 CACHED
+[2026-09-05T18:03:43.417Z] 
+[2026-09-05T18:03:43.417Z] #19 [stage-1 5/5] COPY --from=builder /out/configs /app/configs
+[2026-09-05T18:03:43.417Z] #19 CACHED
+[2026-09-05T18:03:43.417Z] 
+[2026-09-05T18:03:43.417Z] #20 [auth] pulseops/ecampus-chat:pull,push token for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+[2026-09-05T18:03:43.417Z] #20 DONE 0.0s
+[2026-09-05T18:03:43.417Z] 
+[2026-09-05T18:03:43.417Z] #21 exporting to image
+[2026-09-05T18:03:43.417Z] #21 exporting layers done
+[2026-09-05T18:03:43.417Z] #21 exporting manifest sha256:222e291ea413655807c40278f1653e9e9511fffecc99666a7e27143e3ffe5590 done
+[2026-09-05T18:03:43.417Z] #21 exporting config sha256:fb8211c77050321e0d941a188714c2954b662983e3a3ed74807880a52474b0e9 done
+[2026-09-05T18:03:43.417Z] #21 pushing layers
+[2026-09-05T18:03:43.977Z] #21 pushing layers 0.7s done
+[2026-09-05T18:03:43.977Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-chat:git-94c062c5@sha256:222e291ea413655807c40278f1653e9e9511fffecc99666a7e27143e3ffe5590
+[2026-09-05T18:03:44.233Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-chat:git-94c062c5@sha256:222e291ea413655807c40278f1653e9e9511fffecc99666a7e27143e3ffe5590 0.3s done
+[2026-09-05T18:03:44.233Z] #21 DONE 1.0s
+[2026-09-05T18:03:44.233Z] 
+[2026-09-05T18:03:44.233Z] #22 exporting cache to client directory
+[2026-09-05T18:03:44.233Z] #22 preparing build cache for export
+[2026-09-05T18:03:45.162Z] #22 preparing build cache for export 2.0s done
+[2026-09-05T18:03:45.162Z] #22 sending cache export
+[2026-09-05T18:03:45.420Z] #22 writing layer sha256:25f1d6b1951ac8eb3740558fe94cb83d377bdadf95fd9f98b50d2e1b96130471 done
+[2026-09-05T18:03:45.420Z] #22 writing layer sha256:064fa59a616396e5e634c6b983ed9148a6337b2994b78c8eaf85dcfaf73777e5 done
+[2026-09-05T18:03:45.420Z] #22 writing layer sha256:199f0b48100e05981a69e3fd484503c74b0f4f15496d10496c87e4691492aa8d done
+[2026-09-05T18:03:45.420Z] #22 writing layer sha256:042661aeb5c69dd0452694703e1bcda91e6086e4cf3ae186e367a9cd60abcd7d done
+[2026-09-05T18:03:45.420Z] #22 writing layer sha256:2cb3e687d353c47479f7eb82d6cc1b230f1d252bfefaddbeec9d3de57edf5d49 done
+[2026-09-05T18:03:45.420Z] #22 writing layer sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 done
+[2026-09-05T18:03:45.420Z] #22 writing layer sha256:55afa1ecc21d2bb5e5045f32dafee56272ffd89860bac26f6c32123439af26a4 done
+[2026-09-05T18:03:45.421Z] #22 writing layer sha256:7c3a144dfd2227e5e4aec126921061520351642741e8d4756e18775005b628b1 done
+[2026-09-05T18:03:45.421Z] #22 writing layer sha256:9631d7dfcdff651a26266473b942eb90ce3f0d7ca30f8abb047952278a7e5c47 done
+[2026-09-05T18:03:45.421Z] #22 writing layer sha256:97899feefcfabb3437175a0fccfa863ec04cf4d64f9e42467712588180f88e72 done
+[2026-09-05T18:03:45.421Z] #22 writing layer sha256:a01ef6a6016004d114c97cf04a9708d71f6bb95e2b482f829ae547874376d5c7 done
+[2026-09-05T18:03:45.421Z] #22 writing layer sha256:bba1b8482d9a01c11df25e07330410aa90a96a13d050644a4f259d25a387c4d9 done
+[2026-09-05T18:03:45.421Z] #22 writing layer sha256:c023d63c4a5bc658f0a860ac595ad386804f7f891c5a2149f4a8270eb855ed59 done
+[2026-09-05T18:03:45.421Z] #22 writing layer sha256:dd1c1353aa2647514eb01e000bacfc9528ec54d22d7dafff7f17079f036d5fa2
+[2026-09-05T18:03:45.421Z] #22 writing layer sha256:e5ee7da0307b89156ec739187daa2d6a1d45ec8063b39d7b33810fa12979cc5d done
+[2026-09-05T18:03:45.421Z] #22 writing layer sha256:dd1c1353aa2647514eb01e000bacfc9528ec54d22d7dafff7f17079f036d5fa2 0.3s done
+[2026-09-05T18:03:45.421Z] #22 sending cache export 0.3s done
+[2026-09-05T18:03:45.421Z] #22 writing config sha256:46342501928c8762cf742bca1ef89d3308ba120afd1f44db83ae2e22e9803137 done
+[2026-09-05T18:03:45.421Z] #22 writing cache image manifest sha256:a9031627ceb0d4f3bb26eca323d145f18273328ee45073eaa4c4765091e67849 0.0s done
+[2026-09-05T18:03:45.421Z] #22 DONE 2.3s
+[2026-09-05T18:03:45.421Z] + test -s /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/chat.json
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] writeFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:03:46.246Z] + set -eu
+[2026-09-05T18:03:46.246Z] + cd gitops/platform/server
+[2026-09-05T18:03:46.246Z] + go run ./cmd/server release-record --service chat --environment dev --record --status releasing --git-revision 94c062c50bb8e34d53953085806b8ff1151f053b --image-digest sha256:222e291ea413655807c40278f1653e9e9511fffecc99666a7e27143e3ffe5590 --config-revision  --rollout-strategy bluegreen
+[2026-09-05T18:03:46.246Z] recorded chat dev as releasing
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // parallel
+[Pipeline] parallel
+[Pipeline] { (Branch: comment)
+[Pipeline] readFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:03:47.089Z] + set -eu
+[2026-09-05T18:03:47.089Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests
+[2026-09-05T18:03:47.089Z] + chmod -R 777 /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-05T18:03:47.089Z] + cd source
+[2026-09-05T18:03:47.089Z] + ./scripts/ci/run-service-checks.sh --service comment
+[2026-09-05T18:03:48.023Z] ?   	github.com/Milchstrassse/Ecampus-go/cmd/ecampus-comment	[no test files]
+[2026-09-05T18:03:48.023Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/bootstrap	[no test files]
+[2026-09-05T18:03:48.023Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/commentproducer	[no test files]
+[2026-09-05T18:03:48.023Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampus/commentapp	[no test files]
+[2026-09-05T18:03:48.023Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusproducer	[no test files]
+[2026-09-05T18:03:48.023Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusruntime	[no test files]
+[2026-09-05T18:03:48.023Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/moderationadapter	[no test files]
+[2026-09-05T18:03:48.023Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/useradapter	[no test files]
+[2026-09-05T18:03:48.023Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/comment	(cached)
+[2026-09-05T18:03:48.023Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/integration/wxutil	(cached)
+[2026-09-05T18:03:48.023Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/middleware	(cached)
+[2026-09-05T18:03:48.023Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/moderation	(cached)
+[2026-09-05T18:03:48.023Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/mq	(cached)
+[2026-09-05T18:03:48.023Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/adminjwt	(cached)
+[2026-09-05T18:03:48.023Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/bizerr	[no test files]
+[2026-09-05T18:03:48.023Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/config	(cached)
+[2026-09-05T18:03:48.023Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/encrypt	(cached)
+[2026-09-05T18:03:48.023Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/jwtutil	[no test files]
+[2026-09-05T18:03:48.023Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/pagination	[no test files]
+[2026-09-05T18:03:48.023Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/rediskey	[no test files]
+[2026-09-05T18:03:48.023Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/responses	(cached)
+[2026-09-05T18:03:48.023Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/snowflake	[no test files]
+[2026-09-05T18:03:48.023Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/sensitive	(cached)
+[2026-09-05T18:03:48.023Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/user	(cached)
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:03:48.718Z] + set -eu
+[2026-09-05T18:03:48.718Z] + metadata=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/comment.json
+[2026-09-05T18:03:48.718Z] + import_cache=
+[2026-09-05T18:03:48.718Z] + '[' -d /home/user/.local/share/buildkit/local-cache ]
+[2026-09-05T18:03:48.718Z] + ls -A /home/user/.local/share/buildkit/local-cache
+[2026-09-05T18:03:48.718Z] + '[' -n 'blobs
+[2026-09-05T18:03:48.718Z] index.json
+[2026-09-05T18:03:48.718Z] ingest
+[2026-09-05T18:03:48.718Z] oci-layout' ]
+[2026-09-05T18:03:48.718Z] + import_cache='--import-cache type=local,src=/home/user/.local/share/buildkit/local-cache'
+[2026-09-05T18:03:48.719Z] + buildctl build '--frontend=dockerfile.v0' --local 'context=/home/jenkins/agent/workspace/ecampus-pipeline/source' --local 'dockerfile=/home/jenkins/agent/workspace/ecampus-pipeline/source' --opt 'filename=build/Dockerfile.go-service' --opt 'platform=linux/amd64' --opt 'build-arg:SERVICE_PATH=./cmd/ecampus-comment' --opt 'build-arg:CONFIG_DIR=configs/ecampus' --opt 'build-arg:SERVICE_PORT=8080' --import-cache 'type=local,src=/home/user/.local/share/buildkit/local-cache' --export-cache 'type=local,dest=/home/user/.local/share/buildkit/local-cache,mode=max' --output 'type=image,name=crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-comment:git-94c062c5,push=true' '--metadata-file=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/comment.json'
+[2026-09-05T18:03:48.719Z] #1 [internal] load build definition from build/Dockerfile.go-service
+[2026-09-05T18:03:48.719Z] #1 DONE 0.0s
+[2026-09-05T18:03:48.719Z] 
+[2026-09-05T18:03:48.719Z] #1 [internal] load build definition from build/Dockerfile.go-service
+[2026-09-05T18:03:48.719Z] #1 transferring dockerfile: 1.39kB done
+[2026-09-05T18:03:48.719Z] #1 DONE 0.0s
+[2026-09-05T18:03:48.719Z] 
+[2026-09-05T18:03:48.719Z] #2 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+[2026-09-05T18:03:48.719Z] #2 DONE 0.0s
+[2026-09-05T18:03:48.719Z] 
+[2026-09-05T18:03:48.719Z] #3 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+[2026-09-05T18:03:48.719Z] #3 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+[2026-09-05T18:03:48.719Z] #3 CACHED
+[2026-09-05T18:03:48.719Z] 
+[2026-09-05T18:03:48.719Z] #4 [internal] load metadata for docker.io/library/golang:1.26-alpine
+[2026-09-05T18:03:48.977Z] #4 DONE 0.1s
+[2026-09-05T18:03:48.977Z] 
+[2026-09-05T18:03:48.977Z] #5 [internal] load metadata for docker.io/library/alpine:3.20
+[2026-09-05T18:03:48.977Z] #5 DONE 0.0s
+[2026-09-05T18:03:48.977Z] 
+[2026-09-05T18:03:48.977Z] #6 [internal] load .dockerignore
+[2026-09-05T18:03:48.977Z] #6 transferring context: 124B done
+[2026-09-05T18:03:48.977Z] #6 DONE 0.0s
+[2026-09-05T18:03:48.977Z] 
+[2026-09-05T18:03:48.977Z] #7 [internal] load build context
+[2026-09-05T18:03:48.977Z] #7 DONE 0.0s
+[2026-09-05T18:03:48.977Z] 
+[2026-09-05T18:03:48.977Z] #8 importing cache manifest from local:5510001052538954180
+[2026-09-05T18:03:48.977Z] #8 inferred cache manifest type: application/vnd.oci.image.manifest.v1+json done
+[2026-09-05T18:03:48.977Z] #8 DONE 0.0s
+[2026-09-05T18:03:48.977Z] 
+[2026-09-05T18:03:48.977Z] #9 [stage-1 1/5] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:03:48.977Z] #9 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc 0.0s done
+[2026-09-05T18:03:48.977Z] #9 DONE 0.0s
+[2026-09-05T18:03:48.977Z] 
+[2026-09-05T18:03:48.977Z] #10 [builder 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:03:48.977Z] #10 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:03:48.977Z] #10 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628 0.0s done
+[2026-09-05T18:03:48.977Z] #10 DONE 0.0s
+[2026-09-05T18:03:48.977Z] 
+[2026-09-05T18:03:48.977Z] #7 [internal] load build context
+[2026-09-05T18:03:48.977Z] #7 transferring context: 35.95kB 0.0s done
+[2026-09-05T18:03:48.977Z] #7 DONE 0.0s
+[2026-09-05T18:03:48.977Z] 
+[2026-09-05T18:03:48.977Z] #11 [builder 2/6] WORKDIR /src
+[2026-09-05T18:03:48.977Z] #11 CACHED
+[2026-09-05T18:03:48.977Z] 
+[2026-09-05T18:03:48.977Z] #12 [builder 3/6] COPY go.mod go.sum ./
+[2026-09-05T18:03:48.977Z] #12 CACHED
+[2026-09-05T18:03:48.977Z] 
+[2026-09-05T18:03:48.977Z] #13 [builder 4/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     go mod download
+[2026-09-05T18:03:48.977Z] #13 CACHED
+[2026-09-05T18:03:48.977Z] 
+[2026-09-05T18:03:48.977Z] #14 [builder 5/6] COPY . .
+[2026-09-05T18:03:48.977Z] #14 CACHED
+[2026-09-05T18:03:48.977Z] 
+[2026-09-05T18:03:48.978Z] #15 [builder 6/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     --mount=type=cache,id=ecampus-go-build-linux-amd64,target=/root/.cache/go-build,sharing=shared     test -n "./cmd/ecampus-comment" &&     test -d "configs/ecampus" &&     CGO_ENABLED=0 GOOS="linux" GOARCH="amd64"       go build -trimpath -o /out/app "./cmd/ecampus-comment" &&     mkdir -p /out/configs &&     cp -R "configs/ecampus" /out/configs/
+[2026-09-05T18:03:51.501Z] #15 DONE 2.2s
+[2026-09-05T18:03:51.501Z] 
+[2026-09-05T18:03:51.501Z] #16 [stage-1 2/5] RUN sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#' /etc/apk/repositories     && apk --no-cache add ca-certificates tzdata
+[2026-09-05T18:03:51.501Z] #16 CACHED
+[2026-09-05T18:03:51.501Z] 
+[2026-09-05T18:03:51.501Z] #17 [stage-1 3/5] WORKDIR /app
+[2026-09-05T18:03:51.501Z] #17 CACHED
+[2026-09-05T18:03:51.501Z] 
+[2026-09-05T18:03:51.501Z] #18 [stage-1 4/5] COPY --from=builder /out/app /app/app
+[2026-09-05T18:03:51.501Z] #18 CACHED
+[2026-09-05T18:03:51.501Z] 
+[2026-09-05T18:03:51.501Z] #19 [stage-1 5/5] COPY --from=builder /out/configs /app/configs
+[2026-09-05T18:03:51.501Z] #19 CACHED
+[2026-09-05T18:03:51.501Z] 
+[2026-09-05T18:03:51.501Z] #20 [auth] pulseops/ecampus-comment:pull,push token for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+[2026-09-05T18:03:51.501Z] #20 DONE 0.0s
+[2026-09-05T18:03:51.501Z] 
+[2026-09-05T18:03:51.501Z] #21 exporting to image
+[2026-09-05T18:03:51.501Z] #21 exporting layers done
+[2026-09-05T18:03:51.501Z] #21 exporting manifest sha256:95b2504544380cfb9baef3c782bba2e73786e5bccaf226714272444ea5e235ff done
+[2026-09-05T18:03:51.501Z] #21 exporting config sha256:9e0a6f0ec264ae0e03a90f67b1a45c3c8cb6be0f58f1a51eba802b568cbb91f5 done
+[2026-09-05T18:03:51.501Z] #21 pushing layers
+[2026-09-05T18:03:52.064Z] #21 pushing layers 0.7s done
+[2026-09-05T18:03:52.064Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-comment:git-94c062c5@sha256:95b2504544380cfb9baef3c782bba2e73786e5bccaf226714272444ea5e235ff
+[2026-09-05T18:03:52.319Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-comment:git-94c062c5@sha256:95b2504544380cfb9baef3c782bba2e73786e5bccaf226714272444ea5e235ff 0.3s done
+[2026-09-05T18:03:52.319Z] #21 DONE 1.0s
+[2026-09-05T18:03:52.319Z] 
+[2026-09-05T18:03:52.319Z] #22 exporting cache to client directory
+[2026-09-05T18:03:52.319Z] #22 preparing build cache for export
+[2026-09-05T18:03:53.246Z] #22 preparing build cache for export 2.0s done
+[2026-09-05T18:03:53.246Z] #22 sending cache export
+[2026-09-05T18:03:53.504Z] #22 writing layer sha256:2cb3e687d353c47479f7eb82d6cc1b230f1d252bfefaddbeec9d3de57edf5d49 done
+[2026-09-05T18:03:53.504Z] #22 writing layer sha256:24275aa5dec8a6f9b5d3314084767a9b2554eba798733f68b0c7213321d45964 done
+[2026-09-05T18:03:53.504Z] #22 writing layer sha256:042661aeb5c69dd0452694703e1bcda91e6086e4cf3ae186e367a9cd60abcd7d done
+[2026-09-05T18:03:53.504Z] #22 writing layer sha256:25f1d6b1951ac8eb3740558fe94cb83d377bdadf95fd9f98b50d2e1b96130471 done
+[2026-09-05T18:03:53.504Z] #22 writing layer sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 done
+[2026-09-05T18:03:53.504Z] #22 writing layer sha256:55afa1ecc21d2bb5e5045f32dafee56272ffd89860bac26f6c32123439af26a4 done
+[2026-09-05T18:03:53.504Z] #22 writing layer sha256:7c3a144dfd2227e5e4aec126921061520351642741e8d4756e18775005b628b1 done
+[2026-09-05T18:03:53.504Z] #22 writing layer sha256:9631d7dfcdff651a26266473b942eb90ce3f0d7ca30f8abb047952278a7e5c47 done
+[2026-09-05T18:03:53.504Z] #22 writing layer sha256:96fa339d42521d766c5229a4c30560e2dc42ccd784af709bac7e3ace9738ba2c done
+[2026-09-05T18:03:53.504Z] #22 writing layer sha256:97899feefcfabb3437175a0fccfa863ec04cf4d64f9e42467712588180f88e72 done
+[2026-09-05T18:03:53.504Z] #22 writing layer sha256:a01ef6a6016004d114c97cf04a9708d71f6bb95e2b482f829ae547874376d5c7 done
+[2026-09-05T18:03:53.504Z] #22 writing layer sha256:bba1b8482d9a01c11df25e07330410aa90a96a13d050644a4f259d25a387c4d9 done
+[2026-09-05T18:03:53.504Z] #22 writing layer sha256:c023d63c4a5bc658f0a860ac595ad386804f7f891c5a2149f4a8270eb855ed59 done
+[2026-09-05T18:03:53.504Z] #22 writing layer sha256:e5ee7da0307b89156ec739187daa2d6a1d45ec8063b39d7b33810fa12979cc5d done
+[2026-09-05T18:03:53.504Z] #22 writing layer sha256:f00987736fe41c370bea04cd0514f41092773d0da7b58c1850cc0beee31c2bcf
+[2026-09-05T18:03:53.759Z] #22 writing layer sha256:f00987736fe41c370bea04cd0514f41092773d0da7b58c1850cc0beee31c2bcf 0.3s done
+[2026-09-05T18:03:53.759Z] #22 sending cache export 0.3s done
+[2026-09-05T18:03:53.759Z] #22 writing config sha256:77bc761e4f1161b468dc3c61ab6e4baaeb82c6e3f4c84e2b892d345744ded754 0.0s done
+[2026-09-05T18:03:53.759Z] #22 writing cache image manifest sha256:e485c95fdf485a738a51daea735ae156a430d24511de273b73e65dabcab639bb 0.0s done
+[2026-09-05T18:03:53.759Z] #22 DONE 2.4s
+[2026-09-05T18:03:53.759Z] + test -s /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/comment.json
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] writeFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:03:54.589Z] + set -eu
+[2026-09-05T18:03:54.589Z] + cd gitops/platform/server
+[2026-09-05T18:03:54.589Z] + go run ./cmd/server release-record --service comment --environment dev --record --status releasing --git-revision 94c062c50bb8e34d53953085806b8ff1151f053b --image-digest sha256:95b2504544380cfb9baef3c782bba2e73786e5bccaf226714272444ea5e235ff --config-revision  --rollout-strategy canary
+[2026-09-05T18:03:54.589Z] recorded comment dev as releasing
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // parallel
+[Pipeline] parallel
+[Pipeline] { (Branch: file)
+[Pipeline] readFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:03:55.364Z] + set -eu
+[2026-09-05T18:03:55.364Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests
+[2026-09-05T18:03:55.364Z] + chmod -R 777 /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-05T18:03:55.364Z] + cd source
+[2026-09-05T18:03:55.364Z] + ./scripts/ci/run-service-checks.sh --service file
+[2026-09-05T18:03:56.295Z] ?   	github.com/Milchstrassse/Ecampus-go/cmd/ecampus-file	[no test files]
+[2026-09-05T18:03:56.295Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/bootstrap	[no test files]
+[2026-09-05T18:03:56.295Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampus/fileapp	[no test files]
+[2026-09-05T18:03:56.295Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusruntime	[no test files]
+[2026-09-05T18:03:56.295Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/moderationadapter	[no test files]
+[2026-09-05T18:03:56.295Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/useradapter	[no test files]
+[2026-09-05T18:03:56.295Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/file	(cached)
+[2026-09-05T18:03:56.295Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/integration/cosutil	[no test files]
+[2026-09-05T18:03:56.295Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/integration/wxutil	(cached)
+[2026-09-05T18:03:56.295Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/middleware	(cached)
+[2026-09-05T18:03:56.295Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/moderation	(cached)
+[2026-09-05T18:03:56.295Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/adminjwt	(cached)
+[2026-09-05T18:03:56.296Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/bizerr	[no test files]
+[2026-09-05T18:03:56.296Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/config	(cached)
+[2026-09-05T18:03:56.296Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/encrypt	(cached)
+[2026-09-05T18:03:56.296Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/jwtutil	[no test files]
+[2026-09-05T18:03:56.296Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/pagination	[no test files]
+[2026-09-05T18:03:56.296Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/rediskey	[no test files]
+[2026-09-05T18:03:56.296Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/responses	(cached)
+[2026-09-05T18:03:56.296Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/snowflake	[no test files]
+[2026-09-05T18:03:56.296Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/user	(cached)
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:03:56.980Z] + set -eu
+[2026-09-05T18:03:56.980Z] + metadata=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/file.json
+[2026-09-05T18:03:56.980Z] + import_cache=
+[2026-09-05T18:03:56.980Z] + '[' -d /home/user/.local/share/buildkit/local-cache ]
+[2026-09-05T18:03:56.980Z] + ls -A /home/user/.local/share/buildkit/local-cache
+[2026-09-05T18:03:56.980Z] + '[' -n 'blobs
+[2026-09-05T18:03:56.980Z] index.json
+[2026-09-05T18:03:56.980Z] ingest
+[2026-09-05T18:03:56.980Z] oci-layout' ]
+[2026-09-05T18:03:56.980Z] + import_cache='--import-cache type=local,src=/home/user/.local/share/buildkit/local-cache'
+[2026-09-05T18:03:56.980Z] + buildctl build '--frontend=dockerfile.v0' --local 'context=/home/jenkins/agent/workspace/ecampus-pipeline/source' --local 'dockerfile=/home/jenkins/agent/workspace/ecampus-pipeline/source' --opt 'filename=build/Dockerfile.go-service' --opt 'platform=linux/amd64' --opt 'build-arg:SERVICE_PATH=./cmd/ecampus-file' --opt 'build-arg:CONFIG_DIR=configs/ecampus' --opt 'build-arg:SERVICE_PORT=8080' --import-cache 'type=local,src=/home/user/.local/share/buildkit/local-cache' --export-cache 'type=local,dest=/home/user/.local/share/buildkit/local-cache,mode=max' --output 'type=image,name=crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-file:git-94c062c5,push=true' '--metadata-file=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/file.json'
+[2026-09-05T18:03:56.981Z] #1 [internal] load build definition from build/Dockerfile.go-service
+[2026-09-05T18:03:56.981Z] #1 transferring dockerfile: 1.39kB done
+[2026-09-05T18:03:56.981Z] #1 DONE 0.0s
+[2026-09-05T18:03:56.981Z] 
+[2026-09-05T18:03:56.981Z] #2 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+[2026-09-05T18:03:56.981Z] #2 DONE 0.0s
+[2026-09-05T18:03:56.981Z] 
+[2026-09-05T18:03:56.981Z] #3 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+[2026-09-05T18:03:56.981Z] #3 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+[2026-09-05T18:03:56.981Z] #3 CACHED
+[2026-09-05T18:03:56.981Z] 
+[2026-09-05T18:03:56.981Z] #4 [internal] load metadata for docker.io/library/alpine:3.20
+[2026-09-05T18:03:57.252Z] #4 DONE 0.0s
+[2026-09-05T18:03:57.252Z] 
+[2026-09-05T18:03:57.252Z] #5 [internal] load metadata for docker.io/library/golang:1.26-alpine
+[2026-09-05T18:03:57.252Z] #5 DONE 0.1s
+[2026-09-05T18:03:57.252Z] 
+[2026-09-05T18:03:57.252Z] #6 [internal] load .dockerignore
+[2026-09-05T18:03:57.252Z] #6 transferring context: 124B done
+[2026-09-05T18:03:57.252Z] #6 DONE 0.0s
+[2026-09-05T18:03:57.252Z] 
+[2026-09-05T18:03:57.252Z] #7 [internal] load build context
+[2026-09-05T18:03:57.252Z] #7 DONE 0.0s
+[2026-09-05T18:03:57.252Z] 
+[2026-09-05T18:03:57.252Z] #8 importing cache manifest from local:7983496942982816978
+[2026-09-05T18:03:57.252Z] #8 inferred cache manifest type: application/vnd.oci.image.manifest.v1+json done
+[2026-09-05T18:03:57.252Z] #8 DONE 0.0s
+[2026-09-05T18:03:57.252Z] 
+[2026-09-05T18:03:57.252Z] #9 [builder 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:03:57.252Z] #9 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628 0.0s done
+[2026-09-05T18:03:57.252Z] #9 DONE 0.0s
+[2026-09-05T18:03:57.252Z] 
+[2026-09-05T18:03:57.252Z] #10 [stage-1 1/5] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:03:57.252Z] #10 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:03:57.252Z] #10 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc 0.0s done
+[2026-09-05T18:03:57.255Z] #10 DONE 0.0s
+[2026-09-05T18:03:57.255Z] 
+[2026-09-05T18:03:57.255Z] #7 [internal] load build context
+[2026-09-05T18:03:57.255Z] #7 transferring context: 35.95kB 0.0s done
+[2026-09-05T18:03:57.255Z] #7 DONE 0.0s
+[2026-09-05T18:03:57.255Z] 
+[2026-09-05T18:03:57.255Z] #11 [builder 2/6] WORKDIR /src
+[2026-09-05T18:03:57.255Z] #11 CACHED
+[2026-09-05T18:03:57.255Z] 
+[2026-09-05T18:03:57.255Z] #12 [builder 3/6] COPY go.mod go.sum ./
+[2026-09-05T18:03:57.255Z] #12 CACHED
+[2026-09-05T18:03:57.255Z] 
+[2026-09-05T18:03:57.255Z] #13 [builder 4/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     go mod download
+[2026-09-05T18:03:57.255Z] #13 CACHED
+[2026-09-05T18:03:57.255Z] 
+[2026-09-05T18:03:57.255Z] #14 [builder 5/6] COPY . .
+[2026-09-05T18:03:57.255Z] #14 CACHED
+[2026-09-05T18:03:57.255Z] 
+[2026-09-05T18:03:57.255Z] #15 [builder 6/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     --mount=type=cache,id=ecampus-go-build-linux-amd64,target=/root/.cache/go-build,sharing=shared     test -n "./cmd/ecampus-file" &&     test -d "configs/ecampus" &&     CGO_ENABLED=0 GOOS="linux" GOARCH="amd64"       go build -trimpath -o /out/app "./cmd/ecampus-file" &&     mkdir -p /out/configs &&     cp -R "configs/ecampus" /out/configs/
+[2026-09-05T18:03:59.880Z] #15 DONE 2.2s
+[2026-09-05T18:03:59.880Z] 
+[2026-09-05T18:03:59.880Z] #16 [stage-1 2/5] RUN sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#' /etc/apk/repositories     && apk --no-cache add ca-certificates tzdata
+[2026-09-05T18:03:59.880Z] #16 CACHED
+[2026-09-05T18:03:59.880Z] 
+[2026-09-05T18:03:59.880Z] #17 [stage-1 3/5] WORKDIR /app
+[2026-09-05T18:03:59.880Z] #17 CACHED
+[2026-09-05T18:03:59.880Z] 
+[2026-09-05T18:03:59.880Z] #18 [stage-1 4/5] COPY --from=builder /out/app /app/app
+[2026-09-05T18:03:59.880Z] #18 CACHED
+[2026-09-05T18:03:59.880Z] 
+[2026-09-05T18:03:59.880Z] #19 [stage-1 5/5] COPY --from=builder /out/configs /app/configs
+[2026-09-05T18:03:59.880Z] #19 CACHED
+[2026-09-05T18:03:59.880Z] 
+[2026-09-05T18:03:59.880Z] #20 [auth] pulseops/ecampus-file:pull,push token for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+[2026-09-05T18:03:59.880Z] #20 DONE 0.0s
+[2026-09-05T18:03:59.880Z] 
+[2026-09-05T18:03:59.880Z] #21 exporting to image
+[2026-09-05T18:03:59.880Z] #21 exporting layers done
+[2026-09-05T18:03:59.880Z] #21 exporting manifest sha256:21544f7adceba35a31e6e450d4620650c95a0bc902b4a277eadb74043ad5984a done
+[2026-09-05T18:03:59.880Z] #21 exporting config sha256:32654b23d392305ff17070360f052e16a8f25b9ee36f76321e06878cc6206727 done
+[2026-09-05T18:03:59.880Z] #21 pushing layers
+[2026-09-05T18:04:00.441Z] #21 pushing layers 0.8s done
+[2026-09-05T18:04:00.441Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-file:git-94c062c5@sha256:21544f7adceba35a31e6e450d4620650c95a0bc902b4a277eadb74043ad5984a
+[2026-09-05T18:04:00.696Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-file:git-94c062c5@sha256:21544f7adceba35a31e6e450d4620650c95a0bc902b4a277eadb74043ad5984a 0.3s done
+[2026-09-05T18:04:00.696Z] #21 DONE 1.1s
+[2026-09-05T18:04:00.696Z] 
+[2026-09-05T18:04:00.696Z] #22 exporting cache to client directory
+[2026-09-05T18:04:00.696Z] #22 preparing build cache for export
+[2026-09-05T18:04:01.623Z] #22 preparing build cache for export 1.9s done
+[2026-09-05T18:04:01.623Z] #22 sending cache export
+[2026-09-05T18:04:01.623Z] #22 writing layer sha256:25f1d6b1951ac8eb3740558fe94cb83d377bdadf95fd9f98b50d2e1b96130471 done
+[2026-09-05T18:04:01.623Z] #22 writing layer sha256:02656165c1adce8877d1fcdc1cf69325dc6db0d045ed5828f0b36cdee64269f5 done
+[2026-09-05T18:04:01.623Z] #22 writing layer sha256:042661aeb5c69dd0452694703e1bcda91e6086e4cf3ae186e367a9cd60abcd7d done
+[2026-09-05T18:04:01.623Z] #22 writing layer sha256:0c8ed991234ab7a3ab9c3291b76269e7ada4e5a27cb43d0f503dec967925f38f
+[2026-09-05T18:04:01.623Z] #22 writing layer sha256:2cb3e687d353c47479f7eb82d6cc1b230f1d252bfefaddbeec9d3de57edf5d49 done
+[2026-09-05T18:04:01.623Z] #22 writing layer sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 done
+[2026-09-05T18:04:01.623Z] #22 writing layer sha256:55afa1ecc21d2bb5e5045f32dafee56272ffd89860bac26f6c32123439af26a4 done
+[2026-09-05T18:04:01.623Z] #22 writing layer sha256:7c3a144dfd2227e5e4aec126921061520351642741e8d4756e18775005b628b1 done
+[2026-09-05T18:04:01.623Z] #22 writing layer sha256:90577d17d5367ba741a0d8735ea278a7dd093c941ff3ca3c8d01b1b6069fc34d done
+[2026-09-05T18:04:01.623Z] #22 writing layer sha256:9631d7dfcdff651a26266473b942eb90ce3f0d7ca30f8abb047952278a7e5c47 done
+[2026-09-05T18:04:01.623Z] #22 writing layer sha256:97899feefcfabb3437175a0fccfa863ec04cf4d64f9e42467712588180f88e72 done
+[2026-09-05T18:04:01.623Z] #22 writing layer sha256:a01ef6a6016004d114c97cf04a9708d71f6bb95e2b482f829ae547874376d5c7 done
+[2026-09-05T18:04:01.623Z] #22 writing layer sha256:bba1b8482d9a01c11df25e07330410aa90a96a13d050644a4f259d25a387c4d9 done
+[2026-09-05T18:04:01.623Z] #22 writing layer sha256:c023d63c4a5bc658f0a860ac595ad386804f7f891c5a2149f4a8270eb855ed59 done
+[2026-09-05T18:04:01.623Z] #22 writing layer sha256:e5ee7da0307b89156ec739187daa2d6a1d45ec8063b39d7b33810fa12979cc5d done
+[2026-09-05T18:04:01.623Z] #22 writing layer sha256:0c8ed991234ab7a3ab9c3291b76269e7ada4e5a27cb43d0f503dec967925f38f 0.3s done
+[2026-09-05T18:04:01.878Z] #22 sending cache export 0.3s done
+[2026-09-05T18:04:01.878Z] #22 writing config sha256:d08d0d2cab47b75d7c5dbe06d1a0a323d17b4cae83a582f5049e0bb394434ee9 done
+[2026-09-05T18:04:01.878Z] #22 writing cache image manifest sha256:40c978b00e1e0a629bc7e4bca1253983bf76c20ee99645cd430fd6c2431deb9b 0.0s done
+[2026-09-05T18:04:01.878Z] #22 DONE 2.2s
+[2026-09-05T18:04:01.878Z] + test -s /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/file.json
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] writeFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:02.674Z] + set -eu
+[2026-09-05T18:04:02.674Z] + cd gitops/platform/server
+[2026-09-05T18:04:02.674Z] + go run ./cmd/server release-record --service file --environment dev --record --status releasing --git-revision 94c062c50bb8e34d53953085806b8ff1151f053b --image-digest sha256:21544f7adceba35a31e6e450d4620650c95a0bc902b4a277eadb74043ad5984a --config-revision  --rollout-strategy canary
+[2026-09-05T18:04:02.674Z] recorded file dev as releasing
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // parallel
+[Pipeline] parallel
+[Pipeline] { (Branch: marketplace)
+[Pipeline] readFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:03.484Z] + set -eu
+[2026-09-05T18:04:03.484Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests
+[2026-09-05T18:04:03.484Z] + chmod -R 777 /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-05T18:04:03.484Z] + cd source
+[2026-09-05T18:04:03.484Z] + ./scripts/ci/run-service-checks.sh --service marketplace
+[2026-09-05T18:04:04.415Z] ?   	github.com/Milchstrassse/Ecampus-go/cmd/ecampus-marketplace	[no test files]
+[2026-09-05T18:04:04.415Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/bootstrap	[no test files]
+[2026-09-05T18:04:04.415Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampus/marketplaceapp	[no test files]
+[2026-09-05T18:04:04.415Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusruntime	[no test files]
+[2026-09-05T18:04:04.415Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/moderationadapter	[no test files]
+[2026-09-05T18:04:04.415Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/notificationadapter	[no test files]
+[2026-09-05T18:04:04.415Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/useradapter	[no test files]
+[2026-09-05T18:04:04.415Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/integration/wxutil	(cached)
+[2026-09-05T18:04:04.415Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/marketplace	(cached)
+[2026-09-05T18:04:04.415Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/middleware	(cached)
+[2026-09-05T18:04:04.415Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/moderation	(cached)
+[2026-09-05T18:04:04.415Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/mq	(cached)
+[2026-09-05T18:04:04.415Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/notification	(cached)
+[2026-09-05T18:04:04.415Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/adminjwt	(cached)
+[2026-09-05T18:04:04.415Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/bizerr	[no test files]
+[2026-09-05T18:04:04.415Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/config	(cached)
+[2026-09-05T18:04:04.415Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/encrypt	(cached)
+[2026-09-05T18:04:04.415Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/jwtutil	[no test files]
+[2026-09-05T18:04:04.415Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/pagination	[no test files]
+[2026-09-05T18:04:04.415Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/rediskey	[no test files]
+[2026-09-05T18:04:04.415Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/responses	(cached)
+[2026-09-05T18:04:04.415Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/snowflake	[no test files]
+[2026-09-05T18:04:04.415Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/sensitive	(cached)
+[2026-09-05T18:04:04.415Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/user	(cached)
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:05.100Z] + set -eu
+[2026-09-05T18:04:05.100Z] + metadata=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/marketplace.json
+[2026-09-05T18:04:05.100Z] + import_cache=
+[2026-09-05T18:04:05.100Z] + '[' -d /home/user/.local/share/buildkit/local-cache ]
+[2026-09-05T18:04:05.100Z] + ls -A /home/user/.local/share/buildkit/local-cache
+[2026-09-05T18:04:05.100Z] + '[' -n 'blobs
+[2026-09-05T18:04:05.100Z] index.json
+[2026-09-05T18:04:05.100Z] ingest
+[2026-09-05T18:04:05.100Z] oci-layout' ]
+[2026-09-05T18:04:05.100Z] + import_cache='--import-cache type=local,src=/home/user/.local/share/buildkit/local-cache'
+[2026-09-05T18:04:05.100Z] + buildctl build '--frontend=dockerfile.v0' --local 'context=/home/jenkins/agent/workspace/ecampus-pipeline/source' --local 'dockerfile=/home/jenkins/agent/workspace/ecampus-pipeline/source' --opt 'filename=build/Dockerfile.go-service' --opt 'platform=linux/amd64' --opt 'build-arg:SERVICE_PATH=./cmd/ecampus-marketplace' --opt 'build-arg:CONFIG_DIR=configs/ecampus' --opt 'build-arg:SERVICE_PORT=8080' --import-cache 'type=local,src=/home/user/.local/share/buildkit/local-cache' --export-cache 'type=local,dest=/home/user/.local/share/buildkit/local-cache,mode=max' --output 'type=image,name=crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-marketplace:git-94c062c5,push=true' '--metadata-file=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/marketplace.json'
+[2026-09-05T18:04:05.100Z] #1 [internal] load build definition from build/Dockerfile.go-service
+[2026-09-05T18:04:05.100Z] #1 transferring dockerfile: 1.39kB done
+[2026-09-05T18:04:05.100Z] #1 DONE 0.0s
+[2026-09-05T18:04:05.100Z] 
+[2026-09-05T18:04:05.100Z] #2 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+[2026-09-05T18:04:05.100Z] #2 DONE 0.0s
+[2026-09-05T18:04:05.100Z] 
+[2026-09-05T18:04:05.100Z] #3 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+[2026-09-05T18:04:05.100Z] #3 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+[2026-09-05T18:04:05.100Z] #3 CACHED
+[2026-09-05T18:04:05.100Z] 
+[2026-09-05T18:04:05.100Z] #4 [internal] load metadata for docker.io/library/golang:1.26-alpine
+[2026-09-05T18:04:05.360Z] #4 DONE 0.1s
+[2026-09-05T18:04:05.360Z] 
+[2026-09-05T18:04:05.360Z] #5 [internal] load metadata for docker.io/library/alpine:3.20
+[2026-09-05T18:04:05.360Z] #5 DONE 0.0s
+[2026-09-05T18:04:05.360Z] 
+[2026-09-05T18:04:05.360Z] #6 [internal] load .dockerignore
+[2026-09-05T18:04:05.360Z] #6 transferring context: 124B done
+[2026-09-05T18:04:05.360Z] #6 DONE 0.0s
+[2026-09-05T18:04:05.360Z] 
+[2026-09-05T18:04:05.360Z] #7 [internal] load build context
+[2026-09-05T18:04:05.360Z] #7 DONE 0.0s
+[2026-09-05T18:04:05.360Z] 
+[2026-09-05T18:04:05.360Z] #8 importing cache manifest from local:4491945895476482760
+[2026-09-05T18:04:05.360Z] #8 inferred cache manifest type: application/vnd.oci.image.manifest.v1+json done
+[2026-09-05T18:04:05.360Z] #8 DONE 0.0s
+[2026-09-05T18:04:05.360Z] 
+[2026-09-05T18:04:05.360Z] #9 [builder 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:04:05.360Z] #9 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628 0.0s done
+[2026-09-05T18:04:05.360Z] #9 DONE 0.0s
+[2026-09-05T18:04:05.360Z] 
+[2026-09-05T18:04:05.360Z] #10 [stage-1 1/5] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:04:05.360Z] #10 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:04:05.360Z] #10 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc 0.0s done
+[2026-09-05T18:04:05.360Z] #10 DONE 0.0s
+[2026-09-05T18:04:05.360Z] 
+[2026-09-05T18:04:05.360Z] #7 [internal] load build context
+[2026-09-05T18:04:05.360Z] #7 transferring context: 35.95kB 0.0s done
+[2026-09-05T18:04:05.360Z] #7 DONE 0.0s
+[2026-09-05T18:04:05.360Z] 
+[2026-09-05T18:04:05.360Z] #11 [builder 2/6] WORKDIR /src
+[2026-09-05T18:04:05.360Z] #11 CACHED
+[2026-09-05T18:04:05.360Z] 
+[2026-09-05T18:04:05.360Z] #12 [builder 3/6] COPY go.mod go.sum ./
+[2026-09-05T18:04:05.360Z] #12 CACHED
+[2026-09-05T18:04:05.360Z] 
+[2026-09-05T18:04:05.360Z] #13 [builder 4/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     go mod download
+[2026-09-05T18:04:05.360Z] #13 CACHED
+[2026-09-05T18:04:05.360Z] 
+[2026-09-05T18:04:05.360Z] #14 [builder 5/6] COPY . .
+[2026-09-05T18:04:05.360Z] #14 CACHED
+[2026-09-05T18:04:05.360Z] 
+[2026-09-05T18:04:05.360Z] #15 [builder 6/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     --mount=type=cache,id=ecampus-go-build-linux-amd64,target=/root/.cache/go-build,sharing=shared     test -n "./cmd/ecampus-marketplace" &&     test -d "configs/ecampus" &&     CGO_ENABLED=0 GOOS="linux" GOARCH="amd64"       go build -trimpath -o /out/app "./cmd/ecampus-marketplace" &&     mkdir -p /out/configs &&     cp -R "configs/ecampus" /out/configs/
+[2026-09-05T18:04:07.918Z] #15 DONE 2.2s
+[2026-09-05T18:04:07.918Z] 
+[2026-09-05T18:04:07.918Z] #16 [stage-1 2/5] RUN sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#' /etc/apk/repositories     && apk --no-cache add ca-certificates tzdata
+[2026-09-05T18:04:07.918Z] #16 CACHED
+[2026-09-05T18:04:07.918Z] 
+[2026-09-05T18:04:07.918Z] #17 [stage-1 3/5] WORKDIR /app
+[2026-09-05T18:04:07.918Z] #17 CACHED
+[2026-09-05T18:04:07.918Z] 
+[2026-09-05T18:04:07.918Z] #18 [stage-1 4/5] COPY --from=builder /out/app /app/app
+[2026-09-05T18:04:07.918Z] #18 CACHED
+[2026-09-05T18:04:07.918Z] 
+[2026-09-05T18:04:07.918Z] #19 [stage-1 5/5] COPY --from=builder /out/configs /app/configs
+[2026-09-05T18:04:07.918Z] #19 CACHED
+[2026-09-05T18:04:07.918Z] 
+[2026-09-05T18:04:07.918Z] #20 [auth] pulseops/ecampus-marketplace:pull,push token for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+[2026-09-05T18:04:07.918Z] #20 DONE 0.0s
+[2026-09-05T18:04:07.918Z] 
+[2026-09-05T18:04:07.918Z] #21 exporting to image
+[2026-09-05T18:04:07.918Z] #21 exporting layers done
+[2026-09-05T18:04:07.918Z] #21 exporting manifest sha256:ee84db714811a117d53c60a8d7bbc610d86d6f34b88c480a65b45f08b982a0b0 done
+[2026-09-05T18:04:07.919Z] #21 exporting config sha256:226b83be7b434507e6dc56f5b22e254d5c2e34790a278051d9834d29fc47936e done
+[2026-09-05T18:04:07.919Z] #21 pushing layers
+[2026-09-05T18:04:08.173Z] #21 pushing layers 0.7s done
+[2026-09-05T18:04:08.173Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-marketplace:git-94c062c5@sha256:ee84db714811a117d53c60a8d7bbc610d86d6f34b88c480a65b45f08b982a0b0
+[2026-09-05T18:04:08.733Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-marketplace:git-94c062c5@sha256:ee84db714811a117d53c60a8d7bbc610d86d6f34b88c480a65b45f08b982a0b0 0.3s done
+[2026-09-05T18:04:08.733Z] #21 DONE 1.0s
+[2026-09-05T18:04:08.733Z] 
+[2026-09-05T18:04:08.733Z] #22 exporting cache to client directory
+[2026-09-05T18:04:08.733Z] #22 preparing build cache for export
+[2026-09-05T18:04:09.658Z] #22 preparing build cache for export 2.0s done
+[2026-09-05T18:04:09.658Z] #22 sending cache export
+[2026-09-05T18:04:09.658Z] #22 writing layer sha256:2cb3e687d353c47479f7eb82d6cc1b230f1d252bfefaddbeec9d3de57edf5d49 done
+[2026-09-05T18:04:09.658Z] #22 writing layer sha256:1a4012ac53face351dabae010110054d96eb5cded9ecef0041a1967b5af9a489 done
+[2026-09-05T18:04:09.658Z] #22 writing layer sha256:042661aeb5c69dd0452694703e1bcda91e6086e4cf3ae186e367a9cd60abcd7d done
+[2026-09-05T18:04:09.658Z] #22 writing layer sha256:25f1d6b1951ac8eb3740558fe94cb83d377bdadf95fd9f98b50d2e1b96130471 done
+[2026-09-05T18:04:09.658Z] #22 writing layer sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 done
+[2026-09-05T18:04:09.658Z] #22 writing layer sha256:55afa1ecc21d2bb5e5045f32dafee56272ffd89860bac26f6c32123439af26a4 done
+[2026-09-05T18:04:09.658Z] #22 writing layer sha256:7c3a144dfd2227e5e4aec126921061520351642741e8d4756e18775005b628b1 done
+[2026-09-05T18:04:09.658Z] #22 writing layer sha256:9631d7dfcdff651a26266473b942eb90ce3f0d7ca30f8abb047952278a7e5c47 done
+[2026-09-05T18:04:09.658Z] #22 writing layer sha256:a01ef6a6016004d114c97cf04a9708d71f6bb95e2b482f829ae547874376d5c7 done
+[2026-09-05T18:04:09.658Z] #22 writing layer sha256:bba1b8482d9a01c11df25e07330410aa90a96a13d050644a4f259d25a387c4d9 done
+[2026-09-05T18:04:09.658Z] #22 writing layer sha256:c023d63c4a5bc658f0a860ac595ad386804f7f891c5a2149f4a8270eb855ed59 done
+[2026-09-05T18:04:09.658Z] #22 writing layer sha256:97899feefcfabb3437175a0fccfa863ec04cf4d64f9e42467712588180f88e72 done
+[2026-09-05T18:04:09.658Z] #22 writing layer sha256:c3a38ce8e83a24ac70baccd4bcbad2ea60ef48fab8760459c124cfc93912598e
+[2026-09-05T18:04:09.658Z] #22 writing layer sha256:df90317247d9a3d5cb2f5f0409c6adffcf782c45e0e65aaf8bbef6f14907a80d done
+[2026-09-05T18:04:09.658Z] #22 writing layer sha256:e5ee7da0307b89156ec739187daa2d6a1d45ec8063b39d7b33810fa12979cc5d done
+[2026-09-05T18:04:09.913Z] #22 writing layer sha256:c3a38ce8e83a24ac70baccd4bcbad2ea60ef48fab8760459c124cfc93912598e 0.3s done
+[2026-09-05T18:04:09.913Z] #22 sending cache export 0.3s done
+[2026-09-05T18:04:09.913Z] #22 writing config sha256:96b4f2eddffcc5b4865065f9a8d74f2a6ff21d3b68a76e8b13f7e09247edea74 done
+[2026-09-05T18:04:09.913Z] #22 writing cache image manifest sha256:e846be25dce15c8dc0dba4bb3e132d4235026b8059cc81bcf4e7ba1f3966eb23 done
+[2026-09-05T18:04:09.913Z] #22 DONE 2.3s
+[2026-09-05T18:04:09.913Z] + test -s /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/marketplace.json
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] writeFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:10.717Z] + set -eu
+[2026-09-05T18:04:10.717Z] + cd gitops/platform/server
+[2026-09-05T18:04:10.717Z] + go run ./cmd/server release-record --service marketplace --environment dev --record --status releasing --git-revision 94c062c50bb8e34d53953085806b8ff1151f053b --image-digest sha256:ee84db714811a117d53c60a8d7bbc610d86d6f34b88c480a65b45f08b982a0b0 --config-revision  --rollout-strategy bluegreen
+[2026-09-05T18:04:10.717Z] recorded marketplace dev as releasing
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // parallel
+[Pipeline] parallel
+[Pipeline] { (Branch: moderation)
+[Pipeline] readFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:11.495Z] + set -eu
+[2026-09-05T18:04:11.495Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests
+[2026-09-05T18:04:11.495Z] + chmod -R 777 /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-05T18:04:11.495Z] + cd source
+[2026-09-05T18:04:11.495Z] + ./scripts/ci/run-service-checks.sh --service moderation
+[2026-09-05T18:04:12.424Z] ?   	github.com/Milchstrassse/Ecampus-go/cmd/ecampus-moderation	[no test files]
+[2026-09-05T18:04:12.424Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/academic	(cached)
+[2026-09-05T18:04:12.424Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/bootstrap	[no test files]
+[2026-09-05T18:04:12.424Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampus/moderationapp	[no test files]
+[2026-09-05T18:04:12.424Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusruntime	[no test files]
+[2026-09-05T18:04:12.424Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/moderationadapter	[no test files]
+[2026-09-05T18:04:12.424Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/moderationtarget	[no test files]
+[2026-09-05T18:04:12.424Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/notificationadapter	[no test files]
+[2026-09-05T18:04:12.424Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/useradapter	[no test files]
+[2026-09-05T18:04:12.424Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/chat	(cached)
+[2026-09-05T18:04:12.424Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/comment	(cached)
+[2026-09-05T18:04:12.424Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/file	(cached)
+[2026-09-05T18:04:12.424Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/integration/cosutil	[no test files]
+[2026-09-05T18:04:12.424Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/integration/wxutil	(cached)
+[2026-09-05T18:04:12.424Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/marketplace	(cached)
+[2026-09-05T18:04:12.424Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/middleware	(cached)
+[2026-09-05T18:04:12.424Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/moderation	(cached)
+[2026-09-05T18:04:12.424Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/mq	(cached)
+[2026-09-05T18:04:12.424Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/notification	(cached)
+[2026-09-05T18:04:12.424Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/adminjwt	(cached)
+[2026-09-05T18:04:12.424Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/bizerr	[no test files]
+[2026-09-05T18:04:12.424Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/config	(cached)
+[2026-09-05T18:04:12.424Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/encrypt	(cached)
+[2026-09-05T18:04:12.424Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/jwtutil	[no test files]
+[2026-09-05T18:04:12.424Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/pagination	[no test files]
+[2026-09-05T18:04:12.424Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/rediskey	[no test files]
+[2026-09-05T18:04:12.424Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/responses	(cached)
+[2026-09-05T18:04:12.424Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/snowflake	[no test files]
+[2026-09-05T18:04:12.424Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/sensitive	(cached)
+[2026-09-05T18:04:12.424Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/topic	(cached)
+[2026-09-05T18:04:12.424Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/user	(cached)
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:13.131Z] + set -eu
+[2026-09-05T18:04:13.131Z] + metadata=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/moderation.json
+[2026-09-05T18:04:13.131Z] + import_cache=
+[2026-09-05T18:04:13.131Z] + '[' -d /home/user/.local/share/buildkit/local-cache ]
+[2026-09-05T18:04:13.131Z] + ls -A /home/user/.local/share/buildkit/local-cache
+[2026-09-05T18:04:13.131Z] + '[' -n 'blobs
+[2026-09-05T18:04:13.131Z] index.json
+[2026-09-05T18:04:13.131Z] ingest
+[2026-09-05T18:04:13.131Z] oci-layout' ]
+[2026-09-05T18:04:13.131Z] + import_cache='--import-cache type=local,src=/home/user/.local/share/buildkit/local-cache'
+[2026-09-05T18:04:13.131Z] + buildctl build '--frontend=dockerfile.v0' --local 'context=/home/jenkins/agent/workspace/ecampus-pipeline/source' --local 'dockerfile=/home/jenkins/agent/workspace/ecampus-pipeline/source' --opt 'filename=build/Dockerfile.go-service' --opt 'platform=linux/amd64' --opt 'build-arg:SERVICE_PATH=./cmd/ecampus-moderation' --opt 'build-arg:CONFIG_DIR=configs/ecampus' --opt 'build-arg:SERVICE_PORT=8080' --import-cache 'type=local,src=/home/user/.local/share/buildkit/local-cache' --export-cache 'type=local,dest=/home/user/.local/share/buildkit/local-cache,mode=max' --output 'type=image,name=crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-moderation:git-94c062c5,push=true' '--metadata-file=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/moderation.json'
+[2026-09-05T18:04:13.132Z] #1 [internal] load build definition from build/Dockerfile.go-service
+[2026-09-05T18:04:13.132Z] #1 transferring dockerfile: 1.39kB done
+[2026-09-05T18:04:13.132Z] #1 DONE 0.0s
+[2026-09-05T18:04:13.132Z] 
+[2026-09-05T18:04:13.132Z] #2 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+[2026-09-05T18:04:13.132Z] #2 DONE 0.0s
+[2026-09-05T18:04:13.132Z] 
+[2026-09-05T18:04:13.132Z] #3 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+[2026-09-05T18:04:13.132Z] #3 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+[2026-09-05T18:04:13.132Z] #3 CACHED
+[2026-09-05T18:04:13.132Z] 
+[2026-09-05T18:04:13.132Z] #4 [internal] load metadata for docker.io/library/golang:1.26-alpine
+[2026-09-05T18:04:13.392Z] #4 DONE 0.1s
+[2026-09-05T18:04:13.392Z] 
+[2026-09-05T18:04:13.392Z] #5 [internal] load metadata for docker.io/library/alpine:3.20
+[2026-09-05T18:04:13.392Z] #5 DONE 0.0s
+[2026-09-05T18:04:13.392Z] 
+[2026-09-05T18:04:13.392Z] #6 [internal] load .dockerignore
+[2026-09-05T18:04:13.392Z] #6 transferring context: 124B done
+[2026-09-05T18:04:13.392Z] #6 DONE 0.0s
+[2026-09-05T18:04:13.392Z] 
+[2026-09-05T18:04:13.392Z] #7 [internal] load build context
+[2026-09-05T18:04:13.392Z] #7 DONE 0.0s
+[2026-09-05T18:04:13.392Z] 
+[2026-09-05T18:04:13.392Z] #8 importing cache manifest from local:5279810592816362546
+[2026-09-05T18:04:13.392Z] #8 inferred cache manifest type: application/vnd.oci.image.manifest.v1+json done
+[2026-09-05T18:04:13.392Z] #8 DONE 0.0s
+[2026-09-05T18:04:13.392Z] 
+[2026-09-05T18:04:13.393Z] #9 [stage-1 1/5] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:04:13.393Z] #9 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:04:13.393Z] #9 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc 0.0s done
+[2026-09-05T18:04:13.393Z] #9 DONE 0.0s
+[2026-09-05T18:04:13.393Z] 
+[2026-09-05T18:04:13.393Z] #10 [builder 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:04:13.393Z] #10 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628 0.0s done
+[2026-09-05T18:04:13.393Z] #10 DONE 0.0s
+[2026-09-05T18:04:13.393Z] 
+[2026-09-05T18:04:13.393Z] #7 [internal] load build context
+[2026-09-05T18:04:13.393Z] #7 transferring context: 35.95kB 0.0s done
+[2026-09-05T18:04:13.393Z] #7 DONE 0.0s
+[2026-09-05T18:04:13.393Z] 
+[2026-09-05T18:04:13.393Z] #11 [builder 2/6] WORKDIR /src
+[2026-09-05T18:04:13.393Z] #11 CACHED
+[2026-09-05T18:04:13.393Z] 
+[2026-09-05T18:04:13.393Z] #12 [builder 3/6] COPY go.mod go.sum ./
+[2026-09-05T18:04:13.393Z] #12 CACHED
+[2026-09-05T18:04:13.393Z] 
+[2026-09-05T18:04:13.393Z] #13 [builder 4/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     go mod download
+[2026-09-05T18:04:13.393Z] #13 CACHED
+[2026-09-05T18:04:13.393Z] 
+[2026-09-05T18:04:13.393Z] #14 [builder 5/6] COPY . .
+[2026-09-05T18:04:13.393Z] #14 CACHED
+[2026-09-05T18:04:13.393Z] 
+[2026-09-05T18:04:13.393Z] #15 [builder 6/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     --mount=type=cache,id=ecampus-go-build-linux-amd64,target=/root/.cache/go-build,sharing=shared     test -n "./cmd/ecampus-moderation" &&     test -d "configs/ecampus" &&     CGO_ENABLED=0 GOOS="linux" GOARCH="amd64"       go build -trimpath -o /out/app "./cmd/ecampus-moderation" &&     mkdir -p /out/configs &&     cp -R "configs/ecampus" /out/configs/
+[2026-09-05T18:04:15.932Z] #15 DONE 2.2s
+[2026-09-05T18:04:15.932Z] 
+[2026-09-05T18:04:15.932Z] #16 [stage-1 2/5] RUN sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#' /etc/apk/repositories     && apk --no-cache add ca-certificates tzdata
+[2026-09-05T18:04:15.932Z] #16 CACHED
+[2026-09-05T18:04:15.932Z] 
+[2026-09-05T18:04:15.932Z] #17 [stage-1 3/5] WORKDIR /app
+[2026-09-05T18:04:15.932Z] #17 CACHED
+[2026-09-05T18:04:15.932Z] 
+[2026-09-05T18:04:15.932Z] #18 [stage-1 4/5] COPY --from=builder /out/app /app/app
+[2026-09-05T18:04:15.932Z] #18 CACHED
+[2026-09-05T18:04:15.932Z] 
+[2026-09-05T18:04:15.932Z] #19 [stage-1 5/5] COPY --from=builder /out/configs /app/configs
+[2026-09-05T18:04:15.932Z] #19 CACHED
+[2026-09-05T18:04:15.932Z] 
+[2026-09-05T18:04:15.932Z] #20 [auth] pulseops/ecampus-moderation:pull,push token for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+[2026-09-05T18:04:15.932Z] #20 DONE 0.0s
+[2026-09-05T18:04:15.932Z] 
+[2026-09-05T18:04:15.932Z] #21 exporting to image
+[2026-09-05T18:04:15.932Z] #21 exporting layers done
+[2026-09-05T18:04:15.932Z] #21 exporting manifest sha256:d5174d16a0ea903879a6bc2d2b058f7ec661d570c2a9b3b3473634b0fa0ecacc done
+[2026-09-05T18:04:15.932Z] #21 exporting config sha256:12129e44eeb68bc35960e4ba35e1c81f5eac14cc8e5c3bbfe36cff3ed40848c4 done
+[2026-09-05T18:04:15.932Z] #21 pushing layers
+[2026-09-05T18:04:16.493Z] #21 pushing layers 0.7s done
+[2026-09-05T18:04:16.493Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-moderation:git-94c062c5@sha256:d5174d16a0ea903879a6bc2d2b058f7ec661d570c2a9b3b3473634b0fa0ecacc
+[2026-09-05T18:04:16.749Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-moderation:git-94c062c5@sha256:d5174d16a0ea903879a6bc2d2b058f7ec661d570c2a9b3b3473634b0fa0ecacc 0.3s done
+[2026-09-05T18:04:16.749Z] #21 DONE 1.0s
+[2026-09-05T18:04:16.749Z] 
+[2026-09-05T18:04:16.749Z] #22 exporting cache to client directory
+[2026-09-05T18:04:16.749Z] #22 preparing build cache for export
+[2026-09-05T18:04:17.673Z] #22 preparing build cache for export 2.0s done
+[2026-09-05T18:04:17.673Z] #22 sending cache export
+[2026-09-05T18:04:17.928Z] #22 writing layer sha256:2c8c53d8eade5082bb968e09d7dd82cc5b8811365a4b758e62ae2c2cdb926a00
+[2026-09-05T18:04:17.928Z] #22 writing layer sha256:0121011748b73ae7ab980bae2313d7996b4ec430a90dd77027f8e2ad490ca974 done
+[2026-09-05T18:04:17.928Z] #22 writing layer sha256:042661aeb5c69dd0452694703e1bcda91e6086e4cf3ae186e367a9cd60abcd7d done
+[2026-09-05T18:04:17.928Z] #22 writing layer sha256:25f1d6b1951ac8eb3740558fe94cb83d377bdadf95fd9f98b50d2e1b96130471 done
+[2026-09-05T18:04:17.928Z] #22 writing layer sha256:2cb3e687d353c47479f7eb82d6cc1b230f1d252bfefaddbeec9d3de57edf5d49 done
+[2026-09-05T18:04:17.928Z] #22 writing layer sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 done
+[2026-09-05T18:04:17.928Z] #22 writing layer sha256:55afa1ecc21d2bb5e5045f32dafee56272ffd89860bac26f6c32123439af26a4 done
+[2026-09-05T18:04:17.928Z] #22 writing layer sha256:7c3a144dfd2227e5e4aec126921061520351642741e8d4756e18775005b628b1 done
+[2026-09-05T18:04:17.928Z] #22 writing layer sha256:9631d7dfcdff651a26266473b942eb90ce3f0d7ca30f8abb047952278a7e5c47 done
+[2026-09-05T18:04:17.928Z] #22 writing layer sha256:97899feefcfabb3437175a0fccfa863ec04cf4d64f9e42467712588180f88e72 done
+[2026-09-05T18:04:17.928Z] #22 writing layer sha256:a01ef6a6016004d114c97cf04a9708d71f6bb95e2b482f829ae547874376d5c7 done
+[2026-09-05T18:04:17.928Z] #22 writing layer sha256:abf382b887bd88550c0399979ac13e6a25ee3632638991e91d1ecef6b02e936a done
+[2026-09-05T18:04:17.928Z] #22 writing layer sha256:bba1b8482d9a01c11df25e07330410aa90a96a13d050644a4f259d25a387c4d9 done
+[2026-09-05T18:04:17.928Z] #22 writing layer sha256:c023d63c4a5bc658f0a860ac595ad386804f7f891c5a2149f4a8270eb855ed59 done
+[2026-09-05T18:04:17.928Z] #22 writing layer sha256:e5ee7da0307b89156ec739187daa2d6a1d45ec8063b39d7b33810fa12979cc5d done
+[2026-09-05T18:04:18.185Z] #22 writing layer sha256:2c8c53d8eade5082bb968e09d7dd82cc5b8811365a4b758e62ae2c2cdb926a00 0.3s done
+[2026-09-05T18:04:18.185Z] #22 sending cache export 0.3s done
+[2026-09-05T18:04:18.185Z] #22 writing config sha256:cbf8a803f8926d69649efd4cd9022e4607338b9f9c2fc5e4d683268aa864fa96 0.0s done
+[2026-09-05T18:04:18.185Z] #22 writing cache image manifest sha256:ef34552f76c6d39c90fdd91de1a45fab554b2424863cfb7dbca7d2e7ea72fbfb done
+[2026-09-05T18:04:18.185Z] #22 DONE 2.3s
+[2026-09-05T18:04:18.185Z] + test -s /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/moderation.json
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] writeFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:18.998Z] + set -eu
+[2026-09-05T18:04:18.998Z] + cd gitops/platform/server
+[2026-09-05T18:04:18.998Z] + go run ./cmd/server release-record --service moderation --environment dev --record --status releasing --git-revision 94c062c50bb8e34d53953085806b8ff1151f053b --image-digest sha256:d5174d16a0ea903879a6bc2d2b058f7ec661d570c2a9b3b3473634b0fa0ecacc --config-revision  --rollout-strategy bluegreen
+[2026-09-05T18:04:18.998Z] recorded moderation dev as releasing
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // parallel
+[Pipeline] parallel
+[Pipeline] { (Branch: notification)
+[Pipeline] readFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:19.819Z] + set -eu
+[2026-09-05T18:04:19.819Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests
+[2026-09-05T18:04:19.819Z] + chmod -R 777 /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-05T18:04:19.819Z] + cd source
+[2026-09-05T18:04:19.819Z] + ./scripts/ci/run-service-checks.sh --service notification
+[2026-09-05T18:04:20.747Z] ?   	github.com/Milchstrassse/Ecampus-go/cmd/ecampus-notification	[no test files]
+[2026-09-05T18:04:20.748Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/bootstrap	[no test files]
+[2026-09-05T18:04:20.748Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampus/notificationapp	[no test files]
+[2026-09-05T18:04:20.748Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusproducer	[no test files]
+[2026-09-05T18:04:20.748Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusruntime	[no test files]
+[2026-09-05T18:04:20.748Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/moderationadapter	[no test files]
+[2026-09-05T18:04:20.748Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/notificationadapter	[no test files]
+[2026-09-05T18:04:20.748Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/useradapter	[no test files]
+[2026-09-05T18:04:20.748Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/integration/wxutil	(cached)
+[2026-09-05T18:04:20.748Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/middleware	(cached)
+[2026-09-05T18:04:20.748Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/moderation	(cached)
+[2026-09-05T18:04:20.748Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/mq	(cached)
+[2026-09-05T18:04:20.748Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/notification	(cached)
+[2026-09-05T18:04:20.748Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/adminjwt	(cached)
+[2026-09-05T18:04:20.748Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/bizerr	[no test files]
+[2026-09-05T18:04:20.748Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/config	(cached)
+[2026-09-05T18:04:20.748Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/encrypt	(cached)
+[2026-09-05T18:04:20.748Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/jwtutil	[no test files]
+[2026-09-05T18:04:20.748Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/pagination	[no test files]
+[2026-09-05T18:04:20.748Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/rediskey	[no test files]
+[2026-09-05T18:04:20.748Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/responses	(cached)
+[2026-09-05T18:04:20.748Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/snowflake	[no test files]
+[2026-09-05T18:04:20.748Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/sensitive	(cached)
+[2026-09-05T18:04:20.748Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/user	(cached)
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:21.428Z] + set -eu
+[2026-09-05T18:04:21.428Z] + metadata=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/notification.json
+[2026-09-05T18:04:21.428Z] + import_cache=
+[2026-09-05T18:04:21.428Z] + '[' -d /home/user/.local/share/buildkit/local-cache ]
+[2026-09-05T18:04:21.428Z] + ls -A /home/user/.local/share/buildkit/local-cache
+[2026-09-05T18:04:21.428Z] + '[' -n 'blobs
+[2026-09-05T18:04:21.428Z] index.json
+[2026-09-05T18:04:21.428Z] ingest
+[2026-09-05T18:04:21.428Z] oci-layout' ]
+[2026-09-05T18:04:21.428Z] + import_cache='--import-cache type=local,src=/home/user/.local/share/buildkit/local-cache'
+[2026-09-05T18:04:21.428Z] + buildctl build '--frontend=dockerfile.v0' --local 'context=/home/jenkins/agent/workspace/ecampus-pipeline/source' --local 'dockerfile=/home/jenkins/agent/workspace/ecampus-pipeline/source' --opt 'filename=build/Dockerfile.go-service' --opt 'platform=linux/amd64' --opt 'build-arg:SERVICE_PATH=./cmd/ecampus-notification' --opt 'build-arg:CONFIG_DIR=configs/ecampus' --opt 'build-arg:SERVICE_PORT=8080' --import-cache 'type=local,src=/home/user/.local/share/buildkit/local-cache' --export-cache 'type=local,dest=/home/user/.local/share/buildkit/local-cache,mode=max' --output 'type=image,name=crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-notification:git-94c062c5,push=true' '--metadata-file=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/notification.json'
+[2026-09-05T18:04:21.428Z] #1 [internal] load build definition from build/Dockerfile.go-service
+[2026-09-05T18:04:21.428Z] #1 transferring dockerfile: 1.39kB done
+[2026-09-05T18:04:21.428Z] #1 DONE 0.0s
+[2026-09-05T18:04:21.428Z] 
+[2026-09-05T18:04:21.428Z] #2 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+[2026-09-05T18:04:21.428Z] #2 DONE 0.0s
+[2026-09-05T18:04:21.428Z] 
+[2026-09-05T18:04:21.428Z] #3 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+[2026-09-05T18:04:21.428Z] #3 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+[2026-09-05T18:04:21.428Z] #3 CACHED
+[2026-09-05T18:04:21.428Z] 
+[2026-09-05T18:04:21.428Z] #4 [internal] load metadata for docker.io/library/golang:1.26-alpine
+[2026-09-05T18:04:21.693Z] #4 DONE 0.1s
+[2026-09-05T18:04:21.693Z] 
+[2026-09-05T18:04:21.694Z] #5 [internal] load metadata for docker.io/library/alpine:3.20
+[2026-09-05T18:04:21.694Z] #5 DONE 0.1s
+[2026-09-05T18:04:21.694Z] 
+[2026-09-05T18:04:21.694Z] #6 [internal] load .dockerignore
+[2026-09-05T18:04:21.694Z] #6 transferring context: 124B done
+[2026-09-05T18:04:21.694Z] #6 DONE 0.0s
+[2026-09-05T18:04:21.694Z] 
+[2026-09-05T18:04:21.694Z] #7 [internal] load build context
+[2026-09-05T18:04:21.694Z] #7 DONE 0.0s
+[2026-09-05T18:04:21.694Z] 
+[2026-09-05T18:04:21.694Z] #8 importing cache manifest from local:7303465290872325323
+[2026-09-05T18:04:21.694Z] #8 inferred cache manifest type: application/vnd.oci.image.manifest.v1+json done
+[2026-09-05T18:04:21.694Z] #8 DONE 0.0s
+[2026-09-05T18:04:21.694Z] 
+[2026-09-05T18:04:21.694Z] #9 [stage-1 1/5] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:04:21.694Z] #9 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc 0.0s done
+[2026-09-05T18:04:21.694Z] #9 DONE 0.0s
+[2026-09-05T18:04:21.694Z] 
+[2026-09-05T18:04:21.694Z] #10 [builder 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:04:21.694Z] #10 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:04:21.694Z] #10 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628 0.0s done
+[2026-09-05T18:04:21.694Z] #10 DONE 0.0s
+[2026-09-05T18:04:21.694Z] 
+[2026-09-05T18:04:21.694Z] #7 [internal] load build context
+[2026-09-05T18:04:21.694Z] #7 transferring context: 35.95kB 0.0s done
+[2026-09-05T18:04:21.694Z] #7 DONE 0.0s
+[2026-09-05T18:04:21.694Z] 
+[2026-09-05T18:04:21.694Z] #11 [builder 3/6] COPY go.mod go.sum ./
+[2026-09-05T18:04:21.694Z] #11 CACHED
+[2026-09-05T18:04:21.694Z] 
+[2026-09-05T18:04:21.694Z] #12 [builder 4/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     go mod download
+[2026-09-05T18:04:21.694Z] #12 CACHED
+[2026-09-05T18:04:21.694Z] 
+[2026-09-05T18:04:21.694Z] #13 [builder 2/6] WORKDIR /src
+[2026-09-05T18:04:21.694Z] #13 CACHED
+[2026-09-05T18:04:21.694Z] 
+[2026-09-05T18:04:21.694Z] #14 [builder 5/6] COPY . .
+[2026-09-05T18:04:21.694Z] #14 CACHED
+[2026-09-05T18:04:21.694Z] 
+[2026-09-05T18:04:21.694Z] #15 [builder 6/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     --mount=type=cache,id=ecampus-go-build-linux-amd64,target=/root/.cache/go-build,sharing=shared     test -n "./cmd/ecampus-notification" &&     test -d "configs/ecampus" &&     CGO_ENABLED=0 GOOS="linux" GOARCH="amd64"       go build -trimpath -o /out/app "./cmd/ecampus-notification" &&     mkdir -p /out/configs &&     cp -R "configs/ecampus" /out/configs/
+[2026-09-05T18:04:24.209Z] #15 DONE 2.2s
+[2026-09-05T18:04:24.209Z] 
+[2026-09-05T18:04:24.209Z] #16 [stage-1 2/5] RUN sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#' /etc/apk/repositories     && apk --no-cache add ca-certificates tzdata
+[2026-09-05T18:04:24.209Z] #16 CACHED
+[2026-09-05T18:04:24.209Z] 
+[2026-09-05T18:04:24.209Z] #17 [stage-1 3/5] WORKDIR /app
+[2026-09-05T18:04:24.209Z] #17 CACHED
+[2026-09-05T18:04:24.209Z] 
+[2026-09-05T18:04:24.209Z] #18 [stage-1 4/5] COPY --from=builder /out/app /app/app
+[2026-09-05T18:04:24.209Z] #18 CACHED
+[2026-09-05T18:04:24.209Z] 
+[2026-09-05T18:04:24.209Z] #19 [stage-1 5/5] COPY --from=builder /out/configs /app/configs
+[2026-09-05T18:04:24.209Z] #19 CACHED
+[2026-09-05T18:04:24.209Z] 
+[2026-09-05T18:04:24.209Z] #20 [auth] pulseops/ecampus-notification:pull,push token for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+[2026-09-05T18:04:24.209Z] #20 DONE 0.0s
+[2026-09-05T18:04:24.209Z] 
+[2026-09-05T18:04:24.209Z] #21 exporting to image
+[2026-09-05T18:04:24.209Z] #21 exporting layers done
+[2026-09-05T18:04:24.209Z] #21 exporting manifest sha256:0baad41c515498bc15f73d8431d5110884121388925be48513585e92bc7d4ab2 done
+[2026-09-05T18:04:24.209Z] #21 exporting config sha256:2f79479fd618c6e40a21160c2d5d84844cab70ec03fbec9e79ebaa3ed24982aa done
+[2026-09-05T18:04:24.209Z] #21 pushing layers
+[2026-09-05T18:04:24.769Z] #21 pushing layers 0.7s done
+[2026-09-05T18:04:24.769Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-notification:git-94c062c5@sha256:0baad41c515498bc15f73d8431d5110884121388925be48513585e92bc7d4ab2
+[2026-09-05T18:04:25.024Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-notification:git-94c062c5@sha256:0baad41c515498bc15f73d8431d5110884121388925be48513585e92bc7d4ab2 0.3s done
+[2026-09-05T18:04:25.024Z] #21 DONE 1.0s
+[2026-09-05T18:04:25.024Z] 
+[2026-09-05T18:04:25.024Z] #22 exporting cache to client directory
+[2026-09-05T18:04:25.024Z] #22 preparing build cache for export
+[2026-09-05T18:04:25.953Z] #22 preparing build cache for export 2.0s done
+[2026-09-05T18:04:25.953Z] #22 sending cache export
+[2026-09-05T18:04:26.211Z] #22 writing layer sha256:25f1d6b1951ac8eb3740558fe94cb83d377bdadf95fd9f98b50d2e1b96130471 done
+[2026-09-05T18:04:26.211Z] #22 writing layer sha256:20d74b8f9c9522c4720aaea9a4fe18a20161454cd69c85a4d869dc54d760f35c
+[2026-09-05T18:04:26.211Z] #22 writing layer sha256:042661aeb5c69dd0452694703e1bcda91e6086e4cf3ae186e367a9cd60abcd7d done
+[2026-09-05T18:04:26.211Z] #22 writing layer sha256:239b4cd7196c2c3f8f8c93a8cbb409ad9517664829ce1453b796bb3e0180edff done
+[2026-09-05T18:04:26.211Z] #22 writing layer sha256:2cb3e687d353c47479f7eb82d6cc1b230f1d252bfefaddbeec9d3de57edf5d49 done
+[2026-09-05T18:04:26.211Z] #22 writing layer sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 done
+[2026-09-05T18:04:26.211Z] #22 writing layer sha256:55afa1ecc21d2bb5e5045f32dafee56272ffd89860bac26f6c32123439af26a4 done
+[2026-09-05T18:04:26.211Z] #22 writing layer sha256:7c3a144dfd2227e5e4aec126921061520351642741e8d4756e18775005b628b1 done
+[2026-09-05T18:04:26.211Z] #22 writing layer sha256:9631d7dfcdff651a26266473b942eb90ce3f0d7ca30f8abb047952278a7e5c47 done
+[2026-09-05T18:04:26.211Z] #22 writing layer sha256:97899feefcfabb3437175a0fccfa863ec04cf4d64f9e42467712588180f88e72 done
+[2026-09-05T18:04:26.211Z] #22 writing layer sha256:a01ef6a6016004d114c97cf04a9708d71f6bb95e2b482f829ae547874376d5c7 done
+[2026-09-05T18:04:26.211Z] #22 writing layer sha256:b11e9a6153c3413be2f161d348857a9b34c8ebca774d1bad0aaa76d37d5fa82f done
+[2026-09-05T18:04:26.211Z] #22 writing layer sha256:bba1b8482d9a01c11df25e07330410aa90a96a13d050644a4f259d25a387c4d9 done
+[2026-09-05T18:04:26.211Z] #22 writing layer sha256:c023d63c4a5bc658f0a860ac595ad386804f7f891c5a2149f4a8270eb855ed59 done
+[2026-09-05T18:04:26.211Z] #22 writing layer sha256:e5ee7da0307b89156ec739187daa2d6a1d45ec8063b39d7b33810fa12979cc5d done
+[2026-09-05T18:04:26.211Z] #22 writing layer sha256:20d74b8f9c9522c4720aaea9a4fe18a20161454cd69c85a4d869dc54d760f35c 0.3s done
+[2026-09-05T18:04:26.466Z] #22 sending cache export 0.3s done
+[2026-09-05T18:04:26.466Z] #22 writing config sha256:f93f3e79e55d30dc9d6e11f1b2f368bfcf5bf7e024e6c69553cb8b2f96c10a5c done
+[2026-09-05T18:04:26.466Z] #22 writing cache image manifest sha256:56d1ef73c762a008191c262ecc9b0525f7718f1564536d52c04166600c9c6f2f done
+[2026-09-05T18:04:26.466Z] #22 DONE 2.3s
+[2026-09-05T18:04:26.466Z] + test -s /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/notification.json
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] writeFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:27.286Z] + set -eu
+[2026-09-05T18:04:27.286Z] + cd gitops/platform/server
+[2026-09-05T18:04:27.286Z] + go run ./cmd/server release-record --service notification --environment dev --record --status releasing --git-revision 94c062c50bb8e34d53953085806b8ff1151f053b --image-digest sha256:0baad41c515498bc15f73d8431d5110884121388925be48513585e92bc7d4ab2 --config-revision  --rollout-strategy bluegreen
+[2026-09-05T18:04:27.286Z] recorded notification dev as releasing
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // parallel
+[Pipeline] parallel
+[Pipeline] { (Branch: reservation)
+[Pipeline] readFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:28.138Z] + set -eu
+[2026-09-05T18:04:28.138Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests
+[2026-09-05T18:04:28.138Z] + chmod -R 777 /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-05T18:04:28.138Z] + cd source
+[2026-09-05T18:04:28.138Z] + ./scripts/ci/run-service-checks.sh --service reservation
+[2026-09-05T18:04:29.067Z] ?   	github.com/Milchstrassse/Ecampus-go/cmd/ecampus-reservation	[no test files]
+[2026-09-05T18:04:29.067Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/bootstrap	[no test files]
+[2026-09-05T18:04:29.067Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampus/reservationapp	[no test files]
+[2026-09-05T18:04:29.067Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusruntime	[no test files]
+[2026-09-05T18:04:29.067Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/moderationadapter	[no test files]
+[2026-09-05T18:04:29.067Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/notificationadapter	[no test files]
+[2026-09-05T18:04:29.067Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/useradapter	[no test files]
+[2026-09-05T18:04:29.067Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/integration/wxutil	(cached)
+[2026-09-05T18:04:29.067Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/middleware	(cached)
+[2026-09-05T18:04:29.067Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/moderation	(cached)
+[2026-09-05T18:04:29.067Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/mq	(cached)
+[2026-09-05T18:04:29.067Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/notification	(cached)
+[2026-09-05T18:04:29.067Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/adminjwt	(cached)
+[2026-09-05T18:04:29.067Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/bizerr	[no test files]
+[2026-09-05T18:04:29.067Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/config	(cached)
+[2026-09-05T18:04:29.067Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/encrypt	(cached)
+[2026-09-05T18:04:29.067Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/jwtutil	[no test files]
+[2026-09-05T18:04:29.067Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/pagination	[no test files]
+[2026-09-05T18:04:29.067Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/rediskey	[no test files]
+[2026-09-05T18:04:29.067Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/responses	(cached)
+[2026-09-05T18:04:29.067Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/snowflake	[no test files]
+[2026-09-05T18:04:29.067Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/reservation	(cached)
+[2026-09-05T18:04:29.067Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/sensitive	(cached)
+[2026-09-05T18:04:29.067Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/user	(cached)
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:29.748Z] + set -eu
+[2026-09-05T18:04:29.748Z] + metadata=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/reservation.json
+[2026-09-05T18:04:29.748Z] + import_cache=
+[2026-09-05T18:04:29.748Z] + '[' -d /home/user/.local/share/buildkit/local-cache ]
+[2026-09-05T18:04:29.748Z] + ls -A /home/user/.local/share/buildkit/local-cache
+[2026-09-05T18:04:29.748Z] + '[' -n 'blobs
+[2026-09-05T18:04:29.748Z] index.json
+[2026-09-05T18:04:29.748Z] ingest
+[2026-09-05T18:04:29.748Z] oci-layout' ]
+[2026-09-05T18:04:29.748Z] + import_cache='--import-cache type=local,src=/home/user/.local/share/buildkit/local-cache'
+[2026-09-05T18:04:29.748Z] + buildctl build '--frontend=dockerfile.v0' --local 'context=/home/jenkins/agent/workspace/ecampus-pipeline/source' --local 'dockerfile=/home/jenkins/agent/workspace/ecampus-pipeline/source' --opt 'filename=build/Dockerfile.go-service' --opt 'platform=linux/amd64' --opt 'build-arg:SERVICE_PATH=./cmd/ecampus-reservation' --opt 'build-arg:CONFIG_DIR=configs/ecampus' --opt 'build-arg:SERVICE_PORT=8080' --import-cache 'type=local,src=/home/user/.local/share/buildkit/local-cache' --export-cache 'type=local,dest=/home/user/.local/share/buildkit/local-cache,mode=max' --output 'type=image,name=crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-reservation:git-94c062c5,push=true' '--metadata-file=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/reservation.json'
+[2026-09-05T18:04:29.749Z] #1 [internal] load build definition from build/Dockerfile.go-service
+[2026-09-05T18:04:29.749Z] #1 DONE 0.0s
+[2026-09-05T18:04:29.749Z] 
+[2026-09-05T18:04:29.749Z] #1 [internal] load build definition from build/Dockerfile.go-service
+[2026-09-05T18:04:29.749Z] #1 transferring dockerfile: 1.39kB done
+[2026-09-05T18:04:29.749Z] #1 DONE 0.0s
+[2026-09-05T18:04:29.749Z] 
+[2026-09-05T18:04:29.749Z] #2 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+[2026-09-05T18:04:29.749Z] #2 DONE 0.1s
+[2026-09-05T18:04:29.749Z] 
+[2026-09-05T18:04:29.749Z] #3 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+[2026-09-05T18:04:29.749Z] #3 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+[2026-09-05T18:04:29.749Z] #3 CACHED
+[2026-09-05T18:04:29.749Z] 
+[2026-09-05T18:04:29.749Z] #4 [internal] load metadata for docker.io/library/golang:1.26-alpine
+[2026-09-05T18:04:30.003Z] #4 ...
+[2026-09-05T18:04:30.003Z] 
+[2026-09-05T18:04:30.003Z] #5 [internal] load metadata for docker.io/library/alpine:3.20
+[2026-09-05T18:04:30.003Z] #5 DONE 0.1s
+[2026-09-05T18:04:30.003Z] 
+[2026-09-05T18:04:30.003Z] #4 [internal] load metadata for docker.io/library/golang:1.26-alpine
+[2026-09-05T18:04:30.003Z] #4 DONE 0.1s
+[2026-09-05T18:04:30.003Z] 
+[2026-09-05T18:04:30.003Z] #6 [internal] load .dockerignore
+[2026-09-05T18:04:30.003Z] #6 transferring context: 124B done
+[2026-09-05T18:04:30.003Z] #6 DONE 0.0s
+[2026-09-05T18:04:30.003Z] 
+[2026-09-05T18:04:30.003Z] #7 importing cache manifest from local:6246073830815720716
+[2026-09-05T18:04:30.003Z] #7 inferred cache manifest type: application/vnd.oci.image.manifest.v1+json done
+[2026-09-05T18:04:30.003Z] #7 DONE 0.0s
+[2026-09-05T18:04:30.003Z] 
+[2026-09-05T18:04:30.003Z] #8 [stage-1 1/5] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:04:30.003Z] #8 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc 0.0s done
+[2026-09-05T18:04:30.003Z] #8 DONE 0.0s
+[2026-09-05T18:04:30.003Z] 
+[2026-09-05T18:04:30.003Z] #9 [builder 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:04:30.003Z] #9 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628 0.0s done
+[2026-09-05T18:04:30.003Z] #9 DONE 0.0s
+[2026-09-05T18:04:30.003Z] 
+[2026-09-05T18:04:30.003Z] #10 [internal] load build context
+[2026-09-05T18:04:30.003Z] #10 transferring context: 35.95kB 0.0s done
+[2026-09-05T18:04:30.003Z] #10 DONE 0.0s
+[2026-09-05T18:04:30.003Z] 
+[2026-09-05T18:04:30.003Z] #11 [builder 4/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     go mod download
+[2026-09-05T18:04:30.003Z] #11 CACHED
+[2026-09-05T18:04:30.003Z] 
+[2026-09-05T18:04:30.003Z] #12 [builder 2/6] WORKDIR /src
+[2026-09-05T18:04:30.004Z] #12 CACHED
+[2026-09-05T18:04:30.004Z] 
+[2026-09-05T18:04:30.004Z] #13 [builder 3/6] COPY go.mod go.sum ./
+[2026-09-05T18:04:30.004Z] #13 CACHED
+[2026-09-05T18:04:30.004Z] 
+[2026-09-05T18:04:30.004Z] #14 [builder 5/6] COPY . .
+[2026-09-05T18:04:30.004Z] #14 CACHED
+[2026-09-05T18:04:30.259Z] 
+[2026-09-05T18:04:30.259Z] #15 [builder 6/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     --mount=type=cache,id=ecampus-go-build-linux-amd64,target=/root/.cache/go-build,sharing=shared     test -n "./cmd/ecampus-reservation" &&     test -d "configs/ecampus" &&     CGO_ENABLED=0 GOOS="linux" GOARCH="amd64"       go build -trimpath -o /out/app "./cmd/ecampus-reservation" &&     mkdir -p /out/configs &&     cp -R "configs/ecampus" /out/configs/
+[2026-09-05T18:04:32.155Z] #15 DONE 2.2s
+[2026-09-05T18:04:32.411Z] 
+[2026-09-05T18:04:32.411Z] #16 [stage-1 2/5] RUN sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#' /etc/apk/repositories     && apk --no-cache add ca-certificates tzdata
+[2026-09-05T18:04:32.411Z] #16 CACHED
+[2026-09-05T18:04:32.411Z] 
+[2026-09-05T18:04:32.411Z] #17 [stage-1 4/5] COPY --from=builder /out/app /app/app
+[2026-09-05T18:04:32.411Z] #17 CACHED
+[2026-09-05T18:04:32.411Z] 
+[2026-09-05T18:04:32.411Z] #18 [stage-1 3/5] WORKDIR /app
+[2026-09-05T18:04:32.411Z] #18 CACHED
+[2026-09-05T18:04:32.411Z] 
+[2026-09-05T18:04:32.411Z] #19 [stage-1 5/5] COPY --from=builder /out/configs /app/configs
+[2026-09-05T18:04:32.411Z] #19 CACHED
+[2026-09-05T18:04:32.668Z] 
+[2026-09-05T18:04:32.668Z] #20 [auth] pulseops/ecampus-reservation:pull,push token for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+[2026-09-05T18:04:32.668Z] #20 DONE 0.0s
+[2026-09-05T18:04:32.668Z] 
+[2026-09-05T18:04:32.668Z] #21 exporting to image
+[2026-09-05T18:04:32.668Z] #21 exporting layers done
+[2026-09-05T18:04:32.668Z] #21 exporting manifest sha256:7f308aca75c87ab3513dc1924a85b6c20e2660697f37bcbdf5977b2aec0427a1 done
+[2026-09-05T18:04:32.668Z] #21 exporting config sha256:d97a5f6f5e71ad79b68078c6573bcc392abb97067d57d4da8b3269c05445b675 done
+[2026-09-05T18:04:32.668Z] #21 pushing layers
+[2026-09-05T18:04:33.231Z] #21 pushing layers 0.7s done
+[2026-09-05T18:04:33.231Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-reservation:git-94c062c5@sha256:7f308aca75c87ab3513dc1924a85b6c20e2660697f37bcbdf5977b2aec0427a1
+[2026-09-05T18:04:33.486Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-reservation:git-94c062c5@sha256:7f308aca75c87ab3513dc1924a85b6c20e2660697f37bcbdf5977b2aec0427a1 0.3s done
+[2026-09-05T18:04:33.486Z] #21 DONE 1.0s
+[2026-09-05T18:04:33.486Z] 
+[2026-09-05T18:04:33.486Z] #22 exporting cache to client directory
+[2026-09-05T18:04:33.486Z] #22 preparing build cache for export
+[2026-09-05T18:04:34.418Z] #22 preparing build cache for export 2.0s done
+[2026-09-05T18:04:34.418Z] #22 sending cache export
+[2026-09-05T18:04:34.418Z] #22 writing layer sha256:2cb3e687d353c47479f7eb82d6cc1b230f1d252bfefaddbeec9d3de57edf5d49 done
+[2026-09-05T18:04:34.418Z] #22 writing layer sha256:042661aeb5c69dd0452694703e1bcda91e6086e4cf3ae186e367a9cd60abcd7d done
+[2026-09-05T18:04:34.418Z] #22 writing layer sha256:1fc7bfa578ed219bbbbf111f8a6947c5832b83df602819a81bf713bd986cb71a done
+[2026-09-05T18:04:34.418Z] #22 writing layer sha256:25f1d6b1951ac8eb3740558fe94cb83d377bdadf95fd9f98b50d2e1b96130471 done
+[2026-09-05T18:04:34.418Z] #22 writing layer sha256:3801f0a48e4704718ba1a053428b1b230755fe093024618170d765feacdce96e
+[2026-09-05T18:04:34.418Z] #22 writing layer sha256:49bcca01c22e79811c4174d00e0f5e011385e03bb9fe655af6338fb275346504 done
+[2026-09-05T18:04:34.418Z] #22 writing layer sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 done
+[2026-09-05T18:04:34.418Z] #22 writing layer sha256:55afa1ecc21d2bb5e5045f32dafee56272ffd89860bac26f6c32123439af26a4 done
+[2026-09-05T18:04:34.418Z] #22 writing layer sha256:7c3a144dfd2227e5e4aec126921061520351642741e8d4756e18775005b628b1 done
+[2026-09-05T18:04:34.418Z] #22 writing layer sha256:9631d7dfcdff651a26266473b942eb90ce3f0d7ca30f8abb047952278a7e5c47 done
+[2026-09-05T18:04:34.418Z] #22 writing layer sha256:97899feefcfabb3437175a0fccfa863ec04cf4d64f9e42467712588180f88e72 done
+[2026-09-05T18:04:34.418Z] #22 writing layer sha256:bba1b8482d9a01c11df25e07330410aa90a96a13d050644a4f259d25a387c4d9 done
+[2026-09-05T18:04:34.418Z] #22 writing layer sha256:c023d63c4a5bc658f0a860ac595ad386804f7f891c5a2149f4a8270eb855ed59 done
+[2026-09-05T18:04:34.418Z] #22 writing layer sha256:a01ef6a6016004d114c97cf04a9708d71f6bb95e2b482f829ae547874376d5c7 done
+[2026-09-05T18:04:34.418Z] #22 writing layer sha256:e5ee7da0307b89156ec739187daa2d6a1d45ec8063b39d7b33810fa12979cc5d done
+[2026-09-05T18:04:34.674Z] #22 writing layer sha256:3801f0a48e4704718ba1a053428b1b230755fe093024618170d765feacdce96e 0.3s done
+[2026-09-05T18:04:34.674Z] #22 sending cache export 0.3s done
+[2026-09-05T18:04:34.674Z] #22 writing config sha256:32fe7aeb12b6278dacaf5c596342f026bbf35ca699264443b099c93e79a79b7c done
+[2026-09-05T18:04:34.674Z] #22 writing cache image manifest sha256:b75de079d2409fc99e1e680745dfe422a00a16974b4462ec5d173edf557fd068 done
+[2026-09-05T18:04:34.674Z] #22 DONE 2.3s
+[2026-09-05T18:04:34.674Z] + test -s /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/reservation.json
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] writeFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:35.490Z] + set -eu
+[2026-09-05T18:04:35.490Z] + cd gitops/platform/server
+[2026-09-05T18:04:35.490Z] + go run ./cmd/server release-record --service reservation --environment dev --record --status releasing --git-revision 94c062c50bb8e34d53953085806b8ff1151f053b --image-digest sha256:7f308aca75c87ab3513dc1924a85b6c20e2660697f37bcbdf5977b2aec0427a1 --config-revision  --rollout-strategy bluegreen
+[2026-09-05T18:04:35.490Z] recorded reservation dev as releasing
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // parallel
+[Pipeline] parallel
+[Pipeline] { (Branch: school)
+[Pipeline] readFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:36.276Z] + set -eu
+[2026-09-05T18:04:36.276Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests
+[2026-09-05T18:04:36.276Z] + chmod -R 777 /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-05T18:04:36.276Z] + cd source
+[2026-09-05T18:04:36.276Z] + ./scripts/ci/run-service-checks.sh --service school
+[2026-09-05T18:04:37.202Z] ?   	github.com/Milchstrassse/Ecampus-go/cmd/ecampus-school	[no test files]
+[2026-09-05T18:04:37.202Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/bootstrap	[no test files]
+[2026-09-05T18:04:37.202Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampus/schoolapp	[no test files]
+[2026-09-05T18:04:37.202Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusruntime	[no test files]
+[2026-09-05T18:04:37.202Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/moderationadapter	[no test files]
+[2026-09-05T18:04:37.202Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/useradapter	[no test files]
+[2026-09-05T18:04:37.202Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/integration/wxutil	(cached)
+[2026-09-05T18:04:37.202Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/middleware	(cached)
+[2026-09-05T18:04:37.202Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/moderation	(cached)
+[2026-09-05T18:04:37.202Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/adminjwt	(cached)
+[2026-09-05T18:04:37.202Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/bizerr	[no test files]
+[2026-09-05T18:04:37.202Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/config	(cached)
+[2026-09-05T18:04:37.202Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/encrypt	(cached)
+[2026-09-05T18:04:37.202Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/jwtutil	[no test files]
+[2026-09-05T18:04:37.202Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/pagination	[no test files]
+[2026-09-05T18:04:37.202Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/rediskey	[no test files]
+[2026-09-05T18:04:37.202Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/responses	(cached)
+[2026-09-05T18:04:37.202Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/snowflake	[no test files]
+[2026-09-05T18:04:37.202Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/school	(cached)
+[2026-09-05T18:04:37.202Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/user	(cached)
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:37.879Z] + set -eu
+[2026-09-05T18:04:37.879Z] + metadata=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/school.json
+[2026-09-05T18:04:37.879Z] + import_cache=
+[2026-09-05T18:04:37.879Z] + '[' -d /home/user/.local/share/buildkit/local-cache ]
+[2026-09-05T18:04:37.879Z] + ls -A /home/user/.local/share/buildkit/local-cache
+[2026-09-05T18:04:37.879Z] + '[' -n 'blobs
+[2026-09-05T18:04:37.879Z] index.json
+[2026-09-05T18:04:37.879Z] ingest
+[2026-09-05T18:04:37.879Z] oci-layout' ]
+[2026-09-05T18:04:37.879Z] + import_cache='--import-cache type=local,src=/home/user/.local/share/buildkit/local-cache'
+[2026-09-05T18:04:37.879Z] + buildctl build '--frontend=dockerfile.v0' --local 'context=/home/jenkins/agent/workspace/ecampus-pipeline/source' --local 'dockerfile=/home/jenkins/agent/workspace/ecampus-pipeline/source' --opt 'filename=build/Dockerfile.go-service' --opt 'platform=linux/amd64' --opt 'build-arg:SERVICE_PATH=./cmd/ecampus-school' --opt 'build-arg:CONFIG_DIR=configs/ecampus' --opt 'build-arg:SERVICE_PORT=8080' --import-cache 'type=local,src=/home/user/.local/share/buildkit/local-cache' --export-cache 'type=local,dest=/home/user/.local/share/buildkit/local-cache,mode=max' --output 'type=image,name=crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-school:git-94c062c5,push=true' '--metadata-file=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/school.json'
+[2026-09-05T18:04:37.879Z] #1 [internal] load build definition from build/Dockerfile.go-service
+[2026-09-05T18:04:37.879Z] #1 transferring dockerfile: 1.39kB done
+[2026-09-05T18:04:37.879Z] #1 DONE 0.0s
+[2026-09-05T18:04:37.879Z] 
+[2026-09-05T18:04:37.879Z] #2 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+[2026-09-05T18:04:37.879Z] #2 DONE 0.0s
+[2026-09-05T18:04:37.879Z] 
+[2026-09-05T18:04:37.879Z] #3 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+[2026-09-05T18:04:37.879Z] #3 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+[2026-09-05T18:04:37.879Z] #3 CACHED
+[2026-09-05T18:04:37.879Z] 
+[2026-09-05T18:04:37.879Z] #4 [internal] load metadata for docker.io/library/golang:1.26-alpine
+[2026-09-05T18:04:38.141Z] #4 DONE 0.1s
+[2026-09-05T18:04:38.141Z] 
+[2026-09-05T18:04:38.141Z] #5 [internal] load metadata for docker.io/library/alpine:3.20
+[2026-09-05T18:04:38.141Z] #5 DONE 0.1s
+[2026-09-05T18:04:38.141Z] 
+[2026-09-05T18:04:38.141Z] #6 [internal] load .dockerignore
+[2026-09-05T18:04:38.141Z] #6 transferring context: 124B done
+[2026-09-05T18:04:38.141Z] #6 DONE 0.0s
+[2026-09-05T18:04:38.141Z] 
+[2026-09-05T18:04:38.141Z] #7 [internal] load build context
+[2026-09-05T18:04:38.141Z] #7 DONE 0.0s
+[2026-09-05T18:04:38.141Z] 
+[2026-09-05T18:04:38.141Z] #8 importing cache manifest from local:7778828053941551035
+[2026-09-05T18:04:38.141Z] #8 inferred cache manifest type: application/vnd.oci.image.manifest.v1+json done
+[2026-09-05T18:04:38.141Z] #8 DONE 0.0s
+[2026-09-05T18:04:38.141Z] 
+[2026-09-05T18:04:38.141Z] #9 [stage-1 1/5] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:04:38.141Z] #9 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc 0.0s done
+[2026-09-05T18:04:38.141Z] #9 DONE 0.0s
+[2026-09-05T18:04:38.141Z] 
+[2026-09-05T18:04:38.141Z] #10 [builder 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:04:38.141Z] #10 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:04:38.141Z] #10 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628 0.0s done
+[2026-09-05T18:04:38.141Z] #10 DONE 0.0s
+[2026-09-05T18:04:38.141Z] 
+[2026-09-05T18:04:38.141Z] #7 [internal] load build context
+[2026-09-05T18:04:38.141Z] #7 transferring context: 35.95kB 0.0s done
+[2026-09-05T18:04:38.141Z] #7 DONE 0.0s
+[2026-09-05T18:04:38.141Z] 
+[2026-09-05T18:04:38.141Z] #11 [builder 4/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     go mod download
+[2026-09-05T18:04:38.141Z] #11 CACHED
+[2026-09-05T18:04:38.141Z] 
+[2026-09-05T18:04:38.141Z] #12 [builder 2/6] WORKDIR /src
+[2026-09-05T18:04:38.141Z] #12 CACHED
+[2026-09-05T18:04:38.141Z] 
+[2026-09-05T18:04:38.141Z] #13 [builder 3/6] COPY go.mod go.sum ./
+[2026-09-05T18:04:38.141Z] #13 CACHED
+[2026-09-05T18:04:38.141Z] 
+[2026-09-05T18:04:38.141Z] #14 [builder 5/6] COPY . .
+[2026-09-05T18:04:38.141Z] #14 CACHED
+[2026-09-05T18:04:38.141Z] 
+[2026-09-05T18:04:38.141Z] #15 [builder 6/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     --mount=type=cache,id=ecampus-go-build-linux-amd64,target=/root/.cache/go-build,sharing=shared     test -n "./cmd/ecampus-school" &&     test -d "configs/ecampus" &&     CGO_ENABLED=0 GOOS="linux" GOARCH="amd64"       go build -trimpath -o /out/app "./cmd/ecampus-school" &&     mkdir -p /out/configs &&     cp -R "configs/ecampus" /out/configs/
+[2026-09-05T18:04:40.661Z] #15 DONE 2.1s
+[2026-09-05T18:04:40.661Z] 
+[2026-09-05T18:04:40.661Z] #16 [stage-1 2/5] RUN sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#' /etc/apk/repositories     && apk --no-cache add ca-certificates tzdata
+[2026-09-05T18:04:40.661Z] #16 CACHED
+[2026-09-05T18:04:40.661Z] 
+[2026-09-05T18:04:40.661Z] #17 [stage-1 3/5] WORKDIR /app
+[2026-09-05T18:04:40.661Z] #17 CACHED
+[2026-09-05T18:04:40.661Z] 
+[2026-09-05T18:04:40.661Z] #18 [stage-1 4/5] COPY --from=builder /out/app /app/app
+[2026-09-05T18:04:40.661Z] #18 CACHED
+[2026-09-05T18:04:40.661Z] 
+[2026-09-05T18:04:40.661Z] #19 [stage-1 5/5] COPY --from=builder /out/configs /app/configs
+[2026-09-05T18:04:40.661Z] #19 CACHED
+[2026-09-05T18:04:40.661Z] 
+[2026-09-05T18:04:40.661Z] #20 [auth] pulseops/ecampus-school:pull,push token for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+[2026-09-05T18:04:40.661Z] #20 DONE 0.0s
+[2026-09-05T18:04:40.661Z] 
+[2026-09-05T18:04:40.661Z] #21 exporting to image
+[2026-09-05T18:04:40.661Z] #21 exporting layers done
+[2026-09-05T18:04:40.661Z] #21 exporting manifest sha256:8aca65dc0a531d25cc652f5cc1f1a1f0371c35ab06f5e0214a2506927c540df9 done
+[2026-09-05T18:04:40.661Z] #21 exporting config sha256:dbab39c51d98c5097c63ab2e9c47af08f331be0ab43ed1e08c697f508df0da71 done
+[2026-09-05T18:04:40.661Z] #21 pushing layers
+[2026-09-05T18:04:40.916Z] #21 pushing layers 0.7s done
+[2026-09-05T18:04:40.916Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-school:git-94c062c5@sha256:8aca65dc0a531d25cc652f5cc1f1a1f0371c35ab06f5e0214a2506927c540df9
+[2026-09-05T18:04:41.476Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-school:git-94c062c5@sha256:8aca65dc0a531d25cc652f5cc1f1a1f0371c35ab06f5e0214a2506927c540df9 0.3s done
+[2026-09-05T18:04:41.476Z] #21 DONE 1.0s
+[2026-09-05T18:04:41.476Z] 
+[2026-09-05T18:04:41.476Z] #22 exporting cache to client directory
+[2026-09-05T18:04:41.476Z] #22 preparing build cache for export
+[2026-09-05T18:04:42.037Z] #22 preparing build cache for export 1.8s done
+[2026-09-05T18:04:42.037Z] #22 sending cache export
+[2026-09-05T18:04:42.293Z] #22 writing layer sha256:2cb3e687d353c47479f7eb82d6cc1b230f1d252bfefaddbeec9d3de57edf5d49 done
+[2026-09-05T18:04:42.293Z] #22 writing layer sha256:1f5ae24a931bcd87f951fd41eabec4dcde276b3488bbee8257a0077a7345fa9b
+[2026-09-05T18:04:42.293Z] #22 writing layer sha256:042661aeb5c69dd0452694703e1bcda91e6086e4cf3ae186e367a9cd60abcd7d done
+[2026-09-05T18:04:42.293Z] #22 writing layer sha256:25f1d6b1951ac8eb3740558fe94cb83d377bdadf95fd9f98b50d2e1b96130471 done
+[2026-09-05T18:04:42.293Z] #22 writing layer sha256:40b55aec1a0dcd0ae344598ac87f8b8bbf777005ef672584ede784f1450fd390 done
+[2026-09-05T18:04:42.293Z] #22 writing layer sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 done
+[2026-09-05T18:04:42.293Z] #22 writing layer sha256:55afa1ecc21d2bb5e5045f32dafee56272ffd89860bac26f6c32123439af26a4 done
+[2026-09-05T18:04:42.293Z] #22 writing layer sha256:7c3a144dfd2227e5e4aec126921061520351642741e8d4756e18775005b628b1 done
+[2026-09-05T18:04:42.293Z] #22 writing layer sha256:9631d7dfcdff651a26266473b942eb90ce3f0d7ca30f8abb047952278a7e5c47 done
+[2026-09-05T18:04:42.293Z] #22 writing layer sha256:97899feefcfabb3437175a0fccfa863ec04cf4d64f9e42467712588180f88e72 done
+[2026-09-05T18:04:42.293Z] #22 writing layer sha256:a01ef6a6016004d114c97cf04a9708d71f6bb95e2b482f829ae547874376d5c7 done
+[2026-09-05T18:04:42.294Z] #22 writing layer sha256:b29095ce3b9d9640874849042159cd9a0c24ee13f4d2d59b83a27f157263c2d4 done
+[2026-09-05T18:04:42.294Z] #22 writing layer sha256:bba1b8482d9a01c11df25e07330410aa90a96a13d050644a4f259d25a387c4d9 done
+[2026-09-05T18:04:42.294Z] #22 writing layer sha256:c023d63c4a5bc658f0a860ac595ad386804f7f891c5a2149f4a8270eb855ed59 done
+[2026-09-05T18:04:42.294Z] #22 writing layer sha256:e5ee7da0307b89156ec739187daa2d6a1d45ec8063b39d7b33810fa12979cc5d done
+[2026-09-05T18:04:42.548Z] #22 writing layer sha256:1f5ae24a931bcd87f951fd41eabec4dcde276b3488bbee8257a0077a7345fa9b 0.3s done
+[2026-09-05T18:04:42.548Z] #22 sending cache export 0.3s done
+[2026-09-05T18:04:42.548Z] #22 writing config sha256:24b7930692157fbc78c5dbec329b714fa54c73829b329f90d169fb7b408c27c3 0.0s done
+[2026-09-05T18:04:42.548Z] #22 writing cache image manifest sha256:68062846e278de9c1aadd718034569eeceddcf87a369a1ca5cbccdbddea6681d done
+[2026-09-05T18:04:42.548Z] #22 DONE 2.1s
+[2026-09-05T18:04:42.548Z] + test -s /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/school.json
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] writeFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:43.337Z] + set -eu
+[2026-09-05T18:04:43.337Z] + cd gitops/platform/server
+[2026-09-05T18:04:43.337Z] + go run ./cmd/server release-record --service school --environment dev --record --status releasing --git-revision 94c062c50bb8e34d53953085806b8ff1151f053b --image-digest sha256:8aca65dc0a531d25cc652f5cc1f1a1f0371c35ab06f5e0214a2506927c540df9 --config-revision  --rollout-strategy bluegreen
+[2026-09-05T18:04:43.337Z] recorded school dev as releasing
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // parallel
+[Pipeline] parallel
+[Pipeline] { (Branch: theme)
+[Pipeline] readFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:44.155Z] + set -eu
+[2026-09-05T18:04:44.155Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests
+[2026-09-05T18:04:44.155Z] + chmod -R 777 /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-05T18:04:44.155Z] + cd source
+[2026-09-05T18:04:44.155Z] + ./scripts/ci/run-service-checks.sh --service theme
+[2026-09-05T18:04:45.084Z] ?   	github.com/Milchstrassse/Ecampus-go/cmd/ecampus-theme	[no test files]
+[2026-09-05T18:04:45.084Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/bootstrap	[no test files]
+[2026-09-05T18:04:45.084Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampus/themeapp	[no test files]
+[2026-09-05T18:04:45.084Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusruntime	[no test files]
+[2026-09-05T18:04:45.084Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/moderationadapter	[no test files]
+[2026-09-05T18:04:45.084Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/useradapter	[no test files]
+[2026-09-05T18:04:45.084Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/integration/wxutil	(cached)
+[2026-09-05T18:04:45.084Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/middleware	(cached)
+[2026-09-05T18:04:45.084Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/moderation	(cached)
+[2026-09-05T18:04:45.084Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/adminjwt	(cached)
+[2026-09-05T18:04:45.084Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/bizerr	[no test files]
+[2026-09-05T18:04:45.084Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/config	(cached)
+[2026-09-05T18:04:45.084Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/encrypt	(cached)
+[2026-09-05T18:04:45.084Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/jwtutil	[no test files]
+[2026-09-05T18:04:45.084Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/pagination	[no test files]
+[2026-09-05T18:04:45.084Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/rediskey	[no test files]
+[2026-09-05T18:04:45.084Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/responses	(cached)
+[2026-09-05T18:04:45.084Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/snowflake	[no test files]
+[2026-09-05T18:04:45.084Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/theme	[no test files]
+[2026-09-05T18:04:45.084Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/user	(cached)
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:45.778Z] + set -eu
+[2026-09-05T18:04:45.779Z] + metadata=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/theme.json
+[2026-09-05T18:04:45.779Z] + import_cache=
+[2026-09-05T18:04:45.779Z] + '[' -d /home/user/.local/share/buildkit/local-cache ]
+[2026-09-05T18:04:45.779Z] + ls -A /home/user/.local/share/buildkit/local-cache
+[2026-09-05T18:04:45.779Z] + '[' -n 'blobs
+[2026-09-05T18:04:45.779Z] index.json
+[2026-09-05T18:04:45.779Z] ingest
+[2026-09-05T18:04:45.779Z] oci-layout' ]
+[2026-09-05T18:04:45.779Z] + import_cache='--import-cache type=local,src=/home/user/.local/share/buildkit/local-cache'
+[2026-09-05T18:04:45.779Z] + buildctl build '--frontend=dockerfile.v0' --local 'context=/home/jenkins/agent/workspace/ecampus-pipeline/source' --local 'dockerfile=/home/jenkins/agent/workspace/ecampus-pipeline/source' --opt 'filename=build/Dockerfile.go-service' --opt 'platform=linux/amd64' --opt 'build-arg:SERVICE_PATH=./cmd/ecampus-theme' --opt 'build-arg:CONFIG_DIR=configs/ecampus' --opt 'build-arg:SERVICE_PORT=8080' --import-cache 'type=local,src=/home/user/.local/share/buildkit/local-cache' --export-cache 'type=local,dest=/home/user/.local/share/buildkit/local-cache,mode=max' --output 'type=image,name=crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-theme:git-94c062c5,push=true' '--metadata-file=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/theme.json'
+[2026-09-05T18:04:45.779Z] #1 [internal] load build definition from build/Dockerfile.go-service
+[2026-09-05T18:04:45.779Z] #1 transferring dockerfile: 1.39kB done
+[2026-09-05T18:04:45.779Z] #1 DONE 0.0s
+[2026-09-05T18:04:45.779Z] 
+[2026-09-05T18:04:45.779Z] #2 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+[2026-09-05T18:04:45.779Z] #2 DONE 0.0s
+[2026-09-05T18:04:45.779Z] 
+[2026-09-05T18:04:45.779Z] #3 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+[2026-09-05T18:04:45.779Z] #3 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+[2026-09-05T18:04:45.779Z] #3 CACHED
+[2026-09-05T18:04:45.779Z] 
+[2026-09-05T18:04:45.779Z] #4 [internal] load metadata for docker.io/library/golang:1.26-alpine
+[2026-09-05T18:04:46.033Z] #4 DONE 0.1s
+[2026-09-05T18:04:46.033Z] 
+[2026-09-05T18:04:46.033Z] #5 [internal] load metadata for docker.io/library/alpine:3.20
+[2026-09-05T18:04:46.033Z] #5 DONE 0.0s
+[2026-09-05T18:04:46.033Z] 
+[2026-09-05T18:04:46.033Z] #6 [internal] load .dockerignore
+[2026-09-05T18:04:46.033Z] #6 transferring context: 124B done
+[2026-09-05T18:04:46.033Z] #6 DONE 0.0s
+[2026-09-05T18:04:46.033Z] 
+[2026-09-05T18:04:46.033Z] #7 [internal] load build context
+[2026-09-05T18:04:46.033Z] #7 DONE 0.0s
+[2026-09-05T18:04:46.033Z] 
+[2026-09-05T18:04:46.033Z] #8 importing cache manifest from local:17017279161681561573
+[2026-09-05T18:04:46.033Z] #8 inferred cache manifest type: application/vnd.oci.image.manifest.v1+json done
+[2026-09-05T18:04:46.033Z] #8 DONE 0.0s
+[2026-09-05T18:04:46.034Z] 
+[2026-09-05T18:04:46.034Z] #9 [stage-1 1/5] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:04:46.034Z] #9 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc 0.0s done
+[2026-09-05T18:04:46.034Z] #9 DONE 0.0s
+[2026-09-05T18:04:46.034Z] 
+[2026-09-05T18:04:46.034Z] #10 [builder 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:04:46.034Z] #10 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:04:46.034Z] #10 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628 0.0s done
+[2026-09-05T18:04:46.034Z] #10 DONE 0.0s
+[2026-09-05T18:04:46.034Z] 
+[2026-09-05T18:04:46.034Z] #7 [internal] load build context
+[2026-09-05T18:04:46.034Z] #7 transferring context: 35.95kB 0.0s done
+[2026-09-05T18:04:46.034Z] #7 DONE 0.0s
+[2026-09-05T18:04:46.034Z] 
+[2026-09-05T18:04:46.034Z] #11 [builder 2/6] WORKDIR /src
+[2026-09-05T18:04:46.034Z] #11 CACHED
+[2026-09-05T18:04:46.034Z] 
+[2026-09-05T18:04:46.034Z] #12 [builder 3/6] COPY go.mod go.sum ./
+[2026-09-05T18:04:46.034Z] #12 CACHED
+[2026-09-05T18:04:46.034Z] 
+[2026-09-05T18:04:46.034Z] #13 [builder 4/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     go mod download
+[2026-09-05T18:04:46.034Z] #13 CACHED
+[2026-09-05T18:04:46.034Z] 
+[2026-09-05T18:04:46.034Z] #14 [builder 5/6] COPY . .
+[2026-09-05T18:04:46.034Z] #14 CACHED
+[2026-09-05T18:04:46.034Z] 
+[2026-09-05T18:04:46.034Z] #15 [builder 6/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     --mount=type=cache,id=ecampus-go-build-linux-amd64,target=/root/.cache/go-build,sharing=shared     test -n "./cmd/ecampus-theme" &&     test -d "configs/ecampus" &&     CGO_ENABLED=0 GOOS="linux" GOARCH="amd64"       go build -trimpath -o /out/app "./cmd/ecampus-theme" &&     mkdir -p /out/configs &&     cp -R "configs/ecampus" /out/configs/
+[2026-09-05T18:04:47.925Z] #15 DONE 2.0s
+[2026-09-05T18:04:48.181Z] 
+[2026-09-05T18:04:48.181Z] #16 [stage-1 2/5] RUN sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#' /etc/apk/repositories     && apk --no-cache add ca-certificates tzdata
+[2026-09-05T18:04:48.181Z] #16 CACHED
+[2026-09-05T18:04:48.181Z] 
+[2026-09-05T18:04:48.181Z] #17 [stage-1 3/5] WORKDIR /app
+[2026-09-05T18:04:48.181Z] #17 CACHED
+[2026-09-05T18:04:48.181Z] 
+[2026-09-05T18:04:48.181Z] #18 [stage-1 4/5] COPY --from=builder /out/app /app/app
+[2026-09-05T18:04:48.181Z] #18 CACHED
+[2026-09-05T18:04:48.181Z] 
+[2026-09-05T18:04:48.181Z] #19 [stage-1 5/5] COPY --from=builder /out/configs /app/configs
+[2026-09-05T18:04:48.181Z] #19 CACHED
+[2026-09-05T18:04:48.435Z] 
+[2026-09-05T18:04:48.435Z] #20 [auth] pulseops/ecampus-theme:pull,push token for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+[2026-09-05T18:04:48.435Z] #20 DONE 0.0s
+[2026-09-05T18:04:48.435Z] 
+[2026-09-05T18:04:48.435Z] #21 exporting to image
+[2026-09-05T18:04:48.435Z] #21 exporting layers done
+[2026-09-05T18:04:48.435Z] #21 exporting manifest sha256:f4e3ef4ccc5738f9bd40ddcf9fa2666c110db37c12338d172dd0252c331dda60 done
+[2026-09-05T18:04:48.435Z] #21 exporting config sha256:a17063f23145b680c630c33b5b40c1c1c1a5459a1f7432602654f95b7a76c076 done
+[2026-09-05T18:04:48.435Z] #21 pushing layers
+[2026-09-05T18:04:48.995Z] #21 pushing layers 0.7s done
+[2026-09-05T18:04:48.995Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-theme:git-94c062c5@sha256:f4e3ef4ccc5738f9bd40ddcf9fa2666c110db37c12338d172dd0252c331dda60
+[2026-09-05T18:04:48.995Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-theme:git-94c062c5@sha256:f4e3ef4ccc5738f9bd40ddcf9fa2666c110db37c12338d172dd0252c331dda60 0.3s done
+[2026-09-05T18:04:48.995Z] #21 DONE 1.0s
+[2026-09-05T18:04:48.995Z] 
+[2026-09-05T18:04:48.995Z] #22 exporting cache to client directory
+[2026-09-05T18:04:48.995Z] #22 preparing build cache for export
+[2026-09-05T18:04:49.920Z] #22 preparing build cache for export 1.8s done
+[2026-09-05T18:04:49.920Z] #22 sending cache export
+[2026-09-05T18:04:50.175Z] #22 writing layer sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 done
+[2026-09-05T18:04:50.175Z] #22 writing layer sha256:25f1d6b1951ac8eb3740558fe94cb83d377bdadf95fd9f98b50d2e1b96130471 done
+[2026-09-05T18:04:50.175Z] #22 writing layer sha256:2cb3e687d353c47479f7eb82d6cc1b230f1d252bfefaddbeec9d3de57edf5d49 done
+[2026-09-05T18:04:50.175Z] #22 writing layer sha256:042661aeb5c69dd0452694703e1bcda91e6086e4cf3ae186e367a9cd60abcd7d done
+[2026-09-05T18:04:50.175Z] #22 writing layer sha256:55afa1ecc21d2bb5e5045f32dafee56272ffd89860bac26f6c32123439af26a4 done
+[2026-09-05T18:04:50.175Z] #22 writing layer sha256:5b0ac2850c169f83624b4cbb446320f7882686a8dc49b80e469d12b8bf70dfc2 done
+[2026-09-05T18:04:50.175Z] #22 writing layer sha256:7c3a144dfd2227e5e4aec126921061520351642741e8d4756e18775005b628b1 done
+[2026-09-05T18:04:50.175Z] #22 writing layer sha256:9631d7dfcdff651a26266473b942eb90ce3f0d7ca30f8abb047952278a7e5c47 done
+[2026-09-05T18:04:50.175Z] #22 writing layer sha256:97899feefcfabb3437175a0fccfa863ec04cf4d64f9e42467712588180f88e72 done
+[2026-09-05T18:04:50.175Z] #22 writing layer sha256:a01ef6a6016004d114c97cf04a9708d71f6bb95e2b482f829ae547874376d5c7 done
+[2026-09-05T18:04:50.175Z] #22 writing layer sha256:bba1b8482d9a01c11df25e07330410aa90a96a13d050644a4f259d25a387c4d9 done
+[2026-09-05T18:04:50.175Z] #22 writing layer sha256:c023d63c4a5bc658f0a860ac595ad386804f7f891c5a2149f4a8270eb855ed59 done
+[2026-09-05T18:04:50.175Z] #22 writing layer sha256:c8853e647f4903d7521086ea6fb8bf4ec157230bb20c2988ee9d601ce93b678d done
+[2026-09-05T18:04:50.175Z] #22 writing layer sha256:e5ee7da0307b89156ec739187daa2d6a1d45ec8063b39d7b33810fa12979cc5d done
+[2026-09-05T18:04:50.175Z] #22 writing layer sha256:f04068caba33fbbc6f32d9e4fa30cccb1a563183991f60562b536f291bcc4cf9
+[2026-09-05T18:04:50.175Z] #22 writing layer sha256:f04068caba33fbbc6f32d9e4fa30cccb1a563183991f60562b536f291bcc4cf9 0.3s done
+[2026-09-05T18:04:50.429Z] #22 sending cache export 0.3s done
+[2026-09-05T18:04:50.429Z] #22 writing config sha256:fc6a808467d9b02214d18917b232af5099870160a7177e48826eb86a995ab484 done
+[2026-09-05T18:04:50.429Z] #22 writing cache image manifest sha256:c0c9febea4949b9051aadd9425a31ee50fb64b8964e7b0bdc5e34083f99fefe9 done
+[2026-09-05T18:04:50.429Z] #22 DONE 2.1s
+[2026-09-05T18:04:50.429Z] + test -s /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/theme.json
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] writeFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:51.249Z] + set -eu
+[2026-09-05T18:04:51.249Z] + cd gitops/platform/server
+[2026-09-05T18:04:51.249Z] + go run ./cmd/server release-record --service theme --environment dev --record --status releasing --git-revision 94c062c50bb8e34d53953085806b8ff1151f053b --image-digest sha256:f4e3ef4ccc5738f9bd40ddcf9fa2666c110db37c12338d172dd0252c331dda60 --config-revision  --rollout-strategy rolling
+[2026-09-05T18:04:51.249Z] recorded theme dev as releasing
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // parallel
+[Pipeline] parallel
+[Pipeline] { (Branch: topic)
+[Pipeline] readFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:52.077Z] + set -eu
+[2026-09-05T18:04:52.077Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests
+[2026-09-05T18:04:52.077Z] + chmod -R 777 /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-05T18:04:52.077Z] + cd source
+[2026-09-05T18:04:52.077Z] + ./scripts/ci/run-service-checks.sh --service topic
+[2026-09-05T18:04:53.010Z] ?   	github.com/Milchstrassse/Ecampus-go/cmd/ecampus-topic	[no test files]
+[2026-09-05T18:04:53.010Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/bootstrap	[no test files]
+[2026-09-05T18:04:53.010Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampus/topicapp	[no test files]
+[2026-09-05T18:04:53.010Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusproducer	[no test files]
+[2026-09-05T18:04:53.010Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusruntime	[no test files]
+[2026-09-05T18:04:53.010Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/moderationadapter	[no test files]
+[2026-09-05T18:04:53.010Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/useradapter	[no test files]
+[2026-09-05T18:04:53.010Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/integration/wxutil	(cached)
+[2026-09-05T18:04:53.010Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/middleware	(cached)
+[2026-09-05T18:04:53.010Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/moderation	(cached)
+[2026-09-05T18:04:53.010Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/mq	(cached)
+[2026-09-05T18:04:53.010Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/adminjwt	(cached)
+[2026-09-05T18:04:53.010Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/bizerr	[no test files]
+[2026-09-05T18:04:53.010Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/config	(cached)
+[2026-09-05T18:04:53.010Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/encrypt	(cached)
+[2026-09-05T18:04:53.010Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/jwtutil	[no test files]
+[2026-09-05T18:04:53.010Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/pagination	[no test files]
+[2026-09-05T18:04:53.011Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/rediskey	[no test files]
+[2026-09-05T18:04:53.011Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/responses	(cached)
+[2026-09-05T18:04:53.011Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/snowflake	[no test files]
+[2026-09-05T18:04:53.011Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/sensitive	(cached)
+[2026-09-05T18:04:53.011Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/topic	(cached)
+[2026-09-05T18:04:53.011Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/user	(cached)
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:53.687Z] + set -eu
+[2026-09-05T18:04:53.687Z] + metadata=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/topic.json
+[2026-09-05T18:04:53.687Z] + import_cache=
+[2026-09-05T18:04:53.687Z] + '[' -d /home/user/.local/share/buildkit/local-cache ]
+[2026-09-05T18:04:53.687Z] + ls -A /home/user/.local/share/buildkit/local-cache
+[2026-09-05T18:04:53.687Z] + '[' -n 'blobs
+[2026-09-05T18:04:53.687Z] index.json
+[2026-09-05T18:04:53.687Z] ingest
+[2026-09-05T18:04:53.687Z] oci-layout' ]
+[2026-09-05T18:04:53.687Z] + import_cache='--import-cache type=local,src=/home/user/.local/share/buildkit/local-cache'
+[2026-09-05T18:04:53.687Z] + buildctl build '--frontend=dockerfile.v0' --local 'context=/home/jenkins/agent/workspace/ecampus-pipeline/source' --local 'dockerfile=/home/jenkins/agent/workspace/ecampus-pipeline/source' --opt 'filename=build/Dockerfile.go-service' --opt 'platform=linux/amd64' --opt 'build-arg:SERVICE_PATH=./cmd/ecampus-topic' --opt 'build-arg:CONFIG_DIR=configs/ecampus' --opt 'build-arg:SERVICE_PORT=8080' --import-cache 'type=local,src=/home/user/.local/share/buildkit/local-cache' --export-cache 'type=local,dest=/home/user/.local/share/buildkit/local-cache,mode=max' --output 'type=image,name=crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-topic:git-94c062c5,push=true' '--metadata-file=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/topic.json'
+[2026-09-05T18:04:53.687Z] #1 [internal] load build definition from build/Dockerfile.go-service
+[2026-09-05T18:04:53.687Z] #1 transferring dockerfile: 1.39kB done
+[2026-09-05T18:04:53.687Z] #1 DONE 0.0s
+[2026-09-05T18:04:53.687Z] 
+[2026-09-05T18:04:53.687Z] #2 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+[2026-09-05T18:04:53.687Z] #2 DONE 0.0s
+[2026-09-05T18:04:53.687Z] 
+[2026-09-05T18:04:53.687Z] #3 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+[2026-09-05T18:04:53.687Z] #3 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+[2026-09-05T18:04:53.687Z] #3 CACHED
+[2026-09-05T18:04:53.687Z] 
+[2026-09-05T18:04:53.687Z] #4 [internal] load metadata for docker.io/library/alpine:3.20
+[2026-09-05T18:04:53.943Z] #4 DONE 0.0s
+[2026-09-05T18:04:53.943Z] 
+[2026-09-05T18:04:53.943Z] #5 [internal] load metadata for docker.io/library/golang:1.26-alpine
+[2026-09-05T18:04:53.943Z] #5 DONE 0.1s
+[2026-09-05T18:04:53.943Z] 
+[2026-09-05T18:04:53.943Z] #6 [internal] load .dockerignore
+[2026-09-05T18:04:53.943Z] #6 transferring context: 124B done
+[2026-09-05T18:04:53.943Z] #6 DONE 0.0s
+[2026-09-05T18:04:53.943Z] 
+[2026-09-05T18:04:53.943Z] #7 [internal] load build context
+[2026-09-05T18:04:53.943Z] #7 DONE 0.0s
+[2026-09-05T18:04:53.943Z] 
+[2026-09-05T18:04:53.943Z] #8 importing cache manifest from local:12221842750997222317
+[2026-09-05T18:04:53.943Z] #8 inferred cache manifest type: application/vnd.oci.image.manifest.v1+json done
+[2026-09-05T18:04:53.944Z] #8 DONE 0.0s
+[2026-09-05T18:04:53.944Z] 
+[2026-09-05T18:04:53.944Z] #9 [builder 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:04:53.944Z] #9 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628 0.0s done
+[2026-09-05T18:04:53.944Z] #9 DONE 0.0s
+[2026-09-05T18:04:53.944Z] 
+[2026-09-05T18:04:53.944Z] #10 [stage-1 1/5] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:04:53.944Z] #10 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:04:53.944Z] #10 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc 0.0s done
+[2026-09-05T18:04:53.944Z] #10 DONE 0.0s
+[2026-09-05T18:04:53.944Z] 
+[2026-09-05T18:04:53.944Z] #7 [internal] load build context
+[2026-09-05T18:04:53.944Z] #7 transferring context: 35.95kB 0.0s done
+[2026-09-05T18:04:53.944Z] #7 DONE 0.0s
+[2026-09-05T18:04:53.944Z] 
+[2026-09-05T18:04:53.944Z] #11 [builder 2/6] WORKDIR /src
+[2026-09-05T18:04:53.944Z] #11 CACHED
+[2026-09-05T18:04:53.944Z] 
+[2026-09-05T18:04:53.944Z] #12 [builder 3/6] COPY go.mod go.sum ./
+[2026-09-05T18:04:53.944Z] #12 CACHED
+[2026-09-05T18:04:53.944Z] 
+[2026-09-05T18:04:53.944Z] #13 [builder 4/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     go mod download
+[2026-09-05T18:04:53.944Z] #13 CACHED
+[2026-09-05T18:04:53.944Z] 
+[2026-09-05T18:04:53.944Z] #14 [builder 5/6] COPY . .
+[2026-09-05T18:04:53.944Z] #14 CACHED
+[2026-09-05T18:04:53.944Z] 
+[2026-09-05T18:04:53.944Z] #15 [builder 6/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     --mount=type=cache,id=ecampus-go-build-linux-amd64,target=/root/.cache/go-build,sharing=shared     test -n "./cmd/ecampus-topic" &&     test -d "configs/ecampus" &&     CGO_ENABLED=0 GOOS="linux" GOARCH="amd64"       go build -trimpath -o /out/app "./cmd/ecampus-topic" &&     mkdir -p /out/configs &&     cp -R "configs/ecampus" /out/configs/
+[2026-09-05T18:04:56.482Z] #15 DONE 2.2s
+[2026-09-05T18:04:56.482Z] 
+[2026-09-05T18:04:56.482Z] #16 [stage-1 2/5] RUN sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#' /etc/apk/repositories     && apk --no-cache add ca-certificates tzdata
+[2026-09-05T18:04:56.482Z] #16 CACHED
+[2026-09-05T18:04:56.482Z] 
+[2026-09-05T18:04:56.482Z] #17 [stage-1 3/5] WORKDIR /app
+[2026-09-05T18:04:56.482Z] #17 CACHED
+[2026-09-05T18:04:56.482Z] 
+[2026-09-05T18:04:56.482Z] #18 [stage-1 4/5] COPY --from=builder /out/app /app/app
+[2026-09-05T18:04:56.482Z] #18 CACHED
+[2026-09-05T18:04:56.483Z] 
+[2026-09-05T18:04:56.483Z] #19 [stage-1 5/5] COPY --from=builder /out/configs /app/configs
+[2026-09-05T18:04:56.483Z] #19 CACHED
+[2026-09-05T18:04:56.483Z] 
+[2026-09-05T18:04:56.483Z] #20 [auth] pulseops/ecampus-topic:pull,push token for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+[2026-09-05T18:04:56.483Z] #20 DONE 0.0s
+[2026-09-05T18:04:56.483Z] 
+[2026-09-05T18:04:56.483Z] #21 exporting to image
+[2026-09-05T18:04:56.483Z] #21 exporting layers done
+[2026-09-05T18:04:56.483Z] #21 exporting manifest sha256:71ce0d4e332fa6c5f840f42e6dc53ec2343c26cdccc8ef90c093ba091b978feb done
+[2026-09-05T18:04:56.483Z] #21 exporting config sha256:f5c58452902e8fd98e3207f2284eeeb48c17e411b8cf7d8db49022731b3b218d done
+[2026-09-05T18:04:56.483Z] #21 pushing layers
+[2026-09-05T18:04:56.738Z] #21 pushing layers 0.6s done
+[2026-09-05T18:04:56.738Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-topic:git-94c062c5@sha256:71ce0d4e332fa6c5f840f42e6dc53ec2343c26cdccc8ef90c093ba091b978feb
+[2026-09-05T18:04:57.298Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-topic:git-94c062c5@sha256:71ce0d4e332fa6c5f840f42e6dc53ec2343c26cdccc8ef90c093ba091b978feb 0.3s done
+[2026-09-05T18:04:57.299Z] #21 DONE 0.9s
+[2026-09-05T18:04:57.299Z] 
+[2026-09-05T18:04:57.299Z] #22 exporting cache to client directory
+[2026-09-05T18:04:57.299Z] #22 preparing build cache for export
+[2026-09-05T18:04:58.223Z] #22 preparing build cache for export 2.0s done
+[2026-09-05T18:04:58.223Z] #22 sending cache export
+[2026-09-05T18:04:58.223Z] #22 writing layer sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 done
+[2026-09-05T18:04:58.223Z] #22 writing layer sha256:25f1d6b1951ac8eb3740558fe94cb83d377bdadf95fd9f98b50d2e1b96130471 done
+[2026-09-05T18:04:58.223Z] #22 writing layer sha256:2cb3e687d353c47479f7eb82d6cc1b230f1d252bfefaddbeec9d3de57edf5d49 done
+[2026-09-05T18:04:58.223Z] #22 writing layer sha256:042661aeb5c69dd0452694703e1bcda91e6086e4cf3ae186e367a9cd60abcd7d done
+[2026-09-05T18:04:58.223Z] #22 writing layer sha256:55afa1ecc21d2bb5e5045f32dafee56272ffd89860bac26f6c32123439af26a4 done
+[2026-09-05T18:04:58.223Z] #22 writing layer sha256:5e6e29015ff580e2fa38c2aaec12c7e09758a4a267c6e0ec787f5a53bafd842e done
+[2026-09-05T18:04:58.223Z] #22 writing layer sha256:74f03da48197d7235a242b9eef7d726a5f48fc689914c760d5abebf5ca804a20 done
+[2026-09-05T18:04:58.223Z] #22 writing layer sha256:7c3a144dfd2227e5e4aec126921061520351642741e8d4756e18775005b628b1 done
+[2026-09-05T18:04:58.223Z] #22 writing layer sha256:9631d7dfcdff651a26266473b942eb90ce3f0d7ca30f8abb047952278a7e5c47 done
+[2026-09-05T18:04:58.223Z] #22 writing layer sha256:97899feefcfabb3437175a0fccfa863ec04cf4d64f9e42467712588180f88e72 done
+[2026-09-05T18:04:58.223Z] #22 writing layer sha256:a01ef6a6016004d114c97cf04a9708d71f6bb95e2b482f829ae547874376d5c7 done
+[2026-09-05T18:04:58.223Z] #22 writing layer sha256:bba1b8482d9a01c11df25e07330410aa90a96a13d050644a4f259d25a387c4d9 done
+[2026-09-05T18:04:58.223Z] #22 writing layer sha256:c023d63c4a5bc658f0a860ac595ad386804f7f891c5a2149f4a8270eb855ed59 done
+[2026-09-05T18:04:58.223Z] #22 writing layer sha256:e0b58ad97abf8be46efde4ee8b7cf4a6c79706a0e21058906120a148e91c8f8b
+[2026-09-05T18:04:58.223Z] #22 writing layer sha256:e5ee7da0307b89156ec739187daa2d6a1d45ec8063b39d7b33810fa12979cc5d done
+[2026-09-05T18:04:58.478Z] #22 writing layer sha256:e0b58ad97abf8be46efde4ee8b7cf4a6c79706a0e21058906120a148e91c8f8b 0.3s done
+[2026-09-05T18:04:58.478Z] #22 sending cache export 0.3s done
+[2026-09-05T18:04:58.478Z] #22 writing config sha256:e836ddb3df751b2a440046d9553e2434f5a43ae62cc7b883ae2842478bb35a1f done
+[2026-09-05T18:04:58.478Z] #22 writing cache image manifest sha256:bbf4b72c097ca81cee0891c4e7d1af48eaf90b41eeccd042e23f0f0310fea5e7 done
+[2026-09-05T18:04:58.478Z] #22 DONE 2.3s
+[2026-09-05T18:04:58.478Z] + test -s /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/topic.json
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] writeFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:04:59.312Z] + set -eu
+[2026-09-05T18:04:59.312Z] + cd gitops/platform/server
+[2026-09-05T18:04:59.312Z] + go run ./cmd/server release-record --service topic --environment dev --record --status releasing --git-revision 94c062c50bb8e34d53953085806b8ff1151f053b --image-digest sha256:71ce0d4e332fa6c5f840f42e6dc53ec2343c26cdccc8ef90c093ba091b978feb --config-revision  --rollout-strategy canary
+[2026-09-05T18:04:59.312Z] recorded topic dev as releasing
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // parallel
+[Pipeline] parallel
+[Pipeline] { (Branch: user)
+[Pipeline] readFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:05:00.127Z] + set -eu
+[2026-09-05T18:05:00.127Z] + mkdir -p /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests
+[2026-09-05T18:05:00.127Z] + chmod -R 777 /home/jenkins/agent/workspace/ecampus-pipeline/.ci
+[2026-09-05T18:05:00.127Z] + cd source
+[2026-09-05T18:05:00.127Z] + ./scripts/ci/run-service-checks.sh --service user
+[2026-09-05T18:05:01.070Z] ?   	github.com/Milchstrassse/Ecampus-go/cmd/ecampus-user	[no test files]
+[2026-09-05T18:05:01.070Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/bootstrap	[no test files]
+[2026-09-05T18:05:01.070Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampus/userapp	[no test files]
+[2026-09-05T18:05:01.070Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusproducer	[no test files]
+[2026-09-05T18:05:01.070Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/ecampusruntime	[no test files]
+[2026-09-05T18:05:01.070Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/moderationadapter	[no test files]
+[2026-09-05T18:05:01.070Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/app/useradapter	[no test files]
+[2026-09-05T18:05:01.070Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/integration/wxutil	(cached)
+[2026-09-05T18:05:01.070Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/middleware	(cached)
+[2026-09-05T18:05:01.070Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/moderation	(cached)
+[2026-09-05T18:05:01.070Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/mq	(cached)
+[2026-09-05T18:05:01.070Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/adminjwt	(cached)
+[2026-09-05T18:05:01.070Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/bizerr	[no test files]
+[2026-09-05T18:05:01.070Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/config	(cached)
+[2026-09-05T18:05:01.070Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/encrypt	(cached)
+[2026-09-05T18:05:01.070Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/jwtutil	[no test files]
+[2026-09-05T18:05:01.070Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/pagination	[no test files]
+[2026-09-05T18:05:01.070Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/rediskey	[no test files]
+[2026-09-05T18:05:01.070Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/platform/responses	(cached)
+[2026-09-05T18:05:01.070Z] ?   	github.com/Milchstrassse/Ecampus-go/internal/platform/snowflake	[no test files]
+[2026-09-05T18:05:01.070Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/sensitive	(cached)
+[2026-09-05T18:05:01.070Z] ok  	github.com/Milchstrassse/Ecampus-go/internal/user	(cached)
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:05:01.726Z] + set -eu
+[2026-09-05T18:05:01.727Z] + metadata=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/user.json
+[2026-09-05T18:05:01.727Z] + import_cache=
+[2026-09-05T18:05:01.727Z] + '[' -d /home/user/.local/share/buildkit/local-cache ]
+[2026-09-05T18:05:01.727Z] + ls -A /home/user/.local/share/buildkit/local-cache
+[2026-09-05T18:05:01.727Z] + '[' -n 'blobs
+[2026-09-05T18:05:01.727Z] index.json
+[2026-09-05T18:05:01.727Z] ingest
+[2026-09-05T18:05:01.727Z] oci-layout' ]
+[2026-09-05T18:05:01.727Z] + import_cache='--import-cache type=local,src=/home/user/.local/share/buildkit/local-cache'
+[2026-09-05T18:05:01.727Z] + buildctl build '--frontend=dockerfile.v0' --local 'context=/home/jenkins/agent/workspace/ecampus-pipeline/source' --local 'dockerfile=/home/jenkins/agent/workspace/ecampus-pipeline/source' --opt 'filename=build/Dockerfile.go-service' --opt 'platform=linux/amd64' --opt 'build-arg:SERVICE_PATH=./cmd/ecampus-user' --opt 'build-arg:CONFIG_DIR=configs/ecampus' --opt 'build-arg:SERVICE_PORT=8080' --import-cache 'type=local,src=/home/user/.local/share/buildkit/local-cache' --export-cache 'type=local,dest=/home/user/.local/share/buildkit/local-cache,mode=max' --output 'type=image,name=crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-user:git-94c062c5,push=true' '--metadata-file=/home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/user.json'
+[2026-09-05T18:05:01.727Z] #1 [internal] load build definition from build/Dockerfile.go-service
+[2026-09-05T18:05:01.727Z] #1 transferring dockerfile: 1.39kB done
+[2026-09-05T18:05:01.727Z] #1 DONE 0.0s
+[2026-09-05T18:05:01.727Z] 
+[2026-09-05T18:05:01.727Z] #2 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+[2026-09-05T18:05:01.727Z] #2 DONE 0.0s
+[2026-09-05T18:05:01.727Z] 
+[2026-09-05T18:05:01.727Z] #3 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+[2026-09-05T18:05:01.727Z] #3 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+[2026-09-05T18:05:01.727Z] #3 CACHED
+[2026-09-05T18:05:01.727Z] 
+[2026-09-05T18:05:01.727Z] #4 [internal] load metadata for docker.io/library/alpine:3.20
+[2026-09-05T18:05:01.984Z] #4 DONE 0.0s
+[2026-09-05T18:05:01.984Z] 
+[2026-09-05T18:05:01.984Z] #5 [internal] load metadata for docker.io/library/golang:1.26-alpine
+[2026-09-05T18:05:01.984Z] #5 DONE 0.1s
+[2026-09-05T18:05:01.984Z] 
+[2026-09-05T18:05:01.984Z] #6 [internal] load .dockerignore
+[2026-09-05T18:05:01.984Z] #6 transferring context: 124B done
+[2026-09-05T18:05:01.984Z] #6 DONE 0.0s
+[2026-09-05T18:05:01.984Z] 
+[2026-09-05T18:05:01.984Z] #7 [internal] load build context
+[2026-09-05T18:05:01.984Z] #7 DONE 0.0s
+[2026-09-05T18:05:01.984Z] 
+[2026-09-05T18:05:01.984Z] #8 importing cache manifest from local:4855301836814098752
+[2026-09-05T18:05:01.984Z] #8 inferred cache manifest type: application/vnd.oci.image.manifest.v1+json done
+[2026-09-05T18:05:01.984Z] #8 DONE 0.0s
+[2026-09-05T18:05:01.984Z] 
+[2026-09-05T18:05:01.984Z] #9 [stage-1 1/5] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+[2026-09-05T18:05:01.984Z] #9 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc 0.0s done
+[2026-09-05T18:05:01.984Z] #9 DONE 0.0s
+[2026-09-05T18:05:01.984Z] 
+[2026-09-05T18:05:01.984Z] #10 [builder 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628
+[2026-09-05T18:05:01.984Z] #10 resolve docker.io/library/golang:1.26-alpine@sha256:ce864e7223ac17b1775e6fd0b4c0db580c2eb50e7953a427916379e4b92a1628 0.0s done
+[2026-09-05T18:05:01.984Z] #10 DONE 0.0s
+[2026-09-05T18:05:01.984Z] 
+[2026-09-05T18:05:01.984Z] #7 [internal] load build context
+[2026-09-05T18:05:01.984Z] #7 transferring context: 35.95kB 0.0s done
+[2026-09-05T18:05:01.984Z] #7 DONE 0.0s
+[2026-09-05T18:05:01.984Z] 
+[2026-09-05T18:05:01.984Z] #11 [builder 3/6] COPY go.mod go.sum ./
+[2026-09-05T18:05:01.984Z] #11 CACHED
+[2026-09-05T18:05:01.984Z] 
+[2026-09-05T18:05:01.984Z] #12 [builder 4/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     go mod download
+[2026-09-05T18:05:01.984Z] #12 CACHED
+[2026-09-05T18:05:01.984Z] 
+[2026-09-05T18:05:01.984Z] #13 [builder 2/6] WORKDIR /src
+[2026-09-05T18:05:01.984Z] #13 CACHED
+[2026-09-05T18:05:01.984Z] 
+[2026-09-05T18:05:01.984Z] #14 [builder 5/6] COPY . .
+[2026-09-05T18:05:01.984Z] #14 CACHED
+[2026-09-05T18:05:01.984Z] 
+[2026-09-05T18:05:01.984Z] #15 [builder 6/6] RUN --mount=type=cache,id=ecampus-go-mod,target=/go/pkg/mod,sharing=shared     --mount=type=cache,id=ecampus-go-build-linux-amd64,target=/root/.cache/go-build,sharing=shared     test -n "./cmd/ecampus-user" &&     test -d "configs/ecampus" &&     CGO_ENABLED=0 GOOS="linux" GOARCH="amd64"       go build -trimpath -o /out/app "./cmd/ecampus-user" &&     mkdir -p /out/configs &&     cp -R "configs/ecampus" /out/configs/
+[2026-09-05T18:05:04.505Z] #15 DONE 2.2s
+[2026-09-05T18:05:04.505Z] 
+[2026-09-05T18:05:04.505Z] #16 [stage-1 3/5] WORKDIR /app
+[2026-09-05T18:05:04.505Z] #16 CACHED
+[2026-09-05T18:05:04.505Z] 
+[2026-09-05T18:05:04.505Z] #17 [stage-1 4/5] COPY --from=builder /out/app /app/app
+[2026-09-05T18:05:04.505Z] #17 CACHED
+[2026-09-05T18:05:04.505Z] 
+[2026-09-05T18:05:04.505Z] #18 [stage-1 2/5] RUN sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#' /etc/apk/repositories     && apk --no-cache add ca-certificates tzdata
+[2026-09-05T18:05:04.505Z] #18 CACHED
+[2026-09-05T18:05:04.505Z] 
+[2026-09-05T18:05:04.505Z] #19 [stage-1 5/5] COPY --from=builder /out/configs /app/configs
+[2026-09-05T18:05:04.505Z] #19 CACHED
+[2026-09-05T18:05:04.505Z] 
+[2026-09-05T18:05:04.506Z] #20 [auth] pulseops/ecampus-user:pull,push token for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+[2026-09-05T18:05:04.506Z] #20 DONE 0.0s
+[2026-09-05T18:05:04.506Z] 
+[2026-09-05T18:05:04.506Z] #21 exporting to image
+[2026-09-05T18:05:04.506Z] #21 exporting layers done
+[2026-09-05T18:05:04.506Z] #21 exporting manifest sha256:e028b142da7ab5d9f42e4491d107cb530f73442a04fdecce11053b0cbe31bbd2 done
+[2026-09-05T18:05:04.506Z] #21 exporting config sha256:d2ba629e692bbb51529675a534ce3e4d8cb86d1f0966765ef75debfab0493283 done
+[2026-09-05T18:05:04.506Z] #21 pushing layers
+[2026-09-05T18:05:05.066Z] #21 pushing layers 0.7s done
+[2026-09-05T18:05:05.066Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-user:git-94c062c5@sha256:e028b142da7ab5d9f42e4491d107cb530f73442a04fdecce11053b0cbe31bbd2
+[2026-09-05T18:05:05.321Z] #21 pushing manifest for crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-user:git-94c062c5@sha256:e028b142da7ab5d9f42e4491d107cb530f73442a04fdecce11053b0cbe31bbd2 0.3s done
+[2026-09-05T18:05:05.321Z] #21 DONE 1.0s
+[2026-09-05T18:05:05.321Z] 
+[2026-09-05T18:05:05.321Z] #22 exporting cache to client directory
+[2026-09-05T18:05:05.321Z] #22 preparing build cache for export
+[2026-09-05T18:05:06.249Z] #22 preparing build cache for export 2.0s done
+[2026-09-05T18:05:06.249Z] #22 sending cache export
+[2026-09-05T18:05:06.504Z] #22 writing layer sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 done
+[2026-09-05T18:05:06.504Z] #22 writing layer sha256:25f1d6b1951ac8eb3740558fe94cb83d377bdadf95fd9f98b50d2e1b96130471 done
+[2026-09-05T18:05:06.504Z] #22 writing layer sha256:2cb3e687d353c47479f7eb82d6cc1b230f1d252bfefaddbeec9d3de57edf5d49 done
+[2026-09-05T18:05:06.504Z] #22 writing layer sha256:042661aeb5c69dd0452694703e1bcda91e6086e4cf3ae186e367a9cd60abcd7d done
+[2026-09-05T18:05:06.504Z] #22 writing layer sha256:55afa1ecc21d2bb5e5045f32dafee56272ffd89860bac26f6c32123439af26a4 done
+[2026-09-05T18:05:06.504Z] #22 writing layer sha256:73a72e818b3d51238f54dc41ec5cf59b9823cff9a0ea4b64db35a324eb2c649c done
+[2026-09-05T18:05:06.504Z] #22 writing layer sha256:7c3a144dfd2227e5e4aec126921061520351642741e8d4756e18775005b628b1 done
+[2026-09-05T18:05:06.504Z] #22 writing layer sha256:94ab7645f90b05b5e0a067886a340b80823a762b9e3b049619af8417aff38e02
+[2026-09-05T18:05:06.504Z] #22 writing layer sha256:9631d7dfcdff651a26266473b942eb90ce3f0d7ca30f8abb047952278a7e5c47 done
+[2026-09-05T18:05:06.504Z] #22 writing layer sha256:97899feefcfabb3437175a0fccfa863ec04cf4d64f9e42467712588180f88e72 done
+[2026-09-05T18:05:06.504Z] #22 writing layer sha256:a01ef6a6016004d114c97cf04a9708d71f6bb95e2b482f829ae547874376d5c7 done
+[2026-09-05T18:05:06.504Z] #22 writing layer sha256:bba1b8482d9a01c11df25e07330410aa90a96a13d050644a4f259d25a387c4d9 done
+[2026-09-05T18:05:06.504Z] #22 writing layer sha256:c023d63c4a5bc658f0a860ac595ad386804f7f891c5a2149f4a8270eb855ed59 done
+[2026-09-05T18:05:06.504Z] #22 writing layer sha256:d16c06bb998e7fbc719d2eee6be022ca11d0d9604d1dbbd9dcc6aa5a36d24594 done
+[2026-09-05T18:05:06.504Z] #22 writing layer sha256:e5ee7da0307b89156ec739187daa2d6a1d45ec8063b39d7b33810fa12979cc5d done
+[2026-09-05T18:05:06.504Z] #22 writing layer sha256:94ab7645f90b05b5e0a067886a340b80823a762b9e3b049619af8417aff38e02 0.3s done
+[2026-09-05T18:05:06.759Z] #22 sending cache export 0.3s done
+[2026-09-05T18:05:06.759Z] #22 writing config sha256:88436f37c78703ced8f7332330409bc6bdd2dfaafdeb454f111809ebfe8a0995 done
+[2026-09-05T18:05:06.759Z] #22 writing cache image manifest sha256:d2853fe05501e25c2b24bf786ace129c9b363e0d723012e3b8a9e1f9e0e286b4 done
+[2026-09-05T18:05:06.759Z] #22 DONE 2.3s
+[2026-09-05T18:05:06.759Z] + test -s /home/jenkins/agent/workspace/ecampus-pipeline/.ci/digests/user.json
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] readFile
+[Pipeline] writeFile
+[Pipeline] readFile
+[Pipeline] container
+[Pipeline] {
+[Pipeline] readFile
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:05:07.558Z] + set -eu
+[2026-09-05T18:05:07.558Z] + cd gitops/platform/server
+[2026-09-05T18:05:07.558Z] + go run ./cmd/server release-record --service user --environment dev --record --status releasing --git-revision 94c062c50bb8e34d53953085806b8ff1151f053b --image-digest sha256:e028b142da7ab5d9f42e4491d107cb530f73442a04fdecce11053b0cbe31bbd2 --config-revision  --rollout-strategy canary
+[2026-09-05T18:05:07.558Z] recorded user dev as releasing
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // parallel
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Prepare tools)
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:05:08.342Z] + set -eu
+[2026-09-05T18:05:08.342Z] + '[' '!' -x /cache/jenkins-tools/argo-rollouts/v1.8.3/kubectl-argo-rollouts ]
+[2026-09-05T18:05:08.342Z] + /cache/jenkins-tools/argo-rollouts/v1.8.3/kubectl-argo-rollouts version
+[2026-09-05T18:05:08.342Z] kubectl-argo-rollouts: v1.8.3+49fa151
+[2026-09-05T18:05:08.342Z]   BuildDate: 2025-06-04T22:26:13Z
+[2026-09-05T18:05:08.342Z]   GitCommit: 49fa1516cf71672b69e265267da4e1d16e1fe114
+[2026-09-05T18:05:08.342Z]   GitTreeState: clean
+[2026-09-05T18:05:08.342Z]   GoVersion: go1.23.9
+[2026-09-05T18:05:08.342Z]   Compiler: gc
+[2026-09-05T18:05:08.342Z]   Platform: linux/amd64
+[2026-09-05T18:05:08.342Z] + '[' '!' -x /cache/jenkins-tools/kubectl/v1.31.3/kubectl ]
+[2026-09-05T18:05:08.342Z] + /cache/jenkins-tools/kubectl/v1.31.3/kubectl version --client
+[2026-09-05T18:05:08.597Z] Client Version: v1.31.3
+[2026-09-05T18:05:08.597Z] Kustomize Version: v5.4.2
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] container
+[Pipeline] {
+[Pipeline] sh
+[2026-09-05T18:05:09.171Z] + set -eu
+[2026-09-05T18:05:09.171Z] + sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#' /etc/apk/repositories
+[2026-09-05T18:05:09.171Z] + mkdir -p /cache/jenkins-tools
+[2026-09-05T18:05:09.171Z] + cd gitops/platform/server
+[2026-09-05T18:05:09.171Z] + go build -o /cache/jenkins-tools/platform-server ./cmd/server
+[2026-09-05T18:05:10.095Z] + /cache/jenkins-tools/platform-server catalog --help
+[2026-09-05T18:05:10.095Z] + true
+[2026-09-05T18:05:10.095Z] + /cache/jenkins-tools/platform-server release-record --help
+[2026-09-05T18:05:10.095Z] + true
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Publish GitOps PRs)
+Stage "Publish GitOps PRs" skipped due to when conditional
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Wait for rollout and health)
+Stage "Wait for rollout and health" skipped due to when conditional
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Approve blue-green promotion)
+Stage "Approve blue-green promotion" skipped due to when conditional
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Promote blue-green and wait post-promotion)
+Stage "Promote blue-green and wait post-promotion" skipped due to when conditional
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // timestamps
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] }
+[Pipeline] // podTemplate
+[Pipeline] End of Pipeline
+Finished: SUCCESS
