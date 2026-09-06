@@ -53,9 +53,24 @@ node2 2c4g = worker，跑业务/监控），Tailscale 组网，flannel 绑 tails
 `ecampus-impact` 工具做两件事：`git diff BEFORE..AFTER` 拿变更文件集；`go list -deps` 把变更的
 package 映射到"依赖它的服务集合"（依赖闭包）。改了 `internal/theme/handler.go` → 只有 theme；
 改了共享的 `internal/app/bootstrap` → 闭包扩到所有依赖它的服务。
-**已知边界（面试主动交代加分）**：闭包只建模 Go 代码依赖；Dockerfile/基础镜像/chart 变更不在闭包里，
-靠保守路径或定期全量校验兜底。实测验证：改 theme 一行注释 → console 打出
-`test services: theme / build services: theme`，ACR 里也只多了一个新 tag。
+
+**完备性（被追问"凭什么不漏"的标准答案）**：判定标准是 **Go 工具链自己算出的闭包成员资格**——
+`go list -deps` 的 import 解析与实际构建是同一套逻辑，所以对 Go 代码在构造上完备；所有无法证明无关的
+情形（文件删除/重命名/映射不到 Go 包/不在任何服务闭包里的包/go.mod/go.sum/Dockerfile/configs/CI 脚本）
+一律**回退全量**——**错误方向只会多构建，不会漏构建**。闭包用的是变更后（HEAD）的依赖图：若某次提交
+既改共享包又增删了某服务的 import，该服务自己的源文件也在 diff 里、会经自己的包被选中，不会漏。
+
+实测矩阵（真实工具，golang-ci 容器内验证）：
+
+| 变更 | 实测结果 | 验证点 |
+|---|---|---|
+| `internal/theme/handler.go`（单服务）| 只选 theme（test+build）| 裁剪精准 |
+| `internal/middleware/metrics.go`（全员共享）| **13 服务全选** | 闭包正确扩散 |
+| `internal/app/bootstrap/http.go`（部分共享）| 扩散到 **6 个真实导入方**（不是无脑全量）| 闭包=真实依赖 |
+| `build/Dockerfile.go-service` | 全量 13（保守回退触发）| 非 Go 输入不漏 |
+| `go.mod` | 全量 13 | 依赖变更全员重建 |
+
+加上端到端实测（真实流水线 console `test services: theme`，构建 #52/#56），单服务与扩散两个方向都有据可查。
 
 ### 1.3 构建与缓存：10 倍提升的机制拆开讲
 
@@ -82,9 +97,13 @@ CACHED 复用 → 输出镜像 manifest 按 digest 推送（tag 只是指针）�
 
 构建成功后：克隆 GitOps 仓库 → `yq` 把 values 里的 `image.digest/tag/release.deployId/gitSha/策略参数`
 全部改写 → 提交到 `release/<service>/<sha>` 分支 → 开 PR → auto-merge。
-**为什么绕 PR**：① 审计痕迹（谁在何时把什么放进了环境）；② 分支保护强制 deploy-gate 检查
-（kubeconform 清单校验 + conftest 策略：必须钉 digest、必须有资源限额/探针等）；③ 人工审批的挂载点
-（蓝绿服务 `manual_promotion` 在这一步等人）。
+**为什么绕 PR**：① 审计痕迹（谁在何时把什么放进了环境）；② 人工审批的挂载点（蓝绿服务
+`manual_promotion` 在这一步等人）。
+**真正在跑的清单校验在哪**：不在 PR（原仓库设计的 kubeconform/conftest PR 门禁在单仓合并时未迁移，
+**简历不写**），而在 **Argo 渲染层**——go-service chart 内置 `values.schema.json`，helm template 时
+强制校验。这不是理论：实测 `previewReplicaCount: 0` 越界曾在 sync 时被 schema 挡下，修复后才放行。
+面试若被问"PR 上有什么检查"，答："审批与审计走 PR；清单合法性由 chart 的 JSON Schema 在 Argo
+渲染层强制，实测挡下过越界值。"
 
 **实测踩过的三个坑都在这环节**：分支名带斜杠导致 curl 输出路径不存在（mkdir -p 修复）；
 alpine/git 镜像里没有 curl（API 调用挪到 curl 容器）；PR 合并判断 `state=='merged'` 永假
