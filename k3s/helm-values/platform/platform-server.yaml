@@ -4,29 +4,44 @@ image:
   tag: dev
   pullPolicy: Always
   pullSecrets:
-    - tcr-platform-secret
+    - tcr-secret
+
+webImage:
+  registry: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+  repository: pulseops/platform-web
+  tag: dev
+  pullPolicy: Always
 
 api:
   replicaCount: 1
+  env:
+    - name: LOG_LEVEL
+      value: info
+  envFromSecrets:
+    - platform-server-auth
   nodeSelector:
     platform-role: light
   resources:
     requests:
-      cpu: 50m
-      memory: 128Mi
-    limits:
-      cpu: 300m
+      cpu: 100m
       memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
 
+web:
+  replicaCount: 1
+  nodeSelector:
+    platform-role: light
+
+# host 用 control 节点 Tailscale IP 的 nip.io 域名（无公网入口时的
+# 内部访问方案）；换环境时改这里。
 ingress:
   enabled: true
-  className: traefik
+  className: nginx
   annotations: {}
   hosts:
-    - host: ""
-      paths:
-        - path: /
-          pathType: Prefix
+    - host: platform.100.115.204.94.nip.io
   tls:
     enabled: false
     secretName: ""

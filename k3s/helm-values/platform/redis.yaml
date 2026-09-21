@@ -1,0 +1,34 @@
+# P1 平台骨架：单实例 Redis（会话/缓存/轻量队列），无持久化。
+# chart 已 vendor 进 app-test（k3s/charts/vendor/redis）。
+global:
+  security:
+    # chart 默认镜像在 docker.io/bitnami/*（经 1ms.run mirror 拉取）
+    allowInsecureImages: true
+
+architecture: standalone
+
+image:
+  repository: bitnamilegacy/redis
+  tag: 8.2.1-debian-12-r0
+
+master:
+  persistence:
+    enabled: false
+  nodeSelector:
+    platform-role: light
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+auth:
+  enabled: false
+
+replica:
+  replicaCount: 0
+
+metrics:
+  enabled: false

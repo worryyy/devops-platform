@@ -52,3 +52,10 @@ applicationSet:
 
 notifications:
   enabled: false
+
+repoServer:
+  # 跨境访问 github 的 TLS 延迟尖峰会超过 go-git 默认超时（报
+  # "awaiting headers" context deadline exceeded）；放宽到 60s。
+  env:
+    - name: ARGOCD_GIT_HTTP_TIMEOUT
+      value: "60"

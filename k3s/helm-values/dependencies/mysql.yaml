@@ -1,0 +1,38 @@
+# ecampus 业务依赖：MySQL（campus 库）。
+# 凭据与应用 dev 配置（configs/ecampus/application-dev.yml）中的 DSN 对齐；
+# mysql-auth Secret 先于本 release 创建（见 k3s/secrets/mysql-auth.example.yaml）。
+# 安装：helm upgrade --install mysql bitnami/mysql -n app -f 本文件
+global:
+  security:
+    allowInsecureImages: true
+
+architecture: standalone
+
+image:
+  registry: docker.io
+  repository: bitnamilegacy/mysql
+  tag: 9.4.0-debian-12-r1
+  pullPolicy: IfNotPresent
+
+auth:
+  createDatabase: true
+  database: campus
+  username: campus
+  existingSecret: mysql-auth
+
+primary:
+  nodeSelector:
+    platform-role: light
+  persistence:
+    enabled: true
+    size: 8Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 768Mi
+
+metrics:
+  enabled: false

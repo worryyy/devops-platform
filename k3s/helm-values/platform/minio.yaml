@@ -1,0 +1,26 @@
+# P1 平台骨架：单副本 MinIO（制品/报告/快照对象存储）。
+# 镜像用 chart 默认（docker.io/minio/minio，经 1ms.run mirror 拉取）。
+mode: standalone
+
+# root 凭据走 Secret，不落 values。
+existingSecret: platform-minio-auth
+
+persistence:
+  enabled: true
+  size: 20Gi
+  storageClass: local-path
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    cpu: 500m
+    memory: 1Gi
+
+nodeSelector:
+  platform-role: light
+
+metrics:
+  serviceMonitor:
+    enabled: false

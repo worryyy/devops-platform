@@ -1,0 +1,37 @@
+# ecampus 业务依赖：RabbitMQ。用户/密码与应用 dev 配置对齐（amqp://campus:...）。
+# 安装：helm upgrade --install rabbitmq bitnami/rabbitmq -n app -f 本文件
+global:
+  security:
+    allowInsecureImages: true
+
+image:
+  repository: rabbitmq
+  tag: 4.1-management-alpine
+
+auth:
+  username: campus
+  existingPasswordSecret: rabbitmq-auth
+  existingErlangSecret: rabbitmq-auth
+
+extraConfiguration: |
+  default_user_tags.administrator = true
+
+replicaCount: 1
+
+persistence:
+  enabled: true
+  size: 8Gi
+
+nodeSelector:
+  platform-role: worker
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 768Mi
+
+metrics:
+  enabled: false

@@ -7,9 +7,11 @@ spec:
   project: platform-addons
 
   sources:
-    - repoURL: https://prometheus-community.github.io/helm-charts
-      chart: prometheus
-      targetRevision: 29.14.0
+    # chart 已 vendor 进 app-test（k3s/charts/vendor/prometheus）——远端
+    # chart 仓库的 helm pull 在 repo-server 内间歇超时。
+    - repoURL: https://github.com/worryyy/app-test.git
+      targetRevision: main
+      path: k3s/charts/vendor/prometheus
       helm:
         releaseName: prometheus
         valueFiles:

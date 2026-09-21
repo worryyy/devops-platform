@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: minio
+  namespace: argocd
+spec:
+  project: platform-addons
+
+  sources:
+    - repoURL: https://charts.min.io
+      chart: minio
+      targetRevision: 5.4.0
+      helm:
+        releaseName: platform-minio
+        valueFiles:
+          - $values/k3s/helm-values/platform/minio.yaml
+    - repoURL: https://github.com/worryyy/app-test.git
+      targetRevision: main
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: platform
+
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

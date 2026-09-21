@@ -57,6 +57,21 @@ ansible-playbook -i inventory/dev.ini playbooks/site.yml
 kubectl get nodes -o wide        # 三台 Ready，IP 均为 Tailscale 段
 kubectl -n kube-system get pods  # coredns/flannel 全 Running
 ```
+
+集群 Ready 后打平台节点标签（16G 控制 / 两台 agent 分 light/worker，
+节点名以 `kubectl get nodes` 实际输出为准）：
+```bash
+kubectl label node <control-node> platform-role=control --overwrite
+kubectl label node <agent-1>     platform-role=light   --overwrite
+kubectl label node <agent-2>     platform-role=worker  --overwrite
+```
+
+然后做两件环境级修复（重搭必做，详见 TROUBLESHOOTING 案例 G/H）：
+1. systemd-resolved 全局切公共 DNS（223.5.5.5/119.29.29.29, Domains=~.）
+   ——本 VPC 的阿里云内网 DNS 被安全组掐断。
+2. 在 k3s server 的 `/var/lib/rancher/k3s/server/manifests/coredns.yaml`
+   的 NodeHosts hosts 块内钉扎 github.com 可达 IP（写进该文件才能在
+   k3s 重启后保留；改 ConfigMap 会被重置）。
 卡住 → 案例 1（DNS）、案例 F（NotReady）、加固 F（agent/server 混装）。
 
 ## Phase 3：平台组件
@@ -96,3 +111,20 @@ kubectl apply -f k3s/secrets/platform-postgresql-auth.example.yaml  # 改成真�
 
 它们是**新的未知数**，不在本 runbook 内——到 P4 时按同样的模式各配一份
 安装+验收清单（部署步骤 / 验证命令 / 已知坑位），避免旧坑复踩、新坑无册可查。
+
+## 2026-09-21 重搭新增环境坑位（详见 TROUBLESHOOTING.md 案例字母段）
+
+- 公网出网走共享 NAT（无独立 EIP），访问入口全靠 Tailscale；
+  registry-1.docker.io 与 github.com 部分 IP 被掐，靠 registries.yaml
+  mirror（docker.1ms.run + k8s/quay.m.daocloud.io）与 coredns hosts 钉扎。
+- ACR 个人版会自动清理 `:dev` 等 tag（digest 引用仍有效）——长期方案是
+  发布流水线 digest 钉扎；重搭后需重新构建/推送镜像。
+- Argo CD repo-server 的 go-git 超时（ARGOCD_GIT_HTTP_TIMEOUT=60）与
+  chart vendor（bitnami index 27MB 拉不完）是跨境环境两个必踩点。
+- ecampus 业务依赖 mysql/redis/mongo/rabbitmq 四件中间件
+  （k3s/helm-values/dependencies/ + k3s/manifests/dependencies/），
+  首次启动需先跑 migrate Job（app ns 的 ecampus-migrate 模板在本
+  Runbook 历史记录中）；redis/mongo 的 service 名与配置期望不同，
+  已用 ExternalName 别名（redis/mongo）补齐。
+- 开发 Mac 有本地代理（127.0.0.1:7897），访问 Tailscale 段需 --noproxy
+  或系统代理直连规则，否则平台入口 502 假象。

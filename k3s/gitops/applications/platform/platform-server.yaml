@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-server
+  namespace: argocd
+spec:
+  project: platform-addons
+
+  sources:
+    - repoURL: https://github.com/worryyy/app-test.git
+      targetRevision: main
+      path: k3s/charts/platform-server
+      helm:
+        releaseName: platform-server
+        valueFiles:
+          - ../../helm-values/platform/platform-server.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: platform
+
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

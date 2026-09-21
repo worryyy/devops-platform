@@ -30,14 +30,19 @@ spec:
     - http:
     {{- end }}
         paths:
-          {{- range .paths }}
-          - path: {{ .path | quote }}
-            pathType: {{ .pathType | default "Prefix" }}
+          - path: /api
+            pathType: Prefix
             backend:
               service:
                 name: {{ include "platform-server.fullname" $ }}-api
                 port:
                   number: {{ $.Values.api.service.port }}
-          {{- end }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "platform-server.fullname" $ }}-web
+                port:
+                  number: {{ $.Values.web.service.port }}
     {{- end }}
 {{- end }}

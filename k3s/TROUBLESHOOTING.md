@@ -102,3 +102,43 @@
 - 修复：<改了什么，证据 commit/文件>
 - 一句话：<可复述的沉淀>
 ```
+
+## 2026-09-21 重搭实录（升配 4c16g + 2×4c8g，案例 G-L）
+
+### 案例 G：阿里云内网 DNS（100.100.2.136/138）被安全组整段掐断
+- **症状**：节点 TCP 443 到公网 IP 全通，但任何域名解析超时；`dig @223.5.5.5` 正常。
+- **修复**：三台 systemd-resolved 全局切公共 DNS
+  （`/etc/systemd/resolved.conf.d/public-dns.conf`: DNS=223.5.5.5 119.29.29.29, Domains=~.）。
+
+### 案例 H：github.com 的部分 A 记录（如 20.205.243.166）TCP 层被掐，且 coredns 的 Corefile 改 ConfigMap 会被 k3s 重置
+- **症状**：节点/pod 内 git clone 间歇超时；改 kube-system/coredns ConfigMap 加 hosts
+  后一次 k3s 重启（registries 变更触发）配置被还原，Argo CD 全部 app 变 Unknown。
+- **修复**：把 github.com 钉扎进 k3s server 的
+  `/var/lib/rancher/k3s/server/manifests/coredns.yaml`（k3s 不覆盖已存在的该文件）。
+  另注意 coredns 的 hosts 插件每个 server block 只能用一次（与 NodeHosts 合并写）。
+- **一句话**：CoreDNS 定制要写进 k3s manifest 而不是 ConfigMap；"改了没生效"先看是不是被 k3s 还原了。
+
+### 案例 I：ACR 个人版自动清理 tag，`<repo>:dev` 一夜消失
+- **症状**：昨天能拉的业务镜像今天 NotFound，但 digest 引用仍可拉。
+- **修复**：重搭时从 Ecampus-go 源码本地交叉编译（GOARCH=amd64，注意 QEMU 模拟编译
+  Go 会段错误，改原生交叉编译 + 轻量 Dockerfile）重新推 tag；长期靠流水线 digest 钉扎。
+
+### 案例 J：Argo CD repo-server 拉远端 chart 仓库超时（bitnami index 27MB）+ go-git 默认超时小于跨境 TLS 尖峰
+- **症状**：redis/prometheus app 长期 Unknown：`error fetching chart` /
+  `awaiting headers: context deadline exceeded`；同节点 git CLI 正常。
+- **修复**：① repo-server env `ARGOCD_GIT_HTTP_TIMEOUT=60`；② chart vendor 进
+  GitOps 仓库（k3s/charts/vendor/），不再引用远端 chart 仓库。
+
+### 案例 K：bitnami chart 与官方镜像混用会炸 + bitnami/redis:latest 在 mirror 上不存在
+- **症状**：rabbitmq 官方镜像起在 bitnami chart 里，init 容器找
+  /opt/bitnami/scripts/liblog.sh 失败；redis chart 默认 bitnami/redis:latest 拉不到。
+- **修复**：rabbitmq 改原生 StatefulSet（k3s/manifests/dependencies/rabbitmq.yaml，
+  注意 readiness 的 rabbitmq-diagnostics 需 timeoutSeconds≥8）；redis 钉
+  bitnamilegacy/redis:8.2.1-debian-12-r0。bitnami 系镜像经 docker.1ms.run 拉取，
+  需要 `global.security.allowInsecureImages: true`。
+
+### 案例 L：ecampus 服务对中间件的 service 名有硬编码期望（redis/mongo），helm release fullname 对不上
+- **症状**：服务 panic `lookup mongo ... no such host`，而 mongo 实际叫 mongo-mongodb。
+- **修复**：ExternalName 别名（app ns 内 `redis`→redis-master、`mongo`→mongo-mongodb）。
+  另：envFrom 的 secret 键名会原样成为环境变量名，必须大写
+  （platform-server-auth 用 DATABASE_URL/JWT_SECRET，不是 database-url）。

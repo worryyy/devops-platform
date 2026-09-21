@@ -1,0 +1,37 @@
+# ecampus 业务依赖：MongoDB（campus 库）。admin 密码与应用 dev 配置对齐。
+# 安装：helm upgrade --install mongo bitnami/mongodb -n app -f 本文件
+global:
+  security:
+    allowInsecureImages: true
+
+architecture: standalone
+
+image:
+  repository: bitnamilegacy/mongodb
+  tag: 8.0.4-debian-12-r1
+
+auth:
+  rootUser: admin
+  existingSecret: mongo-auth
+  usernames:
+    - campus
+  databases:
+    - campus
+
+persistence:
+  enabled: true
+  size: 8Gi
+
+nodeSelector:
+  platform-role: worker
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 768Mi
+
+metrics:
+  enabled: false

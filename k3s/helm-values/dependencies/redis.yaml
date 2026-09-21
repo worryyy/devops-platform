@@ -1,0 +1,24 @@
+# ecampus 业务依赖：Redis。密码与应用 dev 配置对齐（redis-auth Secret）。
+# 安装：helm upgrade --install redis bitnami/redis -n app -f 本文件
+architecture: standalone
+
+master:
+  persistence:
+    enabled: true
+    size: 4Gi
+  nodeSelector:
+    platform-role: worker
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+auth:
+  existingSecret: redis-auth
+  existingSecretPasswordKey: redis-password
+
+metrics:
+  enabled: false

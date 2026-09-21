@@ -99,6 +99,15 @@
           endpoint:
             - "https://docker.1ms.run"
             - "https://registry-1.docker.io"
+        # registry.k8s.io 直连经常解析到跨境不可达节点；daocloud 镜像兜底
+        "registry.k8s.io":
+          endpoint:
+            - "https://k8s.m.daocloud.io"
+            - "https://registry.k8s.io"
+        "quay.io":
+          endpoint:
+            - "https://quay.m.daocloud.io"
+            - "https://quay.io"
   register: k3s_registries_config
 
 - name: Check existing k3s server service
