@@ -1,88 +1,10 @@
 version: v1
 
-releaseProfiles:
-  critical-canary:
-    strategy: canary
-    waitTimeout: 75m
-    manualPromotion: false
-    scaleDownDelaySeconds: 900
-    analysis:
-      enabled: true
-      interval: 1m
-      count: 10
-      consecutiveSuccessLimit: 2
-      failureLimit: 2
-      inconclusiveLimit: 10
-      consecutiveErrorLimit: 2
-      minSamples: 3000
-      stableMinSamples: 3000
-      maxErrorRate: 0.01
-      maxErrorRateIncrease: 0.003
-      maxP95Ratio: 1.2
-      minOperationSuccessRate: 0.99
-      inconclusiveTimeout: 15m
-  standard-canary:
-    strategy: canary
-    waitTimeout: 30m
-    manualPromotion: false
-    scaleDownDelaySeconds: 900
-    analysis:
-      enabled: true
-      interval: 1m
-      count: 7
-      consecutiveSuccessLimit: 2
-      failureLimit: 2
-      inconclusiveLimit: 7
-      consecutiveErrorLimit: 2
-      minSamples: 1000
-      stableMinSamples: 1000
-      maxErrorRate: 0.02
-      maxErrorRateIncrease: 0.01
-      maxP95Ratio: 1.5
-      inconclusiveTimeout: 0s
-  controlled-bluegreen:
-    strategy: bluegreen
-    waitTimeout: 45m
-    manualPromotion: true
-    previewReplicaCount: 2
-    promotionTimeout: 10m
-    scaleDownDelaySeconds: 900
-    analysis:
-      enabled: true
-      interval: 1m
-      count: 10
-      consecutiveSuccessLimit: 2
-      failureLimit: 2
-      inconclusiveLimit: 2
-      consecutiveErrorLimit: 2
-      minSamples: 1000
-      stableMinSamples: 1000
-      maxErrorRate: 0.01
-      maxErrorRateIncrease: 0.005
-      maxP95Ratio: 1.3
-  fast-rolling:
-    strategy: rolling
-    waitTimeout: 15m
-    manualPromotion: false
-    analysis:
-      enabled: false
-
-environmentOverrides:
-  dev:
-    profiles:
-      critical-canary:
-        analysis: {minSamples: 50, stableMinSamples: 50}
-      standard-canary:
-        analysis: {minSamples: 20, stableMinSamples: 20}
-      controlled-bluegreen:
-        analysis: {minSamples: 20, stableMinSamples: 20}
-
 services:
   - name: academic
     displayName: Ecampus Academic
     owner: worryyy
     kind: go-service
-    rolloutProfile: standard-canary
     sli: {requestRouteRegex: '^/api/academic.*$', maxP95Seconds: 0.8}
     environments:
       - name: dev
@@ -92,19 +14,14 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-academic, tagPolicy: git-sha, requireDigest: true}
         jenkins: &jenkins {mode: webhook, jobName: ecampus-pipeline}
         argocd: {application: ecampus-academic, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-academic, service: ecampus-academic, container: ecampus-academic}
+        kubernetes: {namespace: app, workload: ecampus-academic, service: ecampus-academic, container: ecampus-academic}
         health: &health {healthPath: /health, readyPath: /health}
 
   - name: agentchat
     displayName: Ecampus Agent Chat
     owner: worryyy
     kind: go-service
-    rolloutProfile: controlled-bluegreen
     sli: {requestRouteRegex: '^/api/agent.*$', maxP95Seconds: 1.5}
-    manualPromotion: true
-    previewProbes:
-      - {name: health, path: /health, method: GET}
-      - {name: conversations, path: /api/agent/conversation, method: GET, requiresAuth: true}
     environments:
       - name: dev
         namespace: app
@@ -113,19 +30,14 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-agentchat, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-agentchat, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-agentchat, service: ecampus-agentchat, container: ecampus-agentchat}
+        kubernetes: {namespace: app, workload: ecampus-agentchat, service: ecampus-agentchat, container: ecampus-agentchat}
         health: *health
 
   - name: chat
     displayName: Ecampus Chat
     owner: worryyy
     kind: go-service
-    rolloutProfile: controlled-bluegreen
     sli: {requestRouteRegex: '^/api/(conversation|message).*$', maxP95Seconds: 1.0}
-    manualPromotion: true
-    previewProbes:
-      - {name: health, path: /health, method: GET}
-      - {name: conversations, path: /api/conversation, method: GET, requiresAuth: true}
     environments:
       - name: dev
         namespace: app
@@ -134,14 +46,13 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-chat, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-chat, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-chat, service: ecampus-chat, container: ecampus-chat}
+        kubernetes: {namespace: app, workload: ecampus-chat, service: ecampus-chat, container: ecampus-chat}
         health: *health
 
   - name: comment
     displayName: Ecampus Comment
     owner: worryyy
     kind: go-service
-    rolloutProfile: critical-canary
     sli: {requestRouteRegex: '^/api/comment.*$', operationRouteRegex: '^/api/comment/:topic_id$', maxP95Seconds: 0.5}
     environments:
       - name: dev
@@ -151,14 +62,13 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-comment, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-comment, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-comment, service: ecampus-comment, container: ecampus-comment}
+        kubernetes: {namespace: app, workload: ecampus-comment, service: ecampus-comment, container: ecampus-comment}
         health: *health
 
   - name: file
     displayName: Ecampus File
     owner: worryyy
     kind: go-service
-    rolloutProfile: standard-canary
     sli: {requestRouteRegex: '^/file.*$', maxP95Seconds: 1.5}
     environments:
       - name: dev
@@ -168,19 +78,14 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-file, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-file, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-file, service: ecampus-file, container: ecampus-file}
+        kubernetes: {namespace: app, workload: ecampus-file, service: ecampus-file, container: ecampus-file}
         health: *health
 
   - name: marketplace
     displayName: Ecampus Marketplace
     owner: worryyy
     kind: go-service
-    rolloutProfile: controlled-bluegreen
     sli: {requestRouteRegex: '^/api/marketplace.*$', maxP95Seconds: 1.0}
-    manualPromotion: true
-    previewProbes:
-      - {name: health, path: /health, method: GET}
-      - {name: categories, path: /api/marketplace/categories, method: GET, requiresAuth: true}
     environments:
       - name: dev
         namespace: app
@@ -189,19 +94,14 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-marketplace, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-marketplace, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-marketplace, service: ecampus-marketplace, container: ecampus-marketplace}
+        kubernetes: {namespace: app, workload: ecampus-marketplace, service: ecampus-marketplace, container: ecampus-marketplace}
         health: *health
 
   - name: moderation
     displayName: Ecampus Moderation
     owner: worryyy
     kind: go-service
-    rolloutProfile: controlled-bluegreen
     sli: {requestRouteRegex: '^/api/moderation.*$', maxP95Seconds: 0.8}
-    manualPromotion: true
-    previewProbes:
-      - {name: health, path: /health, method: GET}
-      - {name: punishments, path: /api/moderation/punishments, method: GET, requiresAuth: true}
     environments:
       - name: dev
         namespace: app
@@ -210,19 +110,14 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-moderation, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-moderation, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-moderation, service: ecampus-moderation, container: ecampus-moderation}
+        kubernetes: {namespace: app, workload: ecampus-moderation, service: ecampus-moderation, container: ecampus-moderation}
         health: *health
 
   - name: notification
     displayName: Ecampus Notification
     owner: worryyy
     kind: go-service
-    rolloutProfile: controlled-bluegreen
     sli: {requestRouteRegex: '^/api/(notification|notify).*$', maxP95Seconds: 0.8}
-    manualPromotion: true
-    previewProbes:
-      - {name: health, path: /health, method: GET}
-      - {name: unread-counts, path: /api/notification/unread-counts, method: GET, requiresAuth: true}
     environments:
       - name: dev
         namespace: app
@@ -231,19 +126,14 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-notification, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-notification, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-notification, service: ecampus-notification, container: ecampus-notification}
+        kubernetes: {namespace: app, workload: ecampus-notification, service: ecampus-notification, container: ecampus-notification}
         health: *health
 
   - name: reservation
     displayName: Ecampus Reservation
     owner: worryyy
     kind: go-service
-    rolloutProfile: controlled-bluegreen
     sli: {requestRouteRegex: '^/api/reservation.*$', maxP95Seconds: 1.0}
-    manualPromotion: true
-    previewProbes:
-      - {name: health, path: /health, method: GET}
-      - {name: venues, path: /api/reservation/venues, method: GET, requiresAuth: true}
     environments:
       - name: dev
         namespace: app
@@ -252,19 +142,14 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-reservation, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-reservation, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-reservation, service: ecampus-reservation, container: ecampus-reservation}
+        kubernetes: {namespace: app, workload: ecampus-reservation, service: ecampus-reservation, container: ecampus-reservation}
         health: *health
 
   - name: school
     displayName: Ecampus School
     owner: worryyy
     kind: go-service
-    rolloutProfile: controlled-bluegreen
     sli: {requestRouteRegex: '^/api/(term|user/(authentication|re_authentication|get_course_by_weeks|get_exam|get_exam_score)).*$', maxP95Seconds: 2.0}
-    manualPromotion: true
-    previewProbes:
-      - {name: health, path: /health, method: GET}
-      - {name: current-term, path: /api/term, method: GET}
     environments:
       - name: dev
         namespace: app
@@ -273,14 +158,13 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-school, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-school, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-school, service: ecampus-school, container: ecampus-school}
+        kubernetes: {namespace: app, workload: ecampus-school, service: ecampus-school, container: ecampus-school}
         health: *health
 
   - name: theme
     displayName: Ecampus Theme
     owner: worryyy
     kind: go-service
-    rolloutProfile: fast-rolling
     sli: {requestRouteRegex: '^/api/theme.*$', maxP95Seconds: 0.5}
     environments:
       - name: dev
@@ -290,14 +174,13 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-theme, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-theme, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-theme, service: ecampus-theme, container: ecampus-theme}
+        kubernetes: {namespace: app, workload: ecampus-theme, service: ecampus-theme, container: ecampus-theme}
         health: *health
 
   - name: topic
     displayName: Ecampus Topic
     owner: worryyy
     kind: go-service
-    rolloutProfile: critical-canary
     sli: {requestRouteRegex: '^/api/(topic|like|collection).*$', operationRouteRegex: '^/api/topic$', maxP95Seconds: 0.5}
     environments:
       - name: dev
@@ -307,14 +190,13 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-topic, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-topic, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-topic, service: ecampus-topic, container: ecampus-topic}
+        kubernetes: {namespace: app, workload: ecampus-topic, service: ecampus-topic, container: ecampus-topic}
         health: *health
 
   - name: user
     displayName: Ecampus User
     owner: worryyy
     kind: go-service
-    rolloutProfile: critical-canary
     sli: {requestRouteRegex: '^/api/(user|wx).*$', operationRouteRegex: '^/api/user/(login|refresh)$', maxP95Seconds: 0.5}
     environments:
       - name: dev
@@ -324,5 +206,5 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-user, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-user, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-user, service: ecampus-user, container: ecampus-user}
+        kubernetes: {namespace: app, workload: ecampus-user, service: ecampus-user, container: ecampus-user}
         health: *health

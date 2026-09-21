@@ -15,10 +15,8 @@ release:
   environment: dev
   buildNumber: ""
 
-rollout:
-  profile: controlled-bluegreen
-  ingress:
-    paths:
-      - /notification/ws
-      - /api/notification
-      - /api/notify
+ingress:
+  paths:
+    - /notification/ws
+    - /api/notification
+    - /api/notify

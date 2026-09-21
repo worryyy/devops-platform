@@ -117,19 +117,6 @@ extraScrapeConfigs: |
       - source_labels: [__meta_kubernetes_endpoint_port_name]
         action: keep
         regex: metrics
-  - job_name: argo-rollouts
-    kubernetes_sd_configs:
-      - role: endpoints
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_namespace]
-        action: keep
-        regex: argo-rollouts
-      - source_labels: [__meta_kubernetes_service_name]
-        action: keep
-        regex: argo-rollouts-metrics
-      - source_labels: [__meta_kubernetes_endpoint_port_name]
-        action: keep
-        regex: metrics
   - job_name: app-release-info
     honor_labels: true
     scrape_interval: 2m
@@ -225,9 +212,6 @@ extraScrapeConfigs: |
       - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
         action: replace
         target_label: service
-      - source_labels: [__meta_kubernetes_pod_label_rollouts_pod_template_hash]
-        action: replace
-        target_label: revision
       - source_labels: [__meta_kubernetes_pod_label_pod_template_hash]
         action: replace
         target_label: revision
@@ -259,7 +243,7 @@ extraScrapeConfigs: |
 
 kube-state-metrics:
   metricLabelsAllowlist:
-    - pods=[app.kubernetes.io/name,app.kubernetes.io/instance,delivery.platform/deploy-id,delivery.platform/git-sha,delivery.platform/environment,delivery.platform/release-batch,rollouts-pod-template-hash,pod-template-hash]
+    - pods=[app.kubernetes.io/name,app.kubernetes.io/instance,delivery.platform/deploy-id,delivery.platform/git-sha,delivery.platform/environment,delivery.platform/release-batch,pod-template-hash]
     - deployments=[app.kubernetes.io/name,app.kubernetes.io/instance,delivery.platform/deploy-id,delivery.platform/git-sha,delivery.platform/environment,delivery.platform/release-batch]
   # both spellings: the bundled sub-chart version decides (4.x AllowList / 5.x Allowlist)
   metricAnnotationsAllowList:
@@ -316,8 +300,7 @@ serverFiles:
                       label_replace(
                         label_replace(
                           label_replace(
-                            label_replace(
-                              kube_pod_labels{label_delivery_platform_deploy_id!=""},
+                            kube_pod_labels{label_delivery_platform_deploy_id!=""},
                               "deploy_id", "$1", "label_delivery_platform_deploy_id", "(.+)"
                             ),
                             "release_batch", "$1", "label_delivery_platform_release_batch", "(.*)"
@@ -328,9 +311,7 @@ serverFiles:
                       ),
                       "service", "$1", "label_app_kubernetes_io_name", "(.+)"
                     ),
-                    "revision", "$1", "label_rollouts_pod_template_hash", "(.+)"
-                  ),
-                  "revision", "$1", "label_pod_template_hash", "(.+)"
+                    "revision", "$1", "label_pod_template_hash", "(.+)"
                 )
                 * on (namespace, pod) group_left(image_digest)
                   label_replace(
@@ -342,14 +323,6 @@ serverFiles:
                     kube_pod_annotations{annotation_delivery_platform_gitops_revision=~".+"},
                     "gitops_revision", "$1", "annotation_delivery_platform_gitops_revision", "(.*)"
                   )
-              )
-          - record: delivery_platform:workload_release_info
-            expr: |
-              max by (namespace, workload, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision) (
-                label_replace(
-                  delivery_platform:pod_release_info,
-                  "workload", "$1", "instance", "(.+)"
-                )
               )
           - record: delivery_platform:deployment_release_info
             expr: |
@@ -387,8 +360,8 @@ serverFiles:
       - name: ecampus-http-recording
         rules:
           # Stable and candidate revisions are compared exactly: every rule is
-          # aggregated by revision (rollouts-pod-template-hash or
-          # pod-template-hash) and environment only. Release identity is joined
+          # aggregated by revision (pod-template-hash)
+          # and environment only. Release identity is joined
           # at alert evaluation time from delivery_platform:release_info so a
           # new release does not create new time series.
           - record: ecampus:http_requests_total:rate5m
@@ -441,7 +414,7 @@ serverFiles:
               description: Internal context signal. Recent pods for deploy {{ $labels.deploy_id }} (batch {{ $labels.release_batch }}) drive inhibition of transient deploy-noise alerts and are never notified directly.
               image_digest: '{{ printf "%.12s" $labels.image_digest }}'
               git_sha: '{{ $labels.git_sha }}'
-              rollout: '{{ $labels.instance }}'
+              workload: '{{ $labels.instance }}'
               prometheus_query: 'delivery_platform:pod_release_info{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",deploy_id="{{ $labels.deploy_id }}"}'
               loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
           - alert: ReleasePodRestarting
@@ -461,7 +434,7 @@ serverFiles:
               description: Container {{ $labels.container }} in pod {{ $labels.pod }} restarted transiently during a release noise window. Sustained crash-looping is covered by ReleasePodCrashLooping and is never suppressed.
               image_digest: '{{ printf "%.12s" $labels.image_digest }}'
               git_sha: '{{ $labels.git_sha }}'
-              rollout: '{{ $labels.instance }}'
+              workload: '{{ $labels.instance }}'
               prometheus_query: 'kube_pod_container_status_restarts_total{namespace="{{ $labels.namespace }}",pod="{{ $labels.pod }}"}'
               loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
           - alert: ReleasePodCrashLooping
@@ -481,7 +454,7 @@ serverFiles:
               description: Container {{ $labels.container }} in pod {{ $labels.pod }} restarted 3 or more times in 10 minutes during a release and must never be suppressed by release noise windows.
               image_digest: '{{ printf "%.12s" $labels.image_digest }}'
               git_sha: '{{ $labels.git_sha }}'
-              rollout: '{{ $labels.instance }}'
+              workload: '{{ $labels.instance }}'
               prometheus_query: 'kube_pod_container_status_restarts_total{namespace="{{ $labels.namespace }}",pod="{{ $labels.pod }}"}'
               loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
           - alert: ReleasePodNotReady
@@ -501,7 +474,7 @@ serverFiles:
               description: Pod {{ $labels.pod }} is not ready during a release noise window.
               image_digest: '{{ printf "%.12s" $labels.image_digest }}'
               git_sha: '{{ $labels.git_sha }}'
-              rollout: '{{ $labels.instance }}'
+              workload: '{{ $labels.instance }}'
               prometheus_query: 'kube_pod_status_ready{namespace="{{ $labels.namespace }}",pod="{{ $labels.pod }}"}'
               loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
           - alert: ReleasePodStuckTerminating
@@ -521,26 +494,15 @@ serverFiles:
               description: Pod {{ $labels.pod }} has been terminating for more than 5 minutes during a release and must never be suppressed by release noise windows.
               image_digest: '{{ printf "%.12s" $labels.image_digest }}'
               git_sha: '{{ $labels.git_sha }}'
-              rollout: '{{ $labels.instance }}'
+              workload: '{{ $labels.instance }}'
               prometheus_query: 'kube_pod_deletion_timestamp{namespace="{{ $labels.namespace }}",pod="{{ $labels.pod }}"}'
               loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
           - alert: ReleaseReplicaShortage
             expr: |
               (
-                (
-                  (kube_deployment_status_replicas_available < kube_deployment_spec_replicas)
-                  * on (namespace, deployment) group_left(service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
-                    delivery_platform:deployment_release_info
-                )
-                or
-                (
-                  (rollout_info_replicas_available < rollout_info_replicas_desired)
-                  * on (namespace, name) group_left(service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
-                    label_replace(
-                      delivery_platform:workload_release_info,
-                      "name", "$1", "workload", "(.+)"
-                    )
-                )
+                (kube_deployment_status_replicas_available < kube_deployment_spec_replicas)
+                * on (namespace, deployment) group_left(service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
+                  delivery_platform:deployment_release_info
               ) > 0
             for: 5m
             labels:
@@ -552,79 +514,8 @@ serverFiles:
               description: Available replicas are below desired for more than 5 minutes; this is not suppressed by release noise windows.
               image_digest: '{{ printf "%.12s" $labels.image_digest }}'
               git_sha: '{{ $labels.git_sha }}'
-              rollout: '{{ $labels.deployment }}{{ $labels.name }}{{ $labels.workload }}'
+              workload: '{{ $labels.deployment }}'
               prometheus_query: 'kube_deployment_status_replicas_available{namespace="{{ $labels.namespace }}"} < kube_deployment_spec_replicas{namespace="{{ $labels.namespace }}"}'
-              loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
-      - name: delivery-platform-release-gate
-        rules:
-          - alert: ReleaseAnalysisInconclusiveOrError
-            expr: |
-              max by (namespace, name, workload, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision) (
-                label_replace(
-                  analysis_run_phase{phase=~"Inconclusive|Error"},
-                  "workload", "$1", "name", "^(.+)-[0-9]+-((prepromotion|postpromotion)|[0-9]+)-[a-z0-9]+$"
-                )
-                * on (namespace, workload) group_left(service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
-                  delivery_platform:workload_release_info
-              )
-            for: 1m
-            labels:
-              severity: info
-              signal_type: deploy_context
-              failure_domain: service
-            annotations:
-              summary: Analysis for {{ $labels.service }} is inconclusive or errored
-              description: AnalysisRun {{ $labels.name }} could not produce a release verdict ({{ $labels.deploy_id }}); this is a deploy-context signal, not user impact.
-              image_digest: '{{ printf "%.12s" $labels.image_digest }}'
-              git_sha: '{{ $labels.git_sha }}'
-              rollout: '{{ $labels.workload }}'
-              prometheus_query: 'analysis_run_phase{namespace="{{ $labels.namespace }}",name="{{ $labels.name }}"}'
-              loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
-          - alert: ReleaseAnalysisFailed
-            expr: |
-              max by (namespace, name, workload, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision) (
-                label_replace(
-                  analysis_run_phase{phase="Failed"},
-                  "workload", "$1", "name", "^(.+)-[0-9]+-((prepromotion|postpromotion)|[0-9]+)-[a-z0-9]+$"
-                )
-                * on (namespace, workload) group_left(service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
-                  delivery_platform:workload_release_info
-              )
-            for: 1m
-            labels:
-              severity: warning
-              signal_type: release_gate_failed
-              failure_domain: service
-            annotations:
-              summary: Release analysis failed for {{ $labels.service }}
-              description: AnalysisRun {{ $labels.name }} failed ({{ $labels.deploy_id }}); the release gate did not pass. User impact is not implied.
-              image_digest: '{{ printf "%.12s" $labels.image_digest }}'
-              git_sha: '{{ $labels.git_sha }}'
-              rollout: '{{ $labels.workload }}'
-              prometheus_query: 'analysis_run_phase{namespace="{{ $labels.namespace }}",name="{{ $labels.name }}"}'
-              loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
-          - alert: ReleaseRolloutDegraded
-            expr: |
-              max by (namespace, name, service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision) (
-                rollout_info{phase="Degraded"}
-                * on (namespace, name) group_left(service, deploy_id, release_batch, environment, image_digest, git_sha, gitops_revision)
-                  label_replace(
-                    delivery_platform:workload_release_info,
-                    "name", "$1", "workload", "(.+)"
-                  )
-              )
-            for: 1m
-            labels:
-              severity: warning
-              signal_type: release_gate_failed
-              failure_domain: service
-            annotations:
-              summary: Rollout {{ $labels.name }} is degraded
-              description: Rollout {{ $labels.name }} ({{ $labels.deploy_id }}) is Degraded; the release gate did not pass.
-              image_digest: '{{ printf "%.12s" $labels.image_digest }}'
-              git_sha: '{{ $labels.git_sha }}'
-              rollout: '{{ $labels.name }}'
-              prometheus_query: 'rollout_info{namespace="{{ $labels.namespace }}",name="{{ $labels.name }}"}'
               loki_query: '{namespace="{{ $labels.namespace }}",service="{{ $labels.service }}",environment="{{ $labels.environment }}"} | json | deploy_id="{{ $labels.deploy_id }}"'
       - name: delivery-platform-user-impact
         rules:

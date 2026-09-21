@@ -64,9 +64,6 @@ jobs:
       - name: wait-for-release fixture tests
         run: sh k3s/ci/scripts/test-wait-release.sh
 
-      - name: rollback-release fixture tests
-        run: sh k3s/ci/scripts/test-rollback-release.sh
-
       - name: delivery contract test
         run: sh k3s/ci/scripts/test-delivery-contract.sh
 
@@ -80,7 +77,8 @@ jobs:
             --environment dev > /tmp/delivery.json
           jq -e '.services | length == 2' /tmp/delivery.json
           jq -e '.services[0].image | contains("ecampus-academic")' /tmp/delivery.json
-          jq -e '.services[0].effective_profile != ""' /tmp/delivery.json
+          jq -e '.services[0].workload != ""' /tmp/delivery.json
+          jq -e '.services[0].workload_kind == "Deployment"' /tmp/delivery.json
 
   helm-render:
     name: helm-render
@@ -155,7 +153,6 @@ jobs:
         run: |
           kubeconform -summary -verbose -kubernetes-version 1.31.0 \
             -schema-location default \
-            -schema-location "file://$GITHUB_WORKSPACE/k3s/ci/schemas/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json" \
             /tmp/rendered.yaml
 
       - name: Validate resource and delivery policies with conftest
@@ -168,7 +165,7 @@ jobs:
       - name: Assert rendered workload composition
         run: |
           set -eu
-          test "$(grep -c '^kind: Rollout$' /tmp/rendered.yaml)" -eq 12
-          test "$(grep -c '^kind: Deployment$' /tmp/rendered.yaml)" -eq 2
-          test "$(grep -c '^kind: AnalysisTemplate$' /tmp/rendered.yaml)" -eq 19
+          test "$(grep -c '^kind: Rollout$' /tmp/rendered.yaml)" -eq 0
+          test "$(grep -c '^kind: AnalysisTemplate$' /tmp/rendered.yaml)" -eq 0
+          test "$(grep -c '^kind: Deployment$' /tmp/rendered.yaml)" -eq 14
           grep -q 'delivery.platform/image-digest' /tmp/rendered.yaml

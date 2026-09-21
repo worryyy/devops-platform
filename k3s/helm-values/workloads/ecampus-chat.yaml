@@ -15,10 +15,8 @@ release:
   environment: dev
   buildNumber: ""
 
-rollout:
-  profile: controlled-bluegreen
-  ingress:
-    paths:
-      - /chat
-      - /api/conversation
-      - /api/message
+ingress:
+  paths:
+    - /chat
+    - /api/conversation
+    - /api/message

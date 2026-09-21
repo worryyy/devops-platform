@@ -1,0 +1,129 @@
+---
+# preflight.yml —— 部署前环境预检：把 2026-09 那次部署里最耗时的环境类问题
+# （安全组/DNS/网卡/资源/残留安装）在跑 site.yml 之前全部拦下。
+# 每条失败信息都指向 k3s/TROUBLESHOOTING.md 的对应案例。
+# 用法：ansible-playbook -i inventory/dev.ini playbooks/preflight.yml
+
+- name: Preflight / inventory sanity（本地）
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: 校验所有节点地址是 Tailscale CGNAT 段（100.64/10）
+      run_once: true
+      loop: "{{ groups['k3s_cluster'] }}"
+      vars:
+        octets: "{{ hostvars[item]['ansible_host'].split('.') }}"
+      ansible.builtin.assert:
+        that:
+          - octets[0] == '100'
+          - 64 <= octets[1] | int and octets[1] | int <= 127
+          - hostvars[item]['ansible_user'] is defined
+        fail_msg: >-
+          {{ item }} 的 ansible_host={{ hostvars[item]['ansible_host'] }}
+          不在 Tailscale 100.64/10 段。group_vars 已把 flannel 钉死在
+          tailscale0，inventory 里必须是各节点的 Tailscale IP——
+          重开/换机器后忘了更新 inventory 是最常见的翻车点
+          （TROUBLESHOOTING.md 案例 F）。
+        success_msg: "{{ item }}: {{ hostvars[item]['ansible_host'] }} (tailscale)"
+
+- name: Preflight / 节点环境检查（全部节点）
+  hosts: k3s_cluster
+  become: yes
+  gather_facts: true
+  tasks:
+    - name: 读取 tailscale0 上的地址（接口不存在则输出为空）
+      ansible.builtin.command: ip -o -4 addr show dev tailscale0
+      register: tailscale_addrs
+      failed_when: false
+      changed_when: false
+
+    - name: flannel 接口必须存在且携带 inventory 地址
+      ansible.builtin.fail:
+        msg: >-
+          k3s_flannel_iface 钉死为 tailscale0，但本节点的 inventory 地址
+          {{ ansible_host }} 不在 tailscale0 上（当前输出：
+          {{ tailscale_addrs.stdout_lines | default([]) | join(' ') }}）。
+          三件套 iface/node-ip/tls-san 必须一致，否则 NotReady 或证书
+          不匹配（TROUBLESHOOTING.md 案例 F / 加固 F）。
+      when: ansible_host not in (tailscale_addrs.stdout | default(''))
+
+    - name: 公共 DNS 可达性（223.5.5.5）
+      ansible.builtin.command: dig +time=3 +tries=1 @223.5.5.5 rancher-mirror.rancher.cn +short
+      register: public_dns
+      changed_when: false
+
+    - name: 阿里云内网 DNS 可达性（不可达只告警）
+      ansible.builtin.command: dig +time=3 +tries=1 @100.100.2.138 aliyun.com +short
+      register: internal_dns
+      failed_when: false
+      changed_when: false
+
+    - name: 内网 DNS 被安全组挡住时给出提示
+      ansible.builtin.debug:
+        msg: >-
+          [warn] 100.100.2.138 不可达：安全组出方向未放行阿里云系统服务段
+          （100.100.2.136/138 DNS、100.100.100.200 元数据）。集群可用
+          公共 DNS 方案绕过，但建议放行（TROUBLESHOOTING.md 案例 1）。
+      when: internal_dns.rc != 0
+
+    - name: ACR 公网端点可达（TCP+TLS 层，不校验鉴权）
+      ansible.builtin.command: curl -s -o /dev/null -m 8 https://crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/v2/
+      register: acr_probe
+      changed_when: false
+
+    - name: ACR 不可达直接失败
+      ansible.builtin.fail:
+        msg: >-
+          ACR 公网端点 443 不可达：镜像推送/拉取全链路会挂。检查安全组
+          出方向 443 与端点选择（VPC 端点也可能被挡，案例 1 的修复是
+          统一走公网端点；TROUBLESHOOTING.md 案例 1/6）。
+      when: acr_probe.rc != 0
+
+    - name: 内存余量检查（<6.5G 直接失败，6.5-7.5G 告警）
+      ansible.builtin.assert:
+        that:
+          - ansible_memtotal_mb >= 6500
+        fail_msg: >-
+          内存 {{ ansible_memtotal_mb }}MB 不足。并行构建的内存预算见
+          PLATFORM_PLAN.md §3（go 8Gi + buildkitd 6Gi 在控制节点），
+          小内存节点是上次逐层 OOM 的直接原因（案例 4）。
+        success_msg: "内存 {{ ansible_memtotal_mb }}MB"
+      ignore_errors: true
+
+    - name: 根盘剩余空间检查（<40G 失败）
+      ansible.builtin.assert:
+        that:
+          - (ansible_mounts | selectattr('mount', 'equalto', '/') | map(attribute='size_available') | first / 1024 / 1024 / 1024) | round(0) >= 40
+        fail_msg: >-
+          根盘剩余不足 40G：构建缓存 PVC（12G）+ 镜像 + 观测数据放不下
+          （磁盘预算见 PLATFORM_PLAN.md §3）。
+      ignore_errors: true
+
+    - name: 时间同步检查（不同步直接失败——TLS/etcd 会被时钟漂移打断）
+      ansible.builtin.command: timedatectl show -p NTPSynchronized --value
+      register: ntp_state
+      changed_when: false
+      failed_when: ntp_state.stdout != 'yes'
+
+    - name: 残留 k3s 安装检查（全新部署前提）
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: k3s_residue
+      loop:
+        - /usr/local/bin/k3s-uninstall.sh
+        - /usr/local/bin/k3s-agent-uninstall.sh
+        - /etc/rancher
+      loop_control:
+        label: "{{ item }}"
+
+    - name: 发现残留安装则失败并给出清理命令
+      ansible.builtin.fail:
+        msg: >-
+          发现残留 k3s 安装：{{ k3s_residue.results
+          | selectattr('stat.exists', 'equalto', true)
+          | map(attribute='item') | join(', ') }}。
+          先执行 /usr/local/bin/k3s-uninstall.sh（server 节点）或
+          /usr/local/bin/k3s-agent-uninstall.sh（agent 节点）再重跑——
+          agent/server 混装会导致 token 和状态错乱（加固 F 的附带防御）。
+      when: k3s_residue.results | selectattr('stat.exists', 'equalto', true) | list | length > 0

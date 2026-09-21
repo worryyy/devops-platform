@@ -14,11 +14,7 @@ release:
   gitopsRevision: ""
   environment: dev
   buildNumber: ""
-  rolloutProfile: fast-rolling
 
-rollout:
-  enabled: false
-  profile: fast-rolling
-  ingress:
-    paths:
-      - /api/theme
+ingress:
+  paths:
+    - /api/theme

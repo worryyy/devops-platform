@@ -15,8 +15,6 @@ release:
   environment: dev
   buildNumber: ""
 
-rollout:
-  profile: standard-canary
-  ingress:
-    paths:
-      - /api/academic
+ingress:
+  paths:
+    - /api/academic

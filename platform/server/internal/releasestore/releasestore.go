@@ -13,23 +13,21 @@ import (
 )
 
 const (
-	StatusReleasing    = "releasing"
-	StatusStable       = "stable"
-	StatusFailed       = "failed"
-	StatusCompensating = "compensating"
+	StatusReleasing = "releasing"
+	StatusStable    = "stable"
+	StatusFailed    = "failed"
 )
 
 var digestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 
 type ReleaseRecord struct {
-	Service         string     `json:"service"`
-	Environment     string     `json:"environment"`
-	GitRevision     string     `json:"git_revision"`
-	ImageDigest     string     `json:"image_digest"`
-	ConfigRevision  string     `json:"config_revision"`
-	RolloutStrategy string     `json:"rollout_strategy"`
-	ReleaseStatus   string     `json:"release_status"`
-	ReleasedAt      *time.Time `json:"released_at"`
+	Service        string     `json:"service"`
+	Environment    string     `json:"environment"`
+	GitRevision    string     `json:"git_revision"`
+	ImageDigest    string     `json:"image_digest"`
+	ConfigRevision string     `json:"config_revision"`
+	ReleaseStatus  string     `json:"release_status"`
+	ReleasedAt     *time.Time `json:"released_at"`
 }
 
 func (r ReleaseRecord) Validate() error {
@@ -40,7 +38,7 @@ func (r ReleaseRecord) Validate() error {
 		return errors.New("environment is required")
 	}
 	switch r.ReleaseStatus {
-	case StatusReleasing, StatusStable, StatusFailed, StatusCompensating:
+	case StatusReleasing, StatusStable, StatusFailed:
 	default:
 		return fmt.Errorf("unsupported release status %q", r.ReleaseStatus)
 	}
@@ -75,27 +73,25 @@ func Record(ctx context.Context, connString string, record ReleaseRecord) error 
 		_, err = pool.Exec(ctx, `
 			insert into service_releases
 			  (service, environment, git_revision, image_digest, config_revision,
-			   rollout_strategy, release_status, released_at)
-			values ($1, $2, $3, $4, $5, $6, 'stable', now())
+			   release_status, released_at)
+			values ($1, $2, $3, $4, $5, 'stable', now())
 			on conflict (service, environment) where release_status = 'stable'
 			do update set
 			  git_revision = excluded.git_revision,
 			  image_digest = excluded.image_digest,
 			  config_revision = excluded.config_revision,
-			  rollout_strategy = excluded.rollout_strategy,
 			  released_at = now(),
 			  updated_at = now()`,
 			record.Service, record.Environment, record.GitRevision,
-			record.ImageDigest, record.ConfigRevision, record.RolloutStrategy)
+			record.ImageDigest, record.ConfigRevision)
 	} else {
 		_, err = pool.Exec(ctx, `
 			insert into service_releases
 			  (service, environment, git_revision, image_digest, config_revision,
-			   rollout_strategy, release_status)
-			values ($1, $2, $3, $4, $5, $6, $7)`,
+			   release_status)
+			values ($1, $2, $3, $4, $5, $6)`,
 			record.Service, record.Environment, record.GitRevision,
-			record.ImageDigest, record.ConfigRevision, record.RolloutStrategy,
-			record.ReleaseStatus)
+			record.ImageDigest, record.ConfigRevision, record.ReleaseStatus)
 	}
 	if err != nil {
 		return fmt.Errorf("record release: %w", err)
@@ -121,7 +117,7 @@ func StableDigest(ctx context.Context, connString, service, environment string) 
 	var record ReleaseRecord
 	err = pool.QueryRow(ctx, `
 		select service, environment, git_revision, image_digest, config_revision,
-		       rollout_strategy, released_at
+		       released_at
 		from service_releases
 		where release_status = 'stable' and service = $1 and environment = $2
 		order by released_at desc nulls last, updated_at desc
@@ -129,7 +125,7 @@ func StableDigest(ctx context.Context, connString, service, environment string) 
 		service, environment,
 	).Scan(
 		&record.Service, &record.Environment, &record.GitRevision,
-		&record.ImageDigest, &record.ConfigRevision, &record.RolloutStrategy,
+		&record.ImageDigest, &record.ConfigRevision,
 		&record.ReleasedAt,
 	)
 	if err != nil {

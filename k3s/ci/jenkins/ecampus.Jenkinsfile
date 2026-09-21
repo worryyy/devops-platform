@@ -42,17 +42,6 @@ def imageDigest(String service) {
   return readFile(".ci/digests/${service}.digest").trim()
 }
 
-def rolloutStrategy(String service) {
-  def delivery = deliveryMetadata(service)
-  if (delivery.effective_profile == 'controlled-bluegreen') {
-    return 'bluegreen'
-  }
-  if (delivery.effective_profile == 'fast-rolling') {
-    return 'rolling'
-  }
-  return 'canary'
-}
-
 def recordRelease(String service, String status, String configRevision, String digestOverride = '', String gitRevisionOverride = '') {
   def digest = ''
   try {
@@ -67,7 +56,6 @@ def recordRelease(String service, String status, String configRevision, String d
       'GIT_REVISION=' + (gitRevisionOverride ?: env.COMMIT_SHA),
       'DIGEST=' + digest,
       'CONFIG_REVISION=' + (configRevision ?: ''),
-      'STRATEGY=' + rolloutStrategy(service),
     ]) {
       sh '''
         set -eu
@@ -79,8 +67,7 @@ def recordRelease(String service, String status, String configRevision, String d
           --status "$STATUS" \
           --git-revision "$GIT_REVISION" \
           --image-digest "${DIGEST:-}" \
-          --config-revision "${CONFIG_REVISION:-}" \
-          --rollout-strategy "$STRATEGY"
+          --config-revision "${CONFIG_REVISION:-}"
       '''
     }
   }
@@ -277,27 +264,6 @@ def patchServiceValues(String checkoutDir, String service, String digest, String
       'GIT_SHA=' + env.COMMIT_SHA,
       'RELEASE_BATCH=' + releaseBatch,
       'DEPLOY_ID=' + releaseBatch + '-' + service + '-1',
-      'PROFILE=' + (delivery.effective_profile ?: 'standard-canary'),
-      'STRATEGY=' + rolloutStrategy(service),
-      'AUTO_PROMOTION=' + (delivery.manual_promotion ? 'true' : 'false'),
-      'PREVIEW_REPLICAS=' + (delivery.preview_replica_count ?: 0).toString(),
-      'SCALE_DOWN_DELAY=' + (delivery.scale_down_delay_seconds ?: 900).toString(),
-      'ANALYSIS_DRY_RUN=' + env.ANALYSIS_DRY_RUN,
-      'ANALYSIS_INTERVAL=' + (delivery.analysis.interval ?: '1m'),
-      'ANALYSIS_COUNT=' + (delivery.analysis.count ?: 10).toString(),
-      'ANALYSIS_CONSECUTIVE=' + (delivery.analysis.consecutive_success_limit ?: 2).toString(),
-      'ANALYSIS_FAILURE_LIMIT=' + (delivery.analysis.failure_limit ?: 2).toString(),
-      'ANALYSIS_INCONCLUSIVE_LIMIT=' + (delivery.analysis.inconclusive_limit ?: 10).toString(),
-      'ANALYSIS_CONSECUTIVE_ERROR_LIMIT=' + (delivery.analysis.consecutive_error_limit ?: 2).toString(),
-      'ANALYSIS_MIN_SAMPLES=' + (delivery.analysis.min_samples ?: 1000).toString(),
-      'ANALYSIS_STABLE_MIN_SAMPLES=' + (delivery.analysis.stable_min_samples ?: 1000).toString(),
-      'ANALYSIS_MAX_ERROR_RATE=' + (delivery.analysis.max_error_rate ?: 0.02).toString(),
-      'ANALYSIS_MAX_ERROR_INCREASE=' + (delivery.analysis.max_error_rate_increase ?: 0.01).toString(),
-      'ANALYSIS_MAX_P95_RATIO=' + (delivery.analysis.max_p95_ratio ?: 1.5).toString(),
-      'ANALYSIS_MAX_P95_SECONDS=' + (delivery.analysis.max_p95_seconds ?: 1.0).toString(),
-      'ANALYSIS_MIN_OP_SUCCESS=' + (delivery.analysis.min_operation_success_rate ?: 0.99).toString(),
-      'REQUEST_ROUTE_REGEX=' + (delivery.request_route_regex ?: ''),
-      'OPERATION_ROUTE_REGEX=' + (delivery.operation_route_regex ?: ''),
       'CONFIG_REVISION=' + (configRevision ?: ''),
     ]) {
       sh '''
@@ -310,29 +276,7 @@ def patchServiceValues(String checkoutDir, String service, String digest, String
           .release.gitSha = strenv(GIT_SHA) |
           .release.gitopsRevision = strenv(CONFIG_REVISION) |
           .release.environment = strenv(TARGET_ENV) |
-          .release.buildNumber = strenv(BUILD_NUMBER) |
-          .release.rolloutProfile = strenv(PROFILE) |
-          .rollout.profile = strenv(PROFILE) |
-          .rollout.strategy = strenv(STRATEGY) |
-          .rollout.autoPromotion = (strenv(AUTO_PROMOTION) == "true") |
-          .rollout.previewReplicaCount = (strenv(PREVIEW_REPLICAS) | tonumber) |
-          .rollout.scaleDownDelaySeconds = (strenv(SCALE_DOWN_DELAY) | tonumber) |
-          .rollout.analysis.dryRun = (strenv(ANALYSIS_DRY_RUN) == "true") |
-          .rollout.analysis.interval = strenv(ANALYSIS_INTERVAL) |
-          .rollout.analysis.count = (strenv(ANALYSIS_COUNT) | tonumber) |
-          .rollout.analysis.consecutiveSuccessLimit = (strenv(ANALYSIS_CONSECUTIVE) | tonumber) |
-          .rollout.analysis.failureLimit = (strenv(ANALYSIS_FAILURE_LIMIT) | tonumber) |
-          .rollout.analysis.inconclusiveLimit = (strenv(ANALYSIS_INCONCLUSIVE_LIMIT) | tonumber) |
-          .rollout.analysis.consecutiveErrorLimit = (strenv(ANALYSIS_CONSECUTIVE_ERROR_LIMIT) | tonumber) |
-          .rollout.analysis.minSamples = (strenv(ANALYSIS_MIN_SAMPLES) | tonumber) |
-          .rollout.analysis.stableMinSamples = (strenv(ANALYSIS_STABLE_MIN_SAMPLES) | tonumber) |
-          .rollout.analysis.maxErrorRate = (strenv(ANALYSIS_MAX_ERROR_RATE) | tonumber) |
-          .rollout.analysis.maxErrorRateIncrease = (strenv(ANALYSIS_MAX_ERROR_INCREASE) | tonumber) |
-          .rollout.analysis.maxP95Ratio = (strenv(ANALYSIS_MAX_P95_RATIO) | tonumber) |
-          .rollout.analysis.maxP95Seconds = (strenv(ANALYSIS_MAX_P95_SECONDS) | tonumber) |
-          .rollout.analysis.minOperationSuccessRate = (strenv(ANALYSIS_MIN_OP_SUCCESS) | tonumber) |
-          .rollout.analysis.requestRouteRegex = strenv(REQUEST_ROUTE_REGEX) |
-          .rollout.analysis.operationRouteRegex = strenv(OPERATION_ROUTE_REGEX)
+          .release.buildNumber = strenv(BUILD_NUMBER)
         ' "$VALUES_FILE"
       '''
     }
@@ -403,23 +347,8 @@ def publishGitOps(String service, String branch, String digest, String tag, Stri
   return createGitOpsPR(service, branch, title)
 }
 
-def mergeGitOpsByRisk(String service, pr, boolean forceManual) {
-  def delivery = deliveryMetadata(service)
-  def manual = delivery.manual_promotion == true
-  if (!manual && !forceManual) {
-    enableAutoMerge(pr.nodeId)
-    waitForPRMerged(pr.number, 900)
-    return
-  }
-  try {
-    input message: 'Approve GitOps PR for ' + service + ': ' + pr.url,
-      submitterParameter: 'APPROVER',
-      timeout: 30
-  } catch (err) {
-    echo 'GitOps PR approval timed out or was rejected for ' + service + '; release skipped'
-    recordRelease(service, 'failed', '')
-    throw err
-  }
+def mergeGitOps(pr) {
+  enableAutoMerge(pr.nodeId)
   waitForPRMerged(pr.number, 900)
 }
 
@@ -427,7 +356,7 @@ def waitForRelease(String service, String configRevision, String digest = '', St
   def delivery = deliveryMetadata(service)
   digest = digest ?: imageDigest(service)
   writeDeliveryMetadata(service)
-  container('rollouts') {
+  container('tools') {
     withEnv([
       'SERVICE_JSON_FILE=' + env.WORKSPACE + '/.ci/delivery/' + service + '.json',
       'EXPECTED_GIT_SHA=' + (expectedSha ?: env.COMMIT_SHA),
@@ -447,37 +376,24 @@ def waitForRelease(String service, String configRevision, String digest = '', St
     }
   }
 
-  try {
-    container('curl') {
-      withEnv([
-        'STABLE_SERVICE=' + delivery.stable_service,
-        'NAMESPACE=' + delivery.namespace,
-        'HEALTH_PATH=' + delivery.health_path,
-      ]) {
-        sh '''
-          set -eu
-          curl --fail --silent --show-error \
-            --retry 12 --retry-delay 5 --retry-all-errors \
-            --connect-timeout 3 --max-time 8 \
-            "http://$STABLE_SERVICE.$NAMESPACE.svc.cluster.local$HEALTH_PATH"
-        '''
-      }
+  container('curl') {
+    withEnv([
+      'STABLE_SERVICE=' + delivery.stable_service,
+      'NAMESPACE=' + delivery.namespace,
+      'HEALTH_PATH=' + delivery.health_path,
+    ]) {
+      sh '''
+        set -eu
+        curl --fail --silent --show-error \
+          --retry 12 --retry-delay 5 --retry-all-errors \
+          --connect-timeout 3 --max-time 8 \
+          "http://$STABLE_SERVICE.$NAMESPACE.svc.cluster.local$HEALTH_PATH"
+      '''
     }
-  } catch (err) {
-    abortRelease(service)
-    throw err
   }
   recordRelease(service, 'stable', configRevision, digest)
 }
 
-def abortRelease(String service) {
-  def delivery = deliveryMetadata(service)
-  container('rollouts') {
-    withEnv(['ROLLOUT=' + delivery.rollout, 'NAMESPACE=' + delivery.namespace]) {
-      sh '"$ROLLOUTS_CLI" abort "$ROLLOUT" --namespace "$NAMESPACE" || true'
-    }
-  }
-}
 
 def notifyFailure(String service, String digest, String prUrl) {
   if (!env.ALERTMANAGER_URL) {
@@ -508,129 +424,8 @@ def notifyFailure(String service, String digest, String prUrl) {
   }
 }
 
-def rollbackRelease(String service, boolean undoRollout) {
-  def checkout = 'gitops-' + service
-  echo 'rolling back failed release for ' + service
-  try {
-    recordRelease(service, 'failed', '')
-  } catch (err) {
-    echo 'failed to record failed status for ' + service + ': ' + err
-  }
-  cloneGitOps(checkout)
-  writeDeliveryMetadata(service)
 
-  try {
-    container('rollouts') {
-      withEnv([
-        'SERVICE_JSON_FILE=' + env.WORKSPACE + '/.ci/delivery/' + service + '.json',
-        'GITOPS_DIR=' + env.WORKSPACE + '/' + checkout,
-        'ROLLBACK_OUTPUT_DIR=' + env.WORKSPACE + '/.ci/rollback',
-        'RELEASE_RECORD_BIN=/cache/jenkins-tools/platform-server release-record',
-        'ROLLBACK_SCRIPT=' + env.GITOPS_DIR + '/k3s/ci/scripts/rollback-release.sh',
-        'ROLLOUTS_CLI=' + env.ROLLOUTS_CLI,
-        'KUBECTL_CLI=' + env.KUBECTL_CLI,
-        'UNDO_ROLLOUT=' + (undoRollout ? '1' : '0'),
-        'ROLLBACK_PAUSE_SYNC=' + (params.ROLLBACK_PAUSE_SYNC ? 'true' : 'false'),
-        'SERVICE=' + service,
-      ]) {
-        sh '''
-          set -eu
-          sh "$ROLLBACK_SCRIPT" resolve-target
-          export EXPECTED_DIGEST=$(jq -r '.image_digest' "$WORKSPACE/.ci/rollback/$SERVICE.json")
-          if [ "$ROLLBACK_PAUSE_SYNC" = "true" ]; then
-            sh "$ROLLBACK_SCRIPT" pause-selfheal
-          fi
-          sh "$ROLLBACK_SCRIPT" abort-traffic
-          attempts=30
-          while [ "$attempts" -gt 0 ]; do
-            if sh "$ROLLBACK_SCRIPT" verify-traffic; then
-              break
-            fi
-            attempts=$((attempts - 1))
-            sleep 10
-          done
-          if [ "$attempts" -eq 0 ]; then
-            echo "traffic did not return to the stable digest in time" >&2
-            exit 1
-          fi
-        '''
-      }
-    }
 
-    try {
-      recordRelease(service, 'compensating', '')
-    } catch (err) {
-      echo 'failed to record compensating status for ' + service + ': ' + err
-    }
-
-    def target = readJson(".ci/rollback/${service}.json")
-    def branch = 'rollback/' + service + '/' + env.SHORT_SHA
-    def compensation = ''
-    container('rollouts') {
-      withEnv([
-        'SERVICE_JSON_FILE=' + env.WORKSPACE + '/.ci/delivery/' + service + '.json',
-        'GITOPS_DIR=' + env.WORKSPACE + '/' + checkout,
-        'ROLLBACK_TARGET_FILE=' + env.WORKSPACE + '/.ci/rollback/' + service + '.json',
-        'COMPENSATION_BRANCH=' + branch,
-        'ROLLBACK_SCRIPT=' + env.GITOPS_DIR + '/k3s/ci/scripts/rollback-release.sh',
-      ]) {
-        compensation = sh(script: 'sh "$ROLLBACK_SCRIPT" prepare-compensation', returnStdout: true).trim()
-      }
-    }
-
-    if (compensation.contains('COMPENSATION_SKIPPED=1')) {
-      echo 'no compensation PR needed for ' + service
-      if (target.source == 'git-history') {
-        recordRelease(service, 'stable', target.config_revision ?: '', target.image_digest, target.git_revision ?: '')
-      }
-      return
-    }
-
-    pushBranch(checkout, branch)
-    def pr = createGitOpsPR(service, branch, 'rollback(' + service + '): ' + (target.image_tag ?: 'stable'))
-    mergeGitOpsByRisk(service, pr, false)
-    def configRevision = gitopsRevisionAfterMerge()
-    waitForRelease(service, configRevision, target.image_digest, target.git_revision ?: '')
-    if (target.source == 'git-history') {
-      recordRelease(service, 'stable', configRevision, target.image_digest, target.git_revision ?: '')
-    }
-  } finally {
-    syncGuard(service, 'resume-selfheal')
-  }
-}
-
-def promoteBlueGreen(String service) {
-  def delivery = deliveryMetadata(service)
-  writeDeliveryMetadata(service)
-  container('rollouts') {
-    withEnv([
-      'SERVICE_JSON_FILE=' + env.WORKSPACE + '/.ci/delivery/' + service + '.json',
-      'WAIT_SCRIPT=' + env.GITOPS_DIR + '/k3s/ci/scripts/wait-for-release.sh',
-    ]) {
-      sh 'sh "$WAIT_SCRIPT" promote-wait'
-    }
-  }
-}
-
-// Toggle automated.selfHeal on the service's Argo CD Application around a
-// rollback: while the compensation PR is still open, Git keeps the failed
-// revision and selfHeal would re-apply it over the live rollback (the
-// rollback/self-heal race). The finally block in rollbackRelease always resumes.
-def syncGuard(String service, String action) {
-  if (params.ROLLBACK_PAUSE_SYNC == false) {
-    return
-  }
-  container('rollouts') {
-    withEnv([
-      'SERVICE_JSON_FILE=' + env.WORKSPACE + '/.ci/delivery/' + service + '.json',
-      'KUBECTL_CLI=' + env.KUBECTL_CLI,
-      'ARGOCD_NAMESPACE=argocd',
-      'ROLLBACK_SCRIPT=' + env.GITOPS_DIR + '/k3s/ci/scripts/rollback-release.sh',
-    ]) {
-      sh 'sh "$ROLLBACK_SCRIPT" ' + action
-    }
-  }
-}
 
 pipeline {
   agent {
@@ -751,7 +546,7 @@ spec:
         limits:
           cpu: "200m"
           memory: 256Mi
-    - name: rollouts
+    - name: tools
       # baked with jq/wget/curl/git/yq
       image: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/alpine-tools:3.21
       command: [cat]
@@ -813,8 +608,7 @@ spec:
     string(name: 'BEFORE_SHA', defaultValue: '', description: 'GitHub webhook before SHA; empty falls back to a conservative full build.')
     string(name: 'AFTER_SHA', defaultValue: '', description: 'GitHub webhook after SHA.')
     string(name: 'BUILDKIT_CACHE_TAG', defaultValue: 'main-amd64', description: 'BuildKit registry cache tag; point it at a never-used tag for cold-cache benchmark runs.')
-    booleanParam(name: 'ROLLBACK_PAUSE_SYNC', defaultValue: true, description: 'Pause Argo CD selfHeal on the target Application during rollback; disable only to reproduce the rollback/self-heal race in drills.')
-    booleanParam(name: 'SKIP_RELEASE', defaultValue: false, description: 'Stop after verify/build/push and skip the GitOps PR, rollout-wait and blue-green stages (CI benchmark mode).')
+    booleanParam(name: 'SKIP_RELEASE', defaultValue: false, description: 'Stop after verify/build/push and skip the GitOps PR and deploy-wait stages (CI benchmark mode).')
     booleanParam(name: 'EXTREME_COLD', defaultValue: false, description: 'Pre-optimization baseline mode: per-service ephemeral Go caches (no sharing across services) and a buildctl prune before every build (no layer reuse).')
   }
 
@@ -826,9 +620,7 @@ spec:
     GITOPS_OWNER = 'worryyy'
     GITOPS_REPO = 'app-test'
     BUILDKIT_CACHE_REPO = 'crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops'
-    ROLLOUTS_CLI = '/cache/jenkins-tools/argo-rollouts/v1.8.3/kubectl-argo-rollouts'
     KUBECTL_CLI = '/cache/jenkins-tools/kubectl/v1.31.3/kubectl'
-    ANALYSIS_DRY_RUN = 'false'
     PROMETHEUS_URL = 'http://prometheus.monitoring.svc:9090'
     ALERTMANAGER_URL = ''
   }
@@ -929,9 +721,6 @@ spec:
           if ((catalog.services ?: []).size() != requested.size()) {
             error('delivery catalog did not return every requested service')
           }
-          def bluegreen = (catalog.services ?: []).findAll { it.manual_promotion == true }.collect { it.service }
-          env.BLUEGREEN_SERVICES = bluegreen.join(',')
-          echo 'blue-green services: ' + (env.BLUEGREEN_SERVICES ?: '(none)')
         }
       }
     }
@@ -985,37 +774,10 @@ spec:
 
     stage('Prepare tools') {
       steps {
-        container('rollouts') {
+        container('tools') {
           sh '''
             set -eu
             # jq/wget/curl/git/yq come from the baked alpine-tools image
-            if [ ! -x "$ROLLOUTS_CLI" ]; then
-              case "$(uname -m)" in
-                x86_64) cli_layer=sha256:bf3ceff451710c15d85b84038cbabab49d132934a31e8edb5c436d7a3d972d04 ;;
-                aarch64) cli_layer=sha256:608969b36e4770ccb572e6f815191cc39e393d3a4e95e0c1ef05ddbc81d31c53 ;;
-                *) echo "unsupported rollout CLI architecture: $(uname -m)" >&2; exit 1 ;;
-              esac
-              tool_dir=$(dirname "$ROLLOUTS_CLI")
-              mkdir -p "$tool_dir"
-              layer_tmp=$(mktemp "$tool_dir/rollouts-layer.XXXXXX")
-              extract_dir=$(mktemp -d "$tool_dir/rollouts-extract.XXXXXX")
-              cleanup_rollouts_cli() {
-                rm -f "$layer_tmp"
-                rm -rf "$extract_dir"
-              }
-              trap cleanup_rollouts_cli EXIT
-              wget -q \
-                "https://quay.io/v2/argoproj/kubectl-argo-rollouts/blobs/$cli_layer" \
-                -O "$layer_tmp"
-              printf '%s  %s\n' "${cli_layer#sha256:}" "$layer_tmp" | sha256sum -c -
-              tar -xzf "$layer_tmp" -C "$extract_dir" bin/kubectl-argo-rollouts
-              chmod 0755 "$extract_dir/bin/kubectl-argo-rollouts"
-              "$extract_dir/bin/kubectl-argo-rollouts" version
-              mv "$extract_dir/bin/kubectl-argo-rollouts" "$ROLLOUTS_CLI"
-              cleanup_rollouts_cli
-              trap - EXIT
-            fi
-            "$ROLLOUTS_CLI" version
             if [ ! -x "$KUBECTL_CLI" ]; then
               kubectl_dir=$(dirname "$KUBECTL_CLI")
               mkdir -p "$kubectl_dir"
@@ -1061,7 +823,7 @@ spec:
             branches[current] = {
               def branch = 'release/' + current + '/' + env.SHORT_SHA
               def pr = publishGitOps(current, branch, imageDigest(current), env.IMAGE_TAG, 'release(' + current + '): ' + env.IMAGE_TAG)
-              mergeGitOpsByRisk(current, pr, false)
+              mergeGitOps(pr)
               def configRevision = gitopsRevisionAfterMerge()
               env['CONFIG_REV_' + serviceKey(current)] = configRevision
               recordRelease(current, 'releasing', configRevision)
@@ -1072,7 +834,7 @@ spec:
       }
     }
 
-    stage('Wait for rollout and health') {
+    stage('Wait for deployment and health') {
       when {
         allOf {
           expression { return (env.BUILD_SERVICES ?: '').trim() }
@@ -1091,63 +853,9 @@ spec:
               } catch (err) {
                 echo 'release failed for ' + current + ': ' + err
                 try {
-                  rollbackRelease(current, false)
-                } catch (rollbackErr) {
-                  echo 'rollback failed for ' + current + ': ' + rollbackErr
-                }
-                notifyFailure(current, imageDigest(current), '')
-                throw err
-              }
-            }
-          }
-          parallel branches
-        }
-      }
-    }
-
-    stage('Approve blue-green promotion') {
-      when {
-        allOf {
-          expression { return (env.BLUEGREEN_SERVICES ?: '').trim() }
-          expression { return params.SKIP_RELEASE != true }
-        }
-      }
-      steps {
-        script {
-          try {
-            input message: 'Approve blue-green promotion for: ' + env.BLUEGREEN_SERVICES,
-              submitterParameter: 'APPROVER',
-              timeout: 30
-          } catch (err) {
-            echo 'blue-green approval timed out or was rejected; aborting every pending blue-green release'
-            env.BLUEGREEN_SERVICES.split(',').findAll { it }.each { abortRelease(it) }
-            error('blue-green approval timeout or rejection')
-          }
-        }
-      }
-    }
-
-    stage('Promote blue-green and wait post-promotion') {
-      when {
-        allOf {
-          expression { return (env.BLUEGREEN_SERVICES ?: '').trim() }
-          expression { return params.SKIP_RELEASE != true }
-        }
-      }
-      steps {
-        script {
-          def branches = [:]
-          env.BLUEGREEN_SERVICES.split(',').findAll { it }.each { service ->
-            def current = service
-            branches[current] = {
-              try {
-                promoteBlueGreen(current)
-              } catch (err) {
-                echo 'post-promotion failed for ' + current + ': ' + err
-                try {
-                  rollbackRelease(current, true)
-                } catch (rollbackErr) {
-                  echo 'rollback failed for ' + current + ': ' + rollbackErr
+                  recordRelease(current, 'failed', configRevision)
+                } catch (recordErr) {
+                  echo 'failed to record failed status for ' + current + ': ' + recordErr
                 }
                 notifyFailure(current, imageDigest(current), '')
                 throw err

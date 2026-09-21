@@ -14,85 +14,52 @@ func loadTestCatalog(t *testing.T) Catalog {
 	return catalog
 }
 
-func TestProfileThresholdsAreTiered(t *testing.T) {
-	catalog := loadTestCatalog(t)
-
-	critical := catalog.ReleaseProfiles["critical-canary"]
-	standard := catalog.ReleaseProfiles["standard-canary"]
-	bluegreen := catalog.ReleaseProfiles["controlled-bluegreen"]
-	rolling := catalog.ReleaseProfiles["fast-rolling"]
-
-	if critical.Analysis.MinSamples <= standard.Analysis.MinSamples {
-		t.Fatalf("critical minSamples %d must exceed standard %d", critical.Analysis.MinSamples, standard.Analysis.MinSamples)
-	}
-	if standard.Analysis.MinSamples < bluegreen.Analysis.MinSamples {
-		t.Fatalf("standard minSamples %d must not trail bluegreen %d", standard.Analysis.MinSamples, bluegreen.Analysis.MinSamples)
-	}
-	if bluegreen.Analysis.MaxErrorRate > critical.Analysis.MaxErrorRate {
-		t.Fatalf("bluegreen maxErrorRate %v must not be looser than critical %v", bluegreen.Analysis.MaxErrorRate, critical.Analysis.MaxErrorRate)
-	}
-	if bluegreen.Analysis.MaxErrorRate >= standard.Analysis.MaxErrorRate {
-		t.Fatalf("bluegreen maxErrorRate %v must be stricter than standard %v", bluegreen.Analysis.MaxErrorRate, standard.Analysis.MaxErrorRate)
-	}
-	if critical.Analysis.MaxErrorRate >= standard.Analysis.MaxErrorRate {
-		t.Fatalf("critical maxErrorRate %v must be stricter than standard %v", critical.Analysis.MaxErrorRate, standard.Analysis.MaxErrorRate)
-	}
-	if critical.Analysis.MaxP95Ratio >= standard.Analysis.MaxP95Ratio {
-		t.Fatalf("critical maxP95Ratio %v must be stricter than standard %v", critical.Analysis.MaxP95Ratio, standard.Analysis.MaxP95Ratio)
-	}
-	if bluegreen.Analysis.InconclusiveLimit != 2 {
-		t.Fatalf("bluegreen inconclusiveLimit = %d, want 2 (fail fast)", bluegreen.Analysis.InconclusiveLimit)
-	}
-	for name, profile := range catalog.ReleaseProfiles {
-		if profile.Strategy == "rolling" {
-			continue
-		}
-		if profile.Analysis.ConsecutiveErrorLimit <= 0 {
-			t.Fatalf("profile %q must configure consecutiveErrorLimit", name)
-		}
-	}
-	if rolling.Analysis.Enabled || rolling.ManualPromotion {
-		t.Fatalf("fast-rolling must disable analysis and manual promotion: %#v", rolling.Analysis)
-	}
-	if !bluegreen.ManualPromotion || bluegreen.PreviewReplicaCount <= 0 {
-		t.Fatalf("controlled-bluegreen must require manual promotion and preview replicas")
+func TestValidateAcceptsCatalog(t *testing.T) {
+	if err := Validate(loadTestCatalog(t)); err != nil {
+		t.Fatalf("Validate() error = %v", err)
 	}
 }
 
-func TestValidateRejectsBrokenProfiles(t *testing.T) {
+func TestValidateRejectsMissingSLI(t *testing.T) {
 	catalog := loadTestCatalog(t)
 
 	broken := catalog
-	broken.ReleaseProfiles = map[string]ReleaseProfile{}
-	for name, profile := range catalog.ReleaseProfiles {
-		broken.ReleaseProfiles[name] = profile
-	}
-	rolling := broken.ReleaseProfiles["fast-rolling"]
-	rolling.Analysis.Enabled = true
-	broken.ReleaseProfiles["fast-rolling"] = rolling
+	broken.Services = append([]Service{}, catalog.Services...)
+	topic := broken.Services[len(broken.Services)-1]
+	topic.SLI.MaxP95Seconds = 0
+	broken.Services[len(broken.Services)-1] = topic
 	if err := Validate(broken); err == nil {
-		t.Fatal("expected rolling profile with analysis to be rejected")
+		t.Fatal("expected service without a p95 budget to be rejected")
 	}
 
 	broken = catalog
-	broken.ReleaseProfiles = map[string]ReleaseProfile{}
-	for name, profile := range catalog.ReleaseProfiles {
-		broken.ReleaseProfiles[name] = profile
-	}
-	bluegreen := broken.ReleaseProfiles["controlled-bluegreen"]
-	bluegreen.ManualPromotion = false
-	broken.ReleaseProfiles["controlled-bluegreen"] = bluegreen
+	broken.Services = append([]Service{}, catalog.Services...)
+	broken.Services[0].SLI.RequestRouteRegex = "("
 	if err := Validate(broken); err == nil {
-		t.Fatal("expected bluegreen without manual promotion to be rejected")
+		t.Fatal("expected invalid route regex to be rejected")
 	}
+}
 
-	broken = catalog
-	broken.ReleaseProfiles = map[string]ReleaseProfile{}
-	for name, profile := range catalog.ReleaseProfiles {
-		broken.ReleaseProfiles[name] = profile
-	}
-	delete(broken.ReleaseProfiles, "critical-canary")
+func TestValidateRejectsMissingWorkload(t *testing.T) {
+	catalog := loadTestCatalog(t)
+
+	broken := catalog
+	broken.Services = append([]Service{}, catalog.Services...)
+	service := broken.Services[0]
+	service.Environments = append([]Environment{}, service.Environments...)
+	service.Environments[0].Kubernetes.Workload = ""
+	broken.Services[0] = service
 	if err := Validate(broken); err == nil {
-		t.Fatal("expected missing critical-canary to be rejected")
+		t.Fatal("expected empty kubernetes.workload to be rejected")
+	}
+}
+
+func TestValidateRejectsDuplicateServices(t *testing.T) {
+	catalog := loadTestCatalog(t)
+	broken := catalog
+	broken.Services = append([]Service{}, catalog.Services...)
+	broken.Services = append(broken.Services, broken.Services[0])
+	if err := Validate(broken); err == nil {
+		t.Fatal("expected duplicate service to be rejected")
 	}
 }

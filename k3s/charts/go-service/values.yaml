@@ -26,8 +26,6 @@ release:
   gitopsRevision: ""
   environment: dev
   buildNumber: ""
-  # Written by the delivery pipeline from the service catalog.
-  rolloutProfile: ""
 
 service:
   type: ClusterIP
@@ -39,88 +37,14 @@ observability:
     path: /metrics
     port: ""
 
-# Progressive delivery configuration. The delivery pipeline writes
-# rollout.profile and rollout.analysis.* from the service catalog; the chart
-# ships defaults for every profile so an unreleased service is still renderable.
-rollout:
+ingress:
   enabled: true
-  # Release profile selected by the pipeline: critical-canary, standard-canary,
-  # controlled-bluegreen or fast-rolling. Empty falls back to standard-canary.
-  profile: ""
-  # Derived automatically from the profile when empty.
-  strategy: ""
-  # BlueGreen controls.
-  autoPromotion: false
-  previewReplicaCount: 2
-  scaleDownDelaySeconds: 900
-  promotionTimeout: 10m
-  # Read-only probes executed against the Preview Service by the pre-promotion
-  # Job. Probes with requiresAuth consume rollout-probe-auth/token.
-  previewProbes: []
-  #   - name: health
-  #     path: /health
-  #     method: GET
-  #   - name: categories
-  #     path: /api/marketplace/categories
-  #     method: GET
-  #     requiresAuth: true
-  # Job probes for the AnalysisTemplate job provider.
-  probeImage: curlimages/curl:8.10.1
-  probeActiveDeadlineSeconds: 120
-  probeBackoffLimit: 0
-  probeSecret: rollout-probe-auth
-  probeSecretKey: token
-  ingress:
-    enabled: true
-    className: nginx
-    host: ""
-    path: /
-    paths: []
-    pathType: Prefix
-    annotations: {}
-  # Per-profile canary step sequences. Weights and pauses are fixed so a
-  # strategy switch never changes the Stable/Candidate Services.
-  profiles:
-    critical-canary:
-      steps:
-        - setWeight: 1
-          pause: 5m
-        - setWeight: 5
-          pause: 5m
-        - setWeight: 20
-          pause: 5m
-        - setWeight: 50
-          pause: 5m
-        - setWeight: 100
-          pause: 0s
-    standard-canary:
-      steps:
-        - setWeight: 20
-          pause: 3m
-        - setWeight: 50
-          pause: 3m
-        - setWeight: 100
-          pause: 0s
-  analysis:
-    # dry-run keeps AnalysisRuns non-blocking while metrics are validated.
-    dryRun: false
-    interval: 1m
-    count: 10
-    consecutiveSuccessLimit: 2
-    failureLimit: 2
-    inconclusiveLimit: 10
-    # Consecutive provider errors that turn the run into Error.
-    consecutiveErrorLimit: 2
-    minSamples: 1000
-    stableMinSamples: 1000
-    maxErrorRate: 0.02
-    maxErrorRateIncrease: 0.01
-    maxP95Ratio: 1.5
-    maxP95Seconds: 1.0
-    minOperationSuccessRate: 0.99
-    requestRouteRegex: "^/api/.*$"
-    operationRouteRegex: ""
-    prometheusAddress: http://prometheus.monitoring.svc:9090
+  className: nginx
+  host: ""
+  path: /
+  paths: []
+  pathType: Prefix
+  annotations: {}
 
 resources:
   requests:

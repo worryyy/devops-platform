@@ -7,9 +7,8 @@ create table if not exists service_releases (
   git_revision text not null,
   image_digest text not null,
   config_revision text not null default '',
-  rollout_strategy text not null default '',
 
-  -- releasing | stable | failed | compensating
+  -- releasing | stable | failed
   release_status text not null,
   released_at timestamptz,
 

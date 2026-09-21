@@ -15,9 +15,7 @@ release:
   environment: dev
   buildNumber: ""
 
-rollout:
-  profile: critical-canary
-  ingress:
-    paths:
-      - /api/user
-      - /api/wx
+ingress:
+  paths:
+    - /api/user
+    - /api/wx

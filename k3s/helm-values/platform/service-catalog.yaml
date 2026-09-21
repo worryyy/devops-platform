@@ -13,7 +13,7 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-academic, tagPolicy: git-sha, requireDigest: true}
         jenkins: &jenkins {mode: webhook, jobName: ecampus-pipeline}
         argocd: {application: ecampus-academic, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-academic, service: ecampus-academic, container: ecampus-academic}
+        kubernetes: {namespace: app, workload: ecampus-academic, service: ecampus-academic, container: ecampus-academic}
         health: &health {healthPath: /health, readyPath: /health}
 
   - name: agentchat
@@ -28,7 +28,7 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-agentchat, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-agentchat, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-agentchat, service: ecampus-agentchat, container: ecampus-agentchat}
+        kubernetes: {namespace: app, workload: ecampus-agentchat, service: ecampus-agentchat, container: ecampus-agentchat}
         health: *health
 
   - name: chat
@@ -43,7 +43,7 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-chat, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-chat, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-chat, service: ecampus-chat, container: ecampus-chat}
+        kubernetes: {namespace: app, workload: ecampus-chat, service: ecampus-chat, container: ecampus-chat}
         health: *health
 
   - name: comment
@@ -58,7 +58,7 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-comment, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-comment, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-comment, service: ecampus-comment, container: ecampus-comment}
+        kubernetes: {namespace: app, workload: ecampus-comment, service: ecampus-comment, container: ecampus-comment}
         health: *health
 
   - name: file
@@ -73,7 +73,7 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-file, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-file, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-file, service: ecampus-file, container: ecampus-file}
+        kubernetes: {namespace: app, workload: ecampus-file, service: ecampus-file, container: ecampus-file}
         health: *health
 
   - name: marketplace
@@ -88,7 +88,7 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-marketplace, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-marketplace, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-marketplace, service: ecampus-marketplace, container: ecampus-marketplace}
+        kubernetes: {namespace: app, workload: ecampus-marketplace, service: ecampus-marketplace, container: ecampus-marketplace}
         health: *health
 
   - name: moderation
@@ -103,7 +103,7 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-moderation, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-moderation, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-moderation, service: ecampus-moderation, container: ecampus-moderation}
+        kubernetes: {namespace: app, workload: ecampus-moderation, service: ecampus-moderation, container: ecampus-moderation}
         health: *health
 
   - name: notification
@@ -118,7 +118,7 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-notification, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-notification, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-notification, service: ecampus-notification, container: ecampus-notification}
+        kubernetes: {namespace: app, workload: ecampus-notification, service: ecampus-notification, container: ecampus-notification}
         health: *health
 
   - name: reservation
@@ -133,7 +133,7 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-reservation, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-reservation, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-reservation, service: ecampus-reservation, container: ecampus-reservation}
+        kubernetes: {namespace: app, workload: ecampus-reservation, service: ecampus-reservation, container: ecampus-reservation}
         health: *health
 
   - name: school
@@ -148,7 +148,7 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-school, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-school, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-school, service: ecampus-school, container: ecampus-school}
+        kubernetes: {namespace: app, workload: ecampus-school, service: ecampus-school, container: ecampus-school}
         health: *health
 
   - name: theme
@@ -163,7 +163,7 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-theme, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-theme, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-theme, service: ecampus-theme, container: ecampus-theme}
+        kubernetes: {namespace: app, workload: ecampus-theme, service: ecampus-theme, container: ecampus-theme}
         health: *health
 
   - name: topic
@@ -178,7 +178,7 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-topic, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-topic, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-topic, service: ecampus-topic, container: ecampus-topic}
+        kubernetes: {namespace: app, workload: ecampus-topic, service: ecampus-topic, container: ecampus-topic}
         health: *health
 
   - name: user
@@ -193,5 +193,5 @@ services:
         image: {repository: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/ecampus-user, tagPolicy: git-sha, requireDigest: true}
         jenkins: *jenkins
         argocd: {application: ecampus-user, namespace: argocd}
-        kubernetes: {namespace: app, rollout: ecampus-user, service: ecampus-user, container: ecampus-user}
+        kubernetes: {namespace: app, workload: ecampus-user, service: ecampus-user, container: ecampus-user}
         health: *health

@@ -1,4 +1,4 @@
-{{- if .Values.rollout.ingress.enabled }}
+{{- if .Values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -6,29 +6,29 @@ metadata:
   labels:
     {{- include "goService.labels" . | nindent 4 }}
   annotations:
-    {{- with .Values.rollout.ingress.annotations }}
+    {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- else }}
     {}
     {{- end }}
 spec:
-  ingressClassName: {{ .Values.rollout.ingress.className | quote }}
+  ingressClassName: {{ .Values.ingress.className | quote }}
   rules:
-    - {{- if .Values.rollout.ingress.host }}
-      host: {{ .Values.rollout.ingress.host | quote }}
+    - {{- if .Values.ingress.host }}
+      host: {{ .Values.ingress.host | quote }}
       {{- end }}
       http:
         paths:
-          {{- $paths := .Values.rollout.ingress.paths }}
+          {{- $paths := .Values.ingress.paths }}
           {{- if not $paths }}
-          {{- $paths = list .Values.rollout.ingress.path }}
+          {{- $paths = list .Values.ingress.path }}
           {{- end }}
           {{- range $path := $paths }}
           - path: {{ $path | quote }}
-            pathType: {{ $.Values.rollout.ingress.pathType }}
+            pathType: {{ $.Values.ingress.pathType }}
             backend:
               service:
-                name: {{ include "goService.stableServiceName" $ }}
+                name: {{ include "goService.fullname" $ }}
                 port:
                   name: http
           {{- end }}

@@ -15,9 +15,7 @@ release:
   environment: dev
   buildNumber: ""
 
-rollout:
-  profile: controlled-bluegreen
-  ingress:
-    paths:
-      - /agent/ws
-      - /api/agent
+ingress:
+  paths:
+    - /agent/ws
+    - /api/agent

@@ -15,8 +15,6 @@ release:
   environment: dev
   buildNumber: ""
 
-rollout:
-  profile: controlled-bluegreen
-  ingress:
-    paths:
-      - /api/moderation
+ingress:
+  paths:
+    - /api/moderation

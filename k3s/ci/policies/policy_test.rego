@@ -63,13 +63,3 @@ test_service_target_port_must_be_http if {
   result := deny with input as [doc]
   count(result) > 0
 }
-
-test_missing_analysis_template_denied if {
-  doc := {
-    "kind": "Rollout",
-    "metadata": {"name": "rollout"},
-    "spec": {"strategy": {"canary": {"steps": [{"pause": {"duration": "1m"}}, {"analysis": {"templates": [{"templateName": "missing"}]}}]}}}
-  }
-  result := deny with input as [doc]
-  count(result) > 0
-}

@@ -15,8 +15,6 @@ release:
   environment: dev
   buildNumber: ""
 
-rollout:
-  profile: critical-canary
-  ingress:
-    paths:
-      - /api/comment
+ingress:
+  paths:
+    - /api/comment

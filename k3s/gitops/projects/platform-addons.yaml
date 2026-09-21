@@ -10,8 +10,6 @@ spec:
     - '*'
 
   destinations:
-    - namespace: argo-rollouts
-      server: https://kubernetes.default.svc
     - namespace: ingress-nginx
       server: https://kubernetes.default.svc
     - namespace: monitoring

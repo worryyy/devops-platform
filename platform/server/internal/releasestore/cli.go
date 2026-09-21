@@ -20,7 +20,6 @@ type cliOptions struct {
 	gitRevision    string
 	imageDigest    string
 	configRevision string
-	rolloutStrategy string
 }
 
 // RunCLI implements `platform-server release-record`.
@@ -34,11 +33,10 @@ func RunCLI(args []string, stdout, stderr io.Writer) int {
 	flags.BoolVar(&opts.record, "record", false, "record a release state transition")
 	flags.BoolVar(&opts.stableDigest, "stable-digest", false, "query the verified stable version")
 	flags.BoolVar(&opts.fail, "fail", false, "record a failed release (shorthand for --record --status failed)")
-	flags.StringVar(&opts.status, "status", "", "release status: releasing, stable, failed, compensating")
+	flags.StringVar(&opts.status, "status", "", "release status: releasing, stable, failed")
 	flags.StringVar(&opts.gitRevision, "git-revision", "", "source repository git revision")
 	flags.StringVar(&opts.imageDigest, "image-digest", "", "image digest (sha256:...)")
 	flags.StringVar(&opts.configRevision, "config-revision", "", "GitOps repository revision that published the digest")
-	flags.StringVar(&opts.rolloutStrategy, "rollout-strategy", "", "canary, bluegreen or rolling")
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
@@ -85,13 +83,12 @@ func RunCLI(args []string, stdout, stderr io.Writer) int {
 	}
 
 	record := ReleaseRecord{
-		Service:         opts.service,
-		Environment:     opts.environment,
-		GitRevision:     opts.gitRevision,
-		ImageDigest:     opts.imageDigest,
-		ConfigRevision:  opts.configRevision,
-		RolloutStrategy: opts.rolloutStrategy,
-		ReleaseStatus:   opts.status,
+		Service:        opts.service,
+		Environment:    opts.environment,
+		GitRevision:    opts.gitRevision,
+		ImageDigest:    opts.imageDigest,
+		ConfigRevision: opts.configRevision,
+		ReleaseStatus:  opts.status,
 	}
 	if err := Record(ctx, connString, record); err != nil {
 		_, _ = fmt.Fprintln(stderr, err)
