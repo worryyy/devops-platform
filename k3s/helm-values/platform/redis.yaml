@@ -4,12 +4,17 @@ global:
   security:
     # chart 默认镜像在 docker.io/bitnami/*（经 1ms.run mirror 拉取）
     allowInsecureImages: true
+  imagePullSecrets:
+    - tcr-secret
 
 architecture: standalone
 
 image:
-  repository: bitnamilegacy/redis
-  tag: 8.2.1-debian-12-r0
+  # 经 ACR 中转（docker.1ms.run 对该镜像拉取极慢；直接 Docker Hub 节点又
+  # 不通）——Mac pull -> push ACR 一次性中转，chart 指向 ACR。
+  registry: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+  repository: pulseops/redis
+  tag: "8.2.1-amd64"
 
 master:
   persistence:
