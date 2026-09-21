@@ -15,11 +15,11 @@ import (
 // environments stay JSONB exactly as the YAML declares them; P7 normalizes
 // environments if ever needed.
 type ServiceRow struct {
-	ID           int64     `gorm:"primaryKey" json:"id"`
-	Name         string    `gorm:"uniqueIndex;size:64" json:"name"`
-	DisplayName  string    `json:"display_name"`
-	Owner        string    `json:"owner"`
-	Kind         string    `json:"kind"`
+	ID           int64  `gorm:"primaryKey" json:"id"`
+	Name         string `gorm:"uniqueIndex;size:64" json:"name"`
+	DisplayName  string `json:"display_name"`
+	Owner        string `json:"owner"`
+	Kind         string `json:"kind"`
 	SLI          JSONB[SLIPolicy]
 	Environments JSONB[[]Environment]
 	Source       string    `gorm:"default:yaml" json:"source"`

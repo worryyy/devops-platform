@@ -7,7 +7,7 @@ spec:
   project: platform-addons
 
   sources:
-    - repoURL: https://github.com/worryyy/app-test.git
+    - repoURL: http://gitea-http.delivery.svc.cluster.local:3000/gitea_admin/app-test.git
       targetRevision: main
       path: k3s/charts/platform-server
       helm:

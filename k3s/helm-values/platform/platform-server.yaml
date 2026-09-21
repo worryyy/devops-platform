@@ -17,8 +17,34 @@ api:
   env:
     - name: LOG_LEVEL
       value: info
+    # P3 weekly reports: the runner uploads through the same MinIO the
+    # platform reads from (object store + presign).
+    - name: MINIO_ENDPOINT
+      value: platform-minio.platform.svc:9000
+    - name: MINIO_ACCESS_KEY
+      secretKeyRef:
+        name: platform-minio-auth
+        key: rootUser
+    - name: MINIO_SECRET_KEY
+      secretKeyRef:
+        name: platform-minio-auth
+        key: rootPassword
+    # P4 数据管道：CH 日志检索 + 事件双写（addr/db/user 有默认值，密码走
+    # clickhouse-admin Secret；未部署 CH 时 API 启动只告警降级不崩）。
+    - name: CLICKHOUSE_ADDR
+      value: platform-clickhouse.platform.svc.cluster.local:9000
+    - name: CLICKHOUSE_DB
+      value: platform
+    - name: CLICKHOUSE_USER
+      value: platform
+    - name: CLICKHOUSE_PASSWORD
+      secretKeyRef:
+        name: clickhouse-admin
+        key: password
   envFromSecrets:
     - platform-server-auth
+    - platform-server-cicd
+    - platform-server-observability
   nodeSelector:
     platform-role: light
   resources:

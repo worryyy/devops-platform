@@ -64,6 +64,9 @@ ingress:
   annotations: {}
   hosts:
     - host: ""
+  # Route /grafana to the api service so the embedded reverse proxy serves
+  # same-origin dashboards (P3).
+  grafana: true
   tls:
     enabled: false
     secretName: ""

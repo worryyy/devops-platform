@@ -17,7 +17,6 @@ import (
 	"github.com/worryyy/devops-platform/platform/server/internal/catalog"
 )
 
-
 const testSecret = "test-secret-0123456789"
 
 // fakeAuthenticator fakes *auth.UserStore for handler tests.

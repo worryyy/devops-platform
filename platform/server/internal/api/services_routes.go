@@ -14,9 +14,9 @@ type ServicesHandlers struct {
 }
 
 type updateServiceRequest struct {
-	DisplayName *string              `json:"displayName"`
-	Owner       *string              `json:"owner"`
-	SLI         *catalog.SLIPolicy   `json:"sli"`
+	DisplayName *string            `json:"displayName"`
+	Owner       *string            `json:"owner"`
+	SLI         *catalog.SLIPolicy `json:"sli"`
 }
 
 func (h ServicesHandlers) Register(router *gin.RouterGroup) {
@@ -28,33 +28,33 @@ func (h ServicesHandlers) Register(router *gin.RouterGroup) {
 func (h ServicesHandlers) list(c *gin.Context) {
 	services, err := h.Catalog.List(c.Request.Context(), c.Query("query"))
 	if err != nil {
-		respFail(c, err)
+		RespFail(c, err)
 		return
 	}
-	respData(c, services)
+	RespData(c, services)
 }
 
 func (h ServicesHandlers) get(c *gin.Context) {
 	service, err := h.Catalog.Get(c.Request.Context(), c.Param("name"))
 	if err != nil {
-		respFail(c, mapCatalogError(err))
+		RespFail(c, mapCatalogError(err))
 		return
 	}
-	respData(c, service)
+	RespData(c, service)
 }
 
 func (h ServicesHandlers) update(c *gin.Context) {
 	var req updateServiceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		respFail(c, ErrorErr(http.StatusBadRequest, "invalid request body"))
+		RespFail(c, ErrorErr(http.StatusBadRequest, "invalid request body"))
 		return
 	}
 	service, err := h.Catalog.Update(c.Request.Context(), c.Param("name"), req.DisplayName, req.Owner, req.SLI)
 	if err != nil {
-		respFail(c, mapCatalogError(err))
+		RespFail(c, mapCatalogError(err))
 		return
 	}
-	respData(c, service)
+	RespData(c, service)
 }
 
 func mapCatalogError(err error) error {
@@ -79,13 +79,13 @@ func (h CatalogHandlers) Register(router *gin.RouterGroup) {
 func (h CatalogHandlers) importYAML(c *gin.Context) {
 	var req importRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		respFail(c, ErrorErr(http.StatusBadRequest, "path is required"))
+		RespFail(c, ErrorErr(http.StatusBadRequest, "path is required"))
 		return
 	}
 	count, err := h.Catalog.ImportFromYAML(c.Request.Context(), req.Path)
 	if err != nil {
-		respFail(c, err)
+		RespFail(c, err)
 		return
 	}
-	respData(c, gin.H{"imported": count})
+	RespData(c, gin.H{"imported": count})
 }

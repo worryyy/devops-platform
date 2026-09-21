@@ -7,6 +7,12 @@ import AppLayout from './layouts/AppLayout';
 import Login from './pages/Login';
 import Services from './pages/Services';
 import ServiceDetail from './pages/ServiceDetail';
+import Pipelines from './pages/Pipelines';
+import PipelineDetail from './pages/PipelineDetail';
+import Alerts from './pages/Alerts';
+import Logs from './pages/Logs';
+import Dashboards from './pages/Dashboards';
+import Reports from './pages/Reports';
 import { tokenStore } from './api/client';
 
 const queryClient = new QueryClient({
@@ -40,6 +46,12 @@ export default function App() {
               <Route index element={<Navigate to="/services" replace />} />
               <Route path="services" element={<Services />} />
               <Route path="services/:name" element={<ServiceDetail />} />
+              <Route path="pipelines" element={<Pipelines />} />
+              <Route path="pipelines/:id" element={<PipelineDetail />} />
+              <Route path="alerts" element={<Alerts />} />
+              <Route path="logs" element={<Logs />} />
+              <Route path="dashboards" element={<Dashboards />} />
+              <Route path="reports" element={<Reports />} />
             </Route>
           </Routes>
         </BrowserRouter>

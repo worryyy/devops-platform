@@ -125,7 +125,7 @@ rollout RBAC 权限、release 记录中的 rollout_strategy 字段。
 底层引擎保留，平台必须拿到「触发 + 状态 + 历史」三样，否则发布出问题时
 还是登 Jenkins 看蓝白屏，平台价值大打折扣。分两步走：
 
-**Phase 1（低成本，纯集成）**
+**Phase 1（低成本，纯集成）——✅ 已落地（P2，2026-09-21）**
 - 触发：平台后端调 Jenkins REST API（buildWithParameters），带
   BEFORE_SHA/AFTER_SHA/SERVICE 参数；Web 端「发布」按钮即触发。
 - 状态回传：Jenkins 已有的 `release-record` CLI 把 releasing/stable/failed
@@ -134,6 +134,8 @@ rollout RBAC 权限、release 记录中的 rollout_strategy 字段。
 - 呈现：每次发布的 stages、digest、GitOps PR 链接、验证结果；Argo CD /
   Jenkins UI 深跳。**发布历史页提供一键 revert PR**（生成 revert 分支按钮，
   纯 Git 操作不是集群操作），作为删除自动回退后的轻量补偿。
+  （落地细节：pipeline_runs 表 + /api/pipelines* + /api/webhooks/jenkins；
+  Jenkins job 参数注册需先 POST config.xml，详见 DEPLOY_RUNBOOK）
 
 **Phase 2（可选演进）**
 - 平台内建流水线编排（stage DAG 用平台 API 描述），Jenkins 退化为纯构建

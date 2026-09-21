@@ -1,0 +1,1 @@
+2026-09-21T22:29:13.939128001+08:00 stdout F 2026/09/21 22:29:13 [31;1m/tmp/ecampus-go/internal/sensitive/repository_sensitive.go:18 [35;1mError 1146 (42S02): Table 'campus.sensitive_words' doesn't exist

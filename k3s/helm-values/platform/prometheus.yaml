@@ -29,9 +29,18 @@ alertmanager:
             - signal_type="deploy_context"
     receivers:
       - name: default-receiver
-      # Intentionally empty: this receiver exists only so deploy_context
-      # alerts can act as inhibit sources without producing notifications.
+        # P3 alert gateway: every notified alert lands in the platform
+        # (store + feishu). send_resolved flips firing rows in the UI.
+        webhook_configs:
+          - url: http://platform-server-api.platform.svc/api/webhooks/alertmanager
+            send_resolved: true
+      # deploy_context signals stay notification-free for humans but flow
+      # to the platform too, where the gateway stores them silently (they
+      # are queryable context, never pushed to feishu).
       - name: deploy-context
+        webhook_configs:
+          - url: http://platform-server-api.platform.svc/api/webhooks/alertmanager
+            send_resolved: true
     inhibit_rules:
       - source_matchers:
           - alertname="ReleaseDeployNoiseWindow"
@@ -73,6 +82,9 @@ server:
   global:
     scrape_interval: 30s
     evaluation_interval: 30s
+  # P3: two weeks of local history covers weekly-report recomputation and
+  # short incident lookbacks without stressing the 8Gi volume.
+  retention: 15d
   persistentVolume:
     enabled: true
     size: 8Gi
@@ -103,7 +115,7 @@ extraScrapeConfigs: |
     metric_relabel_configs:
       - source_labels: [__name__]
         action: keep
-        regex: kubelet_volume_stats_(used_bytes|capacity_bytes)
+        regex: kubelet_volume_stats_(used_bytes|capacity_bytes)|container_cpu_usage_seconds_total|container_memory_working_set_bytes
   - job_name: ingress-nginx
     kubernetes_sd_configs:
       - role: endpoints

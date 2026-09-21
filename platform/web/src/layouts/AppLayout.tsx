@@ -6,6 +6,11 @@ const { Sider, Header, Content } = Layout;
 
 const NAV_ITEMS = [
   { key: '/services', label: '服务目录' },
+  { key: '/pipelines', label: '发布与流水线' },
+  { key: '/alerts', label: '告警' },
+  { key: '/logs', label: '日志检索' },
+  { key: '/dashboards', label: '大盘' },
+  { key: '/reports', label: '周报' },
 ];
 
 export default function AppLayout() {

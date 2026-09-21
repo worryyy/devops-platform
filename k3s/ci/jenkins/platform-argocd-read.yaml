@@ -1,0 +1,15 @@
+# P2: platform-server 读取 Argo CD Application 状态（发布详情页 GitOps 卡片）。
+# 复用 ecampus-release Role（argocd ns 只读 applications）；仅新增绑定。
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: platform-server-argocd-read
+  namespace: argocd
+subjects:
+  - kind: ServiceAccount
+    name: platform-server
+    namespace: platform
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ecampus-release

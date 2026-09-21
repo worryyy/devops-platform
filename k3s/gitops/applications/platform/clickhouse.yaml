@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: clickhouse
+  namespace: argocd
+spec:
+  project: platform-addons
+
+  sources:
+    # chart 已 vendor 进 app-test（k3s/charts/vendor/clickhouse）
+    - repoURL: http://gitea-http.delivery.svc.cluster.local:3000/gitea_admin/app-test.git
+      targetRevision: main
+      path: k3s/charts/vendor/clickhouse
+      helm:
+        releaseName: platform-clickhouse
+        valueFiles:
+          - $values/k3s/helm-values/platform/clickhouse.yaml
+    - repoURL: http://gitea-http.delivery.svc.cluster.local:3000/gitea_admin/app-test.git
+      targetRevision: main
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: platform
+
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

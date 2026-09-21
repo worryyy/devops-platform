@@ -91,6 +91,23 @@ kubectl apply -f k3s/secrets/platform-postgresql-auth.example.yaml  # 改成真�
 **注意：Jenkins 任务要重建，不能沿用**——parameters 的 defaultValue 只在
 首次注册时生效，改 Jenkinsfile 不会更新任务里存的旧默认值（案例 7）。
 
+Jenkins job `ecampus-pipeline` 的注册步骤（2026-09-21 实操）：
+1. 用 admin 密码 + crumb（带 cookie）POST `createItem?name=ecampus-pipeline`
+   一个 CpsScmFlowDefinition（SCM=app-test main，scriptPath=
+   k3s/ci/jenkins/ecampus.Jenkinsfile，credentialsId=git-https）。
+2. **参数注册**：直接 POST 该 job 的 `config.xml`（带 parameterDefinitions
+   块，字段与 Jenkinsfile parameters{} 一致）。空跑一次让 Jenkinsfile 自注册
+   会先卡在跨境 clone，不可靠；config.xml 一次到位。
+3. Jenkins API token：POST
+   `/user/admin/descriptorByName/jenkins.security.ApiTokenProperty/generateNewToken`。
+4. 依赖 Secret：delivery ns 需有 `tcr-kaniko-secret`（agent pod 挂载的
+   registry pull secret），缺失时 agent Pod FailedMount 卡 1000s 超时；
+   `gitea-credentials`（镜像仓库 basic auth）与 argocd ns 的 `repo-gitea`
+   （Argo 读镜像仓）见 k3s/secrets/platform-server-cicd.example.yaml。
+5. kubectl 工具预置：从 k8s.m.daocloud.io/kubectl 镜像导出二进制写入
+   jenkins-agent-cache PVC（详见 TROUBLESHOOTING 案例 N.3）。
+6. 首次构建前经 script console 预批 JsonSlurperClassic 沙箱签名（案例 N.2）。
+
 **验证门：** Argo CD 所有 Application Healthy；Jenkins 能登录；
 `kubectl -n app get pods` 13 个服务 Running。
 

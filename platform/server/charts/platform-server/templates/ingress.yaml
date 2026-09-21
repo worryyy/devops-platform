@@ -37,6 +37,15 @@ spec:
                 name: {{ include "platform-server.fullname" $ }}-api
                 port:
                   number: {{ $.Values.api.service.port }}
+          {{- if $.Values.ingress.grafana }}
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "platform-server.fullname" $ }}-api
+                port:
+                  number: {{ $.Values.api.service.port }}
+          {{- end }}
           - path: /
             pathType: Prefix
             backend:

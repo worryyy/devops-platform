@@ -9,14 +9,14 @@ spec:
   sources:
     # chart 已 vendor 进 app-test（k3s/charts/vendor/prometheus）——远端
     # chart 仓库的 helm pull 在 repo-server 内间歇超时。
-    - repoURL: https://github.com/worryyy/app-test.git
+    - repoURL: http://gitea-http.delivery.svc.cluster.local:3000/gitea_admin/app-test.git
       targetRevision: main
       path: k3s/charts/vendor/prometheus
       helm:
         releaseName: prometheus
         valueFiles:
           - $values/k3s/helm-values/platform/prometheus.yaml
-    - repoURL: https://github.com/worryyy/app-test.git
+    - repoURL: http://gitea-http.delivery.svc.cluster.local:3000/gitea_admin/app-test.git
       targetRevision: main
       ref: values
 

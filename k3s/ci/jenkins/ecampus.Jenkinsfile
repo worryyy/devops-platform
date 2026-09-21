@@ -183,7 +183,7 @@ def gitopsApi(String method, String apiPath, String body, String outFile) {
     """
   }
   container('curl') {
-    withCredentials([usernamePassword(credentialsId: 'git-https', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
+    withCredentials([usernamePassword(credentialsId: 'gitea-https', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
       sh script
     }
   }
@@ -209,7 +209,7 @@ def createGitOpsPR(String service, String branch, String title) {
 def enableAutoMerge(String nodeId) {
   def query = 'mutation { enablePullRequestAutoMerge(input:{pullRequestId:\\"' + nodeId + '\\", mergeMethod: MERGE}) { clientMutationId } }'
   container('curl') {
-    withCredentials([usernamePassword(credentialsId: 'git-https', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
+    withCredentials([usernamePassword(credentialsId: 'gitea-https', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
       sh """
         set -eu
         curl -fsS --retry 4 --retry-delay 5 --retry-all-errors -X POST \\
@@ -241,11 +241,12 @@ def waitForPRMerged(int number, int timeoutSeconds) {
 
 def gitopsRevisionAfterMerge() {
   container('git') {
-    withCredentials([usernamePassword(credentialsId: 'git-https', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
+    withCredentials([usernamePassword(credentialsId: 'gitea-https', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
       sh '''
         set -eu
-        clean_repo=$(echo "$GITOPS_REPO_URL" | sed 's#https://##')
-        git ls-remote "https://$GIT_USER:$GIT_TOKEN@$clean_repo" refs/heads/main | awk '{print $1}' > "$WORKSPACE/gitops-head.txt"
+        clean_repo=$(echo "$GITOPS_REPO_URL" | sed -E 's#^[a-z]+://##')
+        repo_scheme=${GITOPS_REPO_URL%%://*}
+        git ls-remote "${repo_scheme}://$GIT_USER:$GIT_TOKEN@$clean_repo" refs/heads/main | awk '{print $1}' > "$WORKSPACE/gitops-head.txt"
       '''
     }
   }
@@ -285,13 +286,14 @@ def patchServiceValues(String checkoutDir, String service, String digest, String
 
 def cloneGitOps(String checkoutDir) {
   container('git') {
-    withCredentials([usernamePassword(credentialsId: 'git-https', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
+    withCredentials([usernamePassword(credentialsId: 'gitea-https', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
       withEnv(['CHECKOUT=' + checkoutDir, 'REPO_URL=' + env.GITOPS_REPO_URL]) {
         sh '''
           set -eu
           rm -rf "$CHECKOUT"
-          clean_repo=$(echo "$REPO_URL" | sed 's#https://##')
-          git clone --depth 1 "https://$GIT_USER:$GIT_TOKEN@$clean_repo" "$CHECKOUT"
+          clean_repo=$(echo "$REPO_URL" | sed -E 's#^[a-z]+://##')
+          repo_scheme=${REPO_URL%%://*}
+          git clone --depth 1 "${repo_scheme}://$GIT_USER:$GIT_TOKEN@$clean_repo" "$CHECKOUT"
           git -C "$CHECKOUT" remote set-url origin "$REPO_URL"
         '''
       }
@@ -301,14 +303,15 @@ def cloneGitOps(String checkoutDir) {
 
 def pushBranch(String checkoutDir, String branch) {
   container('git') {
-    withCredentials([usernamePassword(credentialsId: 'git-https', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
+    withCredentials([usernamePassword(credentialsId: 'gitea-https', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
       withEnv(['CHECKOUT=' + checkoutDir, 'BRANCH=' + branch, 'REPO_URL=' + env.GITOPS_REPO_URL]) {
         sh '''
           set -eu
-          clean_repo=$(echo "$REPO_URL" | sed 's#https://##')
+          clean_repo=$(echo "$REPO_URL" | sed -E 's#^[a-z]+://##')
+          repo_scheme=${REPO_URL%%://*}
           n=0
           until [ "$n" -ge 5 ]; do
-            git -C "$CHECKOUT" push "https://$GIT_USER:$GIT_TOKEN@$clean_repo" HEAD:"$BRANCH" && break
+            git -C "$CHECKOUT" push "${repo_scheme}://$GIT_USER:$GIT_TOKEN@$clean_repo" HEAD:"$BRANCH" && break
             n=$((n+1)); sleep 20
           done
         '''
@@ -448,10 +451,15 @@ spec:
       image: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops/golang-ci:1.26
       command: [cat]
       tty: true
+      envFrom:
+        - secretRef:
+            name: platform-webhook
       resources:
+        # requests 仅做调度下限：控制节点常驻平台组件后峰值空闲有限，
+        # 低 request + 高 limit 让构建 Pod 可调度且保留突发能力。
         requests:
-          cpu: "1500m"
-          memory: 2Gi
+          cpu: "600m"
+          memory: 1Gi
         limits:
           cpu: "3"
           memory: 8Gi
@@ -514,8 +522,8 @@ spec:
           readOnly: true
       resources:
         requests:
-          cpu: "500m"
-          memory: 1Gi
+          cpu: "300m"
+          memory: 512Mi
         limits:
           cpu: "2"
           memory: 6Gi
@@ -603,7 +611,7 @@ spec:
   }
 
   parameters {
-    string(name: 'SOURCE_REPO', defaultValue: 'https://github.com/worryyy/app-test.git', description: 'Ecampus source repository.')
+    string(name: 'SOURCE_REPO', defaultValue: 'http://gitea-http.delivery.svc.cluster.local:3000/gitea_admin/app-test.git', description: 'Ecampus source repository.')
     string(name: 'TARGET_ENV', defaultValue: 'dev', description: 'Delivery catalog environment.')
     string(name: 'BEFORE_SHA', defaultValue: '', description: 'GitHub webhook before SHA; empty falls back to a conservative full build.')
     string(name: 'AFTER_SHA', defaultValue: '', description: 'GitHub webhook after SHA.')
@@ -616,7 +624,7 @@ spec:
     TARGET_ENV = "${params.TARGET_ENV ?: 'dev'}"
     SOURCE_DIR = 'source'
     GITOPS_DIR = 'gitops'
-    GITOPS_REPO_URL = 'https://github.com/worryyy/app-test.git'
+    GITOPS_REPO_URL = 'http://gitea-http.delivery.svc.cluster.local:3000/gitea_admin/app-test.git'
     GITOPS_OWNER = 'worryyy'
     GITOPS_REPO = 'app-test'
     BUILDKIT_CACHE_REPO = 'crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com/pulseops'
@@ -635,21 +643,24 @@ spec:
     stage('Checkout main') {
       steps {
         container('git') {
-          withCredentials([usernamePassword(credentialsId: 'git-https', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
+          withCredentials([usernamePassword(credentialsId: 'gitea-https', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
             sh '''
               set -eu
               rm -rf "$SOURCE_DIR" "$GITOPS_DIR" .ci impact.json delivery-catalog.json
               # GitHub auth-challenges anonymous git clones from AliCloud IPs,
               # so the public source repo uses the same read token as GitOps.
-              source_repo="${SOURCE_REPO:-https://github.com/worryyy/app-test.git}"
-              clean_source=$(echo "$source_repo" | sed 's#https://##')
+              source_repo="${SOURCE_REPO:-http://gitea-http.delivery.svc.cluster.local:3000/gitea_admin/app-test.git}"
+              clean_source=$(echo "$source_repo" | sed -E 's#^[a-z]+://##')
+              source_scheme=${source_repo%%://*}
               # waterfall analysis showed the full monorepo clone dominates
               # warm runs; a shallow window is enough for impact diffs and the
               # detect stage already falls back to --all when SHAs fall outside
-              n=0; until [ "$n" -ge 3 ]; do git clone --depth 20 --branch main "https://$GIT_USER:$GIT_TOKEN@$clean_source" "$SOURCE_DIR" && break; n=$((n+1)); rm -rf "$SOURCE_DIR"; sleep 20; done
+              n=0; until [ "$n" -ge 3 ]; do git clone --depth 20 --branch main "$source_scheme://$GIT_USER:$GIT_TOKEN@$clean_source" "$SOURCE_DIR" && break; n=$((n+1)); rm -rf "$SOURCE_DIR"; sleep 20; done
 
-              clean_repo=$(echo "$GITOPS_REPO_URL" | sed 's#https://##')
-              n=0; until [ "$n" -ge 3 ]; do git clone "https://$GIT_USER:$GIT_TOKEN@$clean_repo" "$GITOPS_DIR" && break; n=$((n+1)); rm -rf "$GITOPS_DIR"; sleep 20; done
+              clean_repo=$(echo "$GITOPS_REPO_URL" | sed -E 's#^[a-z]+://##')
+        repo_scheme=${GITOPS_REPO_URL%%://*}
+              repo_scheme=${GITOPS_REPO_URL%%://*}
+              n=0; until [ "$n" -ge 3 ]; do git clone "$repo_scheme://$GIT_USER:$GIT_TOKEN@$clean_repo" "$GITOPS_DIR" && break; n=$((n+1)); rm -rf "$GITOPS_DIR"; sleep 20; done
               git -C "$GITOPS_DIR" remote set-url origin "$GITOPS_REPO_URL"
               test "$(git -C "$SOURCE_DIR" branch --show-current)" = main
               git -C "$SOURCE_DIR" rev-parse HEAD > current-head.txt
@@ -863,6 +874,51 @@ spec:
             }
           }
           parallel branches
+        }
+      }
+    }
+
+    // Platform integration (P2) lives in post.always (below): a plain stage
+    // would be skipped after an earlier stage failure and the platform would
+    // never learn the build ended.
+  }
+
+  post {
+    // Runs on success and failure alike; a missing webhook URL is a no-op so
+    // CI benchmarks stay usable without the platform.
+    always {
+      script {
+        if (!(env.PLATFORM_WEBHOOK_URL ?: '').trim()) {
+          echo 'PLATFORM_WEBHOOK_URL not set; skip platform notify'
+          return
+        }
+        def runStatus = currentBuild.currentResult == 'SUCCESS' ? 'success' : 'failed'
+        def services = (env.BUILD_SERVICES ?: '').split(',').findAll { it }
+        if (!services) {
+          // No affected services (e.g. docs-only change or a build that died
+          // before detection): nothing recorded; the platform backfills from
+          // the Jenkins API on the next detail view.
+          echo 'no affected services; skip platform notify'
+          return
+        }
+        def durMs = currentBuild.timeInMillis - currentBuild.startTimeInMillis
+        withCredentials([string(credentialsId: 'platform-webhook-secret', variable: 'WH_SECRET')]) {
+        services.each { service ->
+          // hand-built JSON: all fields (service/digest/status/sha) are
+          // injection-safe character classes, and the pipeline-utility-steps
+          // plugin (writeJSON) is not baked into the agent image.
+          def json = "{\"build\":${currentBuild.number},\"service\":\"${service}\",\"status\":\"${runStatus}\",\"gitRevision\":\"${env.COMMIT_SHA ?: ''}\",\"digest\":\"${imageDigest(service)}\",\"stages\":[{\"name\":\"pipeline\",\"status\":\"${runStatus}\",\"durationMs\":${durMs}}]}" 
+          sh """
+            set +e
+            curl -sf -m 15 -X POST '${env.PLATFORM_WEBHOOK_URL}' \\
+              -H 'Content-Type: application/json' \\
+              -H "X-Platform-Webhook: \${WH_SECRET}" \\
+              --data-binary '${json.replace("'", "'\\''")}' >/dev/null
+            rc=\$?
+            set -e
+            if [ \$rc -ne 0 ]; then echo 'platform notify failed for ${service} (rc='\$rc')'; fi
+          """
+        }
         }
       }
     }

@@ -14,7 +14,7 @@ spec:
         releaseName: platform-minio
         valueFiles:
           - $values/k3s/helm-values/platform/minio.yaml
-    - repoURL: https://github.com/worryyy/app-test.git
+    - repoURL: http://gitea-http.delivery.svc.cluster.local:3000/gitea_admin/app-test.git
       targetRevision: main
       ref: values
 

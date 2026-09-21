@@ -53,6 +53,9 @@ grep -q -- '--metadata-file=' "$pipeline"
 grep -q "imageMetadata\['containerimage.digest'\]" "$pipeline"
 grep -q 'release-record' "$pipeline"
 grep -q 'enablePullRequestAutoMerge' "$pipeline"
+grep -q 'post {' "$pipeline"
+grep -q 'always {' "$pipeline"
+grep -q 'PLATFORM_WEBHOOK_URL' "$pipeline"
 grep -q 'EXPECTED_DIGEST' "$pipeline"
 grep -q 'DATABASE_URL' "$pipeline"
 grep -q 'PROMETHEUS_URL' "$pipeline"
@@ -165,5 +168,38 @@ grep -q 'kubelet_volume_stats_(used_bytes|capacity_bytes)' "$prom_values"
 grep -q 'metricAnnotationsAllowlist' "$prom_values"
 grep -q 'delivery_platform_(deploy_id|git_sha|environment|release_batch|image_digest|gitops_revision)' "$prom_values"
 grep -q '__meta_kubernetes_pod_annotation_delivery_platform_image_digest' "$prom_values"
+
+# P4 pipeline contract: kafka/clickhouse/fluent-bit render, the collector
+# keeps the CRI→k8s-metadata→Kafka chain wired to the platform services, and
+# the CH DDL stays idempotent with the fixed group + format (parsing fixtures
+# live in k3s/ci/fixtures/logs/).
+fluent_bit="${repo_root}/k3s/manifests/fluent-bit/fluent-bit.yaml"
+test -f "$fluent_bit"
+test -f "${repo_root}/k3s/manifests/kafka-exporter/kafka-exporter.yaml"
+grep -q 'Name              tail' "$fluent_bit"
+grep -q 'Parser            cri' "$fluent_bit"
+grep -q 'Kube_Tag_Prefix       kube.var.log.containers.' "$fluent_bit"
+grep -q 'Merge_Log             On' "$fluent_bit"
+grep -q 'platform-kafka.platform.svc.cluster.local:9092' "$fluent_bit"
+grep -q 'Topics            logs.raw' "$fluent_bit"
+grep -q 'message_key       service' "$fluent_bit"
+for app in kafka clickhouse fluent-bit kafka-exporter; do
+  test -f "${repo_root}/k3s/gitops/applications/platform/${app}.yaml"
+done
+helm template platform-kafka "${repo_root}/k3s/charts/vendor/kafka" \
+  -f "${repo_root}/k3s/helm-values/platform/kafka.yaml" --namespace platform | \
+  grep -q 'log.retention.hours=72'
+helm template platform-clickhouse "${repo_root}/k3s/charts/vendor/clickhouse" \
+  -f "${repo_root}/k3s/helm-values/platform/clickhouse.yaml" --namespace platform | \
+  grep -q 'name: platform-clickhouse$'
+ch_ddl="${repo_root}/monitoring/pipeline/clickhouse/001_logs.sql"
+grep -q "kafka_group_name = 'platform-sinker'" "$ch_ddl"
+grep -q "kafka_format = 'JSONAsString'" "$ch_ddl"
+grep -q 'TTL toDateTime(ts) + INTERVAL 30 DAY' "$ch_ddl"
+grep -q 'platform-role: control' "${repo_root}/k3s/helm-values/platform/kafka.yaml"
+grep -q 'platform-role: control' "${repo_root}/k3s/helm-values/platform/clickhouse.yaml"
+for fixture in slog-json.log gorm-text.log kafka-record.json; do
+  test -s "${repo_root}/k3s/ci/fixtures/logs/${fixture}"
+done
 
 echo "delivery contract OK"

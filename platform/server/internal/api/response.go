@@ -23,19 +23,17 @@ type httpError struct {
 
 func (e *httpError) Error() string { return e.message }
 
+// ErrorErr builds an error carrying its HTTP status for RespFail.
 func ErrorErr(status int, message string) error { return &httpError{status: status, message: message} }
 
-var (
-	errUnauthorized   = &httpError{status: http.StatusUnauthorized, message: "unauthorized"}
-	errForbidden      = &httpError{status: http.StatusForbidden, message: "forbidden"}
-	errNotFoundGeneric = &httpError{status: http.StatusNotFound, message: "not found"}
-)
-
-func respData(c *gin.Context, data any) {
+// RespData writes a success envelope.
+func RespData(c *gin.Context, data any) {
 	c.JSON(http.StatusOK, Response{Code: 0, Message: "ok", Data: data})
 }
 
-func respFail(c *gin.Context, err error) {
+// RespFail maps an error to the envelope; ErrorErr controls the status,
+// anything else becomes a 500.
+func RespFail(c *gin.Context, err error) {
 	var he *httpError
 	if !errors.As(err, &he) {
 		he = &httpError{status: http.StatusInternalServerError, message: "internal server error"}

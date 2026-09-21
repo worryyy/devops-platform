@@ -94,9 +94,33 @@ noop_receiver=$(yq -r '.route.routes[] | select(.matchers | any_c(. == "signal_t
   echo "deploy_context route must exist" >&2
   exit 1
 }
-receiver_field_count=$(yq -r ".receivers[] | select(.name == \"$noop_receiver\") | keys | length" "$tmpdir/alertmanager.yml")
-[ "$receiver_field_count" = "1" ] || {
-  echo "deploy_context receiver must have no notification configuration" >&2
+# P3: deploy_context must reach the platform gateway (stored, never
+# notified) but must stay free of human notification channels.
+context_receiver_keys=$(yq -r ".receivers[] | select(.name == \"$noop_receiver\") | keys - [] | sort | join(\",\")" "$tmpdir/alertmanager.yml")
+[ "$context_receiver_keys" = "name,webhook_configs" ] || {
+  echo "deploy_context receiver keys = $context_receiver_keys, want name,webhook_configs (platform-only, no human channels)" >&2
+  exit 1
+}
+
+echo "== alert gateway receiver contract =="
+default_hook=$(yq -r '.receivers[] | select(.name == "default-receiver") | .webhook_configs[0].url' "$tmpdir/alertmanager.yml")
+case "$default_hook" in
+  http://platform-server-api.platform.svc/api/webhooks/alertmanager) ;;
+  *) echo "default-receiver webhook url = $default_hook, want the platform alert gateway" >&2; exit 1 ;;
+esac
+default_resolved=$(yq -r '.receivers[] | select(.name == "default-receiver") | .webhook_configs[0].send_resolved' "$tmpdir/alertmanager.yml")
+[ "$default_resolved" = "true" ] || {
+  echo "default-receiver webhook must send_resolved (platform flips firing rows)" >&2
+  exit 1
+}
+context_hook=$(yq -r ".receivers[] | select(.name == \"$noop_receiver\") | .webhook_configs[0].url" "$tmpdir/alertmanager.yml")
+[ "$context_hook" = "$default_hook" ] || {
+  echo "deploy_context receiver must feed the same platform webhook (store-only path)" >&2
+  exit 1
+}
+retention=$(yq -r '.server.retention // ""' "$prom_values")
+[ "$retention" = "15d" ] || {
+  echo "prometheus server retention = '$retention', want 15d" >&2
   exit 1
 }
 
@@ -144,5 +168,17 @@ grep -q '__meta_kubernetes_pod_annotation_delivery_platform_image_digest' "$prom
   echo "image digest relabel is missing from the application scrape jobs" >&2
   exit 1
 }
+
+echo "== cadvisor metrics for pod TopN =="
+grep -q 'container_cpu_usage_seconds_total|container_memory_working_set_bytes' "$prom_values" || {
+  echo "kubelet cadvisor job must keep container cpu/memory series for the pod TopN dashboard" >&2
+  exit 1
+}
+
+echo "== weekly report aggregate (fixtures) =="
+# Same base image as platform/report-runner/Dockerfile; deps installed at
+# test time so the pinned toolchain stays reproducible.
+docker run --rm -v "$repo_root":/work -w /work --entrypoint sh python:3.12-alpine -c \
+  "pip -q install --index-url https://pypi.tuna.tsinghua.edu.cn/simple boto3 jinja2 >/dev/null 2>&1 && python3 monitoring/report/test_aggregate.py"
 
 echo "observability contract OK"

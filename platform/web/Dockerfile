@@ -7,6 +7,6 @@ COPY . .
 RUN npm run build
 
 FROM docker.1ms.run/library/nginx:1.29-alpine
-COPY web/nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /src/dist /usr/share/nginx/html
 EXPOSE 80

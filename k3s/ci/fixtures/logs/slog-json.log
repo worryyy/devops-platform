@@ -1,0 +1,1 @@
+2026-09-21T22:30:42.725398807+08:00 stdout F {"level":"warn","time":"2026-09-21T22:30:42.725+0800","caller":"sensitive/service.go:224","msg":"rebuild sensitive filter failed","error":"find all sensitive words: Error 1146 (42S02): Table 'campus.sensitive_words' doesn't exist"}

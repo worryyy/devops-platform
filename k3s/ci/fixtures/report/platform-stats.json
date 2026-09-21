@@ -1,0 +1,19 @@
+{
+  "window": { "start": "2026-09-07T00:00:00Z", "end": "2026-09-14T00:00:00Z" },
+  "releases": {
+    "total": 6,
+    "stable": 5,
+    "failed": 1,
+    "ongoing": 0,
+    "byService": { "theme": 3, "chat": 2, "user": 1 }
+  },
+  "pipelines": { "total": 8, "success": 6, "failed": 2, "running": 0, "queued": 0 },
+  "alerts": {
+    "total": 14,
+    "top": [
+      { "alertname": "ReleasePodRestarting", "service": "theme", "count": 5 },
+      { "alertname": "ServiceHighErrorRate", "service": "chat", "count": 3 },
+      { "alertname": "LokiPVCUsageHigh", "service": "", "count": 2 }
+    ]
+  }
+}

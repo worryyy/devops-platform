@@ -1,0 +1,45 @@
+{
+  "version": "4",
+  "groupKey": "{}:{alertname=\"ServiceHighErrorRate\"}",
+  "truncatedAlerts": 0,
+  "status": "firing",
+  "receiver": "default-receiver",
+  "groupLabels": { "alertname": "ServiceHighErrorRate" },
+  "commonLabels": {
+    "alertname": "ServiceHighErrorRate",
+    "service": "theme",
+    "severity": "critical",
+    "signal_type": "user_impact",
+    "alert_scope": "service",
+    "namespace": "app",
+    "environment": "dev"
+  },
+  "commonAnnotations": {
+    "summary": "Service error rate high for theme",
+    "description": "Error ratio is above 5 percent across every revision of theme in dev."
+  },
+  "externalURL": "http://prometheus-monitoring.svc:9093",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "ServiceHighErrorRate",
+        "service": "theme",
+        "severity": "critical",
+        "signal_type": "user_impact",
+        "alert_scope": "service",
+        "namespace": "app",
+        "environment": "dev"
+      },
+      "annotations": {
+        "summary": "Service error rate high for theme",
+        "description": "Error ratio is above 5 percent across every revision of theme in dev.",
+        "prometheus_query": "ecampus:http_error_ratio:rate5m{service=\"theme\"}"
+      },
+      "startsAt": "2026-09-21T09:00:00.000000000Z",
+      "endsAt": "0001-01-01T00:00:00.000000000Z",
+      "generatorURL": "http://prometheus-monitoring.svc:9090/graph?g=expr",
+      "fingerprint": "9f5b2c1a4e8d7f30"
+    }
+  ]
+}

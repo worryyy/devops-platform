@@ -2,6 +2,7 @@ import { Descriptions, Card, Table, Tag, Typography, Alert, Spin } from 'antd';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { servicesApi, type ServiceEnvironment } from '../api/services';
+import { pipelinesApi, type PipelineRun } from '../api/pipelines';
 
 export default function ServiceDetail() {
   const { name } = useParams<{ name: string }>();
@@ -75,6 +76,10 @@ export default function ServiceDetail() {
         </Card>
       )}
 
+      <Card title="最近发布" style={{ marginBottom: 16 }}>
+        <RecentReleases name={data.name} />
+      </Card>
+
       <Card title="全部环境">
         <Table<ServiceEnvironment>
           rowKey="name"
@@ -85,5 +90,49 @@ export default function ServiceDetail() {
         />
       </Card>
     </div>
+  );
+}
+
+
+function RecentReleases({ name }: { name: string }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ['service-pipelines', name],
+    queryFn: () => pipelinesApi.list({ service: name, limit: 5 }),
+  });
+  const columns = [
+    { title: 'ID', dataIndex: 'id', key: 'id', width: 70 },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      render: (s: string) => (
+        <Tag color={s === 'success' ? 'success' : s === 'failed' ? 'error' : 'processing'}>{s}</Tag>
+      ),
+    },
+    { title: '构建号', dataIndex: 'jenkinsBuild', key: 'build', width: 90 },
+    { title: '触发人', dataIndex: 'triggeredBy', key: 'by' },
+    {
+      title: '时间',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (v: string) => new Date(v).toLocaleString('zh-CN', { hour12: false }),
+    },
+    {
+      title: '',
+      key: 'detail',
+      width: 70,
+      render: (_: unknown, run: PipelineRun) => <Link to={`/pipelines/${run.id}`}>详情</Link>,
+    },
+  ];
+  return (
+    <Table<PipelineRun>
+      rowKey="id"
+      size="small"
+      columns={columns}
+      dataSource={data ?? []}
+      loading={isLoading}
+      pagination={false}
+      locale={{ emptyText: '暂无发布记录' }}
+    />
   );
 }

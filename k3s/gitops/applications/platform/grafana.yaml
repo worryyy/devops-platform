@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grafana
+  namespace: argocd
+spec:
+  project: platform-addons
+
+  sources:
+    # chart vendor 进 app-test（k3s/charts/vendor/grafana）——远端 chart
+    # 仓库在 repo-server 内间歇超时，与 prometheus 同策。
+    - repoURL: http://gitea-http.delivery.svc.cluster.local:3000/gitea_admin/app-test.git
+      targetRevision: main
+      path: k3s/charts/vendor/grafana
+      helm:
+        releaseName: grafana
+        valueFiles:
+          - $values/k3s/helm-values/platform/grafana.yaml
+          - $values/k3s/helm-values/platform/grafana-dashboards.yaml
+    - repoURL: http://gitea-http.delivery.svc.cluster.local:3000/gitea_admin/app-test.git
+      targetRevision: main
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: platform
+
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

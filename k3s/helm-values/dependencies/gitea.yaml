@@ -1,0 +1,56 @@
+# 集群内 Git 镜像（P2）：跨境直连 github 的 clone 在 NAT 出口频繁被重置，
+# Jenkins/Argo CD 统一改从 Gitea 拉取；GitHub 仍是记录源，由开发机经
+# Tailscale 双推同步。
+# 安装：helm upgrade --install gitea gitea/gitea -n delivery -f 本文件
+redis-cluster:
+  enabled: false
+valkey:
+  enabled: false
+redis:
+  enabled: false
+memcached:
+  enabled: false
+postgresql:
+  enabled: false
+postgresql-ha:
+  enabled: false
+
+gitea:
+  config:
+    database:
+      DB_TYPE: sqlite3
+    server:
+      DOMAIN: gitea-http.delivery.svc.cluster.local
+      ROOT_URL: http://gitea-http.delivery.svc.cluster.local:3000/
+      OFFLINE_MODE: true
+    repository:
+      DEFAULT_BRANCH: main
+    webhook:
+      ALLOWED_HOST_LIST: private
+    admin:
+      username: gitea-admin
+      password: gitea-dev-password
+      email: gitea@platform.local
+    actions:
+      ENABLED: false
+
+service:
+  http:
+    type: ClusterIP
+    port: 3000
+
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClass: local-path
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+nodeSelector:
+  platform-role: light

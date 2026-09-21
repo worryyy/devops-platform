@@ -142,3 +142,35 @@
 - **修复**：ExternalName 别名（app ns 内 `redis`→redis-master、`mongo`→mongo-mongodb）。
   另：envFrom 的 secret 键名会原样成为环境变量名，必须大写
   （platform-server-auth 用 DATABASE_URL/JWT_SECRET，不是 database-url）。
+
+
+### 案例 M：跨境 git clone 在 NAT 出口持续被重置（P2 遇到，系统性解法）
+- **症状**：Jenkins/Argo CD 克隆 github 仓库频繁 `RPC failed; curl 56 Recv failure`，
+  重试 3 次也耗尽；repo 越大（vendor 了 chart）越必挂。
+- **解法**：**集群内部署 Gitea 做镜像**（k3s/helm-values/dependencies/gitea.yaml，
+  light 节点 ~300MB）。开发机经 Tailscale 推送镜像（全量历史推送也会被
+  port-forward 卡死——用 orphan squash 单 commit 推）；Jenkins job SCM、
+  Jenkinsfile 的 GITOPS_REPO_URL/SOURCE_REPO、全部 Argo CD Application 的
+  repoURL 统一指向 `http://gitea-http.delivery.svc.cluster.local:3000/gitea_admin/app-test.git`
+  （basic auth gitea-https credential / argocd repo-gitea secret）。
+  GitHub 仍是记录源；镜像同步脚本见 /tmp/apptest-clone 工作流（rsync k3s/+platform/ → squash → push -f）。
+- **一句话**：跨境 git 的正确解法不是重试，是把 git 服务搬进集群。
+
+### 案例 N：Jenkins 流水线的四个首跑坑（P2 实录）
+1. **job 参数注册**：POST job config.xml 带 parameterDefinitions（空跑让 Jenkinsfile
+   自注册会卡在跨境 clone）。参数名必须与 Jenkinsfile parameters{} 完全一致。
+2. **沙箱审批**：`new groovy.json.JsonSlurperClassic` 等签名在新 Jenkins 需经
+   script console 预批（ScriptApproval.approveSignature），否则 RejectedAccessException。
+3. **kubectl 工具预置**：Prepare tools 阶段 wget dl.k8s.io 跨境挂死；正确姿势是从
+   k8s.m.daocloud.io/kubectl:v1.31.3 镜像 ctr export 出二进制直接写进
+   jenkins-agent-cache PVC 对应目录（kubectl cp / exec stdin 都会静默损坏二进制！）。
+4. **post 动作的运行位置与凭据**：Notify platform 在 post.always 跑，agent 容器的
+   envFrom 对 post 不生效；用 Jenkins credential（string credentialsId
+   platform-webhook-secret）+ withCredentials 最稳。Groovy GString 里 shell 变量要
+   \$ 转义、RunWrapper 无 durationInMillis 属性（用 timeInMillis-startTimeInMillis）。
+
+### 案例 O：queue item → build number 的错配（平台侧自愈）
+- **症状**：pipeline_runs 存了 Jenkins queue item id，webhook 上报的是 build number，
+  永远对不上（queue item 还会被快速 GC，解析窗口不稳定）。
+- **解法**：webhook 匹配失败时按 (service, status IN queued/running) 认领最新 run
+  并回写正确 build 号——job 对每服务串行（DisableConcurrentBuilds），认领唯一安全。

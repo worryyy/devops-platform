@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>DevOps 周报 {{ report.period }}</title>
+<style>
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+         margin: 0; background: #f5f6f8; color: #1f2329; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 32px 24px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: #646a73; font-size: 13px; margin-bottom: 24px; }
+  .cards { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+  .card { background: #fff; border-radius: 8px; padding: 16px 20px; min-width: 140px;
+          box-shadow: 0 1px 2px rgba(31,35,41,.06); }
+  .card .num { font-size: 26px; font-weight: 600; }
+  .card .label { color: #646a73; font-size: 12px; margin-top: 2px; }
+  section { background: #fff; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px;
+            box-shadow: 0 1px 2px rgba(31,35,41,.06); }
+  h2 { font-size: 15px; margin: 0 0 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #f0f1f3; }
+  th { color: #646a73; font-weight: 500; }
+  .ok { color: #2ea467; } .bad { color: #d83931; } .warn { color: #c8852c; }
+  .gap { color: #d83931; font-size: 12px; }
+  footer { color: #8f959e; font-size: 12px; margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>DevOps 周报 · {{ report.period }}</h1>
+  <div class="sub">{{ report.window.start }} ~ {{ report.window.end }} · 生成于 {{ report.generated_at }}</div>
+
+  {% set plat = report.platform %}
+  <div class="cards">
+    <div class="card"><div class="num">{{ plat.releases.total | default(0) }}</div><div class="label">发布次数</div></div>
+    <div class="card"><div class="num">
+      {% if plat.releases.total %}{{ ((plat.releases.stable or 0) / plat.releases.total * 100) | round(1) }}%{% else %}-{% endif %}
+    </div><div class="label">发布成功率</div></div>
+    <div class="card"><div class="num">{{ plat.pipelines.total | default(0) }}</div><div class="label">流水线执行</div></div>
+    <div class="card"><div class="num">{{ plat.alerts.total | default(0) }}</div><div class="label">告警条数</div></div>
+  </div>
+
+  <section>
+    <h2>服务可用性（周）</h2>
+    {% if report.sla %}
+    <table>
+      <tr><th>服务</th><th>请求数</th><th>错误数</th><th>成功率</th><th>P95 峰值</th></tr>
+      {% for row in report.sla %}
+      <tr>
+        <td>{{ row.service }}</td>
+        <td>{{ "{:,.0f}".format(row.requests | default(0)) }}</td>
+        <td>{{ "{:,.0f}".format(row.errors | default(0)) }}</td>
+        <td class="{% if row.success_ratio is none %}warn{% elif row.success_ratio >= 0.99 %}ok{% else %}bad{% endif %}">
+          {% if row.success_ratio is none %}-{% else %}{{ (row.success_ratio * 100) | round(2) }}%{% endif %}
+        </td>
+        <td>{{ "{:.2f}s".format(row.p95_max) if row.p95_max is defined and row.p95_max is not none else "-" }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}<p class="gap">本周无 ecampus 服务指标数据。</p>{% endif %}
+  </section>
+
+  <section>
+    <h2>发布与流水线</h2>
+    <table>
+      <tr><th>服务</th><th>发布次数</th></tr>
+      {% for service, count in (plat.releases.byService or {}).items() | sort(attribute='1', reverse=true) %}
+      <tr><td>{{ service }}</td><td>{{ count }}</td></tr>
+      {% else %}
+      <tr><td colspan="2">本周无发布记录。</td></tr>
+      {% endfor %}
+    </table>
+    <p style="color:#646a73;font-size:12px;margin-bottom:0">
+      流水线 {{ plat.pipelines.total | default(0) }} 次：成功 {{ plat.pipelines.success | default(0) }}，
+      失败 {{ plat.pipelines.failed | default(0) }}，运行中 {{ plat.pipelines.running | default(0) }}，
+      排队 {{ plat.pipelines.queued | default(0) }}
+    </p>
+  </section>
+
+  <section>
+    <h2>告警 Top</h2>
+    {% if plat.alerts.top %}
+    <table>
+      <tr><th>告警</th><th>服务</th><th>次数</th></tr>
+      {% for row in plat.alerts.top %}
+      <tr><td>{{ row.alertname }}</td><td>{{ row.service or '-' }}</td><td>{{ row.count }}</td></tr>
+      {% endfor %}
+    </table>
+    {% else %}<p>本周无告警记录。</p>{% endif %}
+  </section>
+
+  {% if report.gaps %}
+  <section>
+    <h2>数据缺口</h2>
+    {% for gap in report.gaps %}<p class="gap">⚠ {{ gap }}</p>{% endfor %}
+  </section>
+  {% endif %}
+
+  <footer>由 devops-platform 周报系统自动生成（P3 v1）</footer>
+</div>
+</body>
+</html>

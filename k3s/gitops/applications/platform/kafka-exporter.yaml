@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kafka-exporter
+  namespace: argocd
+spec:
+  project: platform-addons
+
+  # 独立 manifest（不经 helm）：k3s/manifests/kafka-exporter/
+  source:
+    repoURL: http://gitea-http.delivery.svc.cluster.local:3000/gitea_admin/app-test.git
+    targetRevision: main
+    path: k3s/manifests/kafka-exporter
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: platform
+
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

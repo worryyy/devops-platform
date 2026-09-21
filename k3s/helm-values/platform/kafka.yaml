@@ -1,0 +1,72 @@
+# P4 数据管道：Kafka（bitnami chart，KRaft 单副本 controller+broker 合一）。
+# chart 已 vendor 进 app-test（k3s/charts/vendor/kafka，版本 32.4.3）。
+# 镜像经 ACR 中转（Mac pull -> push，与 redis/postgresql 同法），tag 与
+# chart 默认一致（docker.io/bitnami/kafka:4.0.0-debian-12-r10）。
+# 落 node1（control，16G）与构建错峰——压测窗口禁止触发 Jenkins 构建。
+global:
+  security:
+    allowInsecureImages: true
+  imagePullSecrets:
+    - tcr-secret
+
+image:
+  registry: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+  repository: pulseops/kafka
+  tag: "4.0.0-debian-12-r10"
+
+# heap ~768M（蓝图 node1 预算 Kafka ~1G：堆 768M + 页缓存/堆外余量）
+heapOpts: "-Xms768m -Xmx768m"
+
+# 集群内 PLAINTEXT（无 SASL/TLS），listener 细节由 chart 生成
+listeners:
+  client:
+    protocol: PLAINTEXT
+  controller:
+    protocol: PLAINTEXT
+  interbroker:
+    protocol: PLAINTEXT
+  external:
+    protocol: PLAINTEXT
+
+# Kafka server.properties 覆盖（注意：顶层 config 会整体替换 chart 自动
+# 生成的 listener/process.roles/log.dirs 配置，所以用 overrideConfiguration
+# 合并覆盖）
+overrideConfiguration:
+  # 日志保留 72h（蓝图 §7.5：管道缓冲层，CH 落地后 Kafka 只留 3 天）
+  log.retention.hours: 72
+  # 单分区 10G 上限兜底（防异常流量把 20G PVC 撑爆）
+  log.retention.bytes: "10737418240"
+  # 单副本小集群的内部 topic 副本数
+  offsets.topic.replication.factor: 1
+  transaction.state.log.replication.factor: 1
+  transaction.state.log.min.isr: 1
+  num.partitions: 2
+  # CH Kafka 引擎消费需要 topic 先存在：允许自动创建（logs.raw 等）
+  auto.create.topics.enable: true
+
+# KRaft 单副本：controller-eligible 即 broker（controllerOnly: false）
+controller:
+  replicaCount: 1
+  controllerOnly: false
+  # heap 必须放 controller 段（controller.heapOpts 默认值会压过顶层 heapOpts）
+  heapOpts: "-Xms768m -Xmx768m"
+  nodeSelector:
+    platform-role: control
+  persistence:
+    enabled: true
+    size: 20Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 1Gi
+    limits:
+      cpu: "1"
+      memory: 1536Mi
+
+broker:
+  replicaCount: 0
+
+# JMX exporter 侧车暂不启用——lag 由 kafka-exporter（danielqsj）单独部署
+metrics:
+  jmx:
+    enabled: false

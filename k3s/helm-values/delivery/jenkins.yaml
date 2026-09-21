@@ -33,10 +33,30 @@ controller:
       keyName: username
     - name: acr-credentials
       keyName: password
+    - name: platform-webhook
+      keyName: secret
+    - name: gitea-credentials
+      keyName: username
+    - name: gitea-credentials
+      keyName: password
 
+  # P2 platform integration: the pipeline's Notify platform stage posts the
+  # stage summary here after every build (success or failure). Chart 5.9.x
+  # does not render controller.additionalEnv, so the URL is a Jenkins global
+  # env (JCasC globalNodeProperties); the secret rides the mounted secret.
   JCasC:
     defaultConfig: true
     configScripts:
+      delivery-platform: |
+        jenkins:
+          globalNodeProperties:
+            # envVars is the EnvironmentVariablesNodeProperty symbol; the
+            # inner map carries the actual list. A wrong symbol here fails
+            # ConfigurationAsCode.init and crash-loops the controller.
+            - envVars:
+                env:
+                  - key: PLATFORM_WEBHOOK_URL
+                    value: "http://platform-server-api.platform.svc/api/webhooks/jenkins"
       delivery-credentials: |
         credentials:
           system:
@@ -54,6 +74,12 @@ controller:
                       description: "Aliyun ACR credentials for cache existence checks"
                       username: ${file:/run/secrets/additional/acr-credentials-username}
                       password: ${file:/run/secrets/additional/acr-credentials-password}
+                  - usernamePassword:
+                      scope: GLOBAL
+                      id: gitea-https
+                      description: "In-cluster Gitea mirror (app-test)"
+                      username: ${file:/run/secrets/additional/gitea-credentials-username}
+                      password: ${file:/run/secrets/additional/gitea-credentials-password}
 
   # Keep the default in-cluster kubernetes cloud (service-account based);
   # the Jenkinsfile declares its agent pod template inline.

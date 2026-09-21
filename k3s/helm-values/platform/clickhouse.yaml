@@ -1,0 +1,64 @@
+# P4 数据管道：ClickHouse（bitnami chart 9.4.4，单副本 StatefulSet）。
+# chart 已 vendor 进 app-test（k3s/charts/vendor/clickhouse）。
+# 镜像经 ACR 中转：docker.io/bitnami/clickhouse:25.7.5-debian-12-r0
+# -> crpi-...aliyuncs.com/pulseops/clickhouse。
+# 落 node1（control）与构建错峰：压测窗口禁止 Jenkins 构建（Runbook 备注）。
+global:
+  security:
+    allowInsecureImages: true
+  imagePullSecrets:
+    - tcr-secret
+
+image:
+  registry: crpi-gfwwpdquc14b7w22.cn-shanghai.personal.cr.aliyuncs.com
+  repository: pulseops/clickhouse
+  tag: "25.7.5-debian-12-r0"
+
+# 单节点：无副本无 keeper
+shards: 1
+replicaCount: 1
+keeper:
+  enabled: false
+
+# platform-server 用此账号连接（密码走 Secret，见 k3s/secrets/clickhouse.example.yaml）
+auth:
+  username: platform
+  existingSecret: clickhouse-admin
+  existingSecretKey: password
+
+# 小规格调优（4c16G node1 与构建错峰共存）：外部排序/聚合落盘阈值 256M
+# 防大查询吃光内存；单查询内存 1.5G 上限；查询 60s 硬超时。
+# 注：merge 后台线程类参数（background_pool_size /
+# background_merges_mutations_concurrency_ratio）在 CH 25.x 的 config
+# <merge_tree> 段已不受支持，写进去直接启动失败（实测）；如需调低走
+# users.xml profile 或 SYSTEM 查询，v1 不做。
+configdFiles:
+  lowspec.xml: |
+    <clickhouse>
+      <profiles>
+        <default>
+          <max_bytes_before_external_sort>268435456</max_bytes_before_external_sort>
+          <max_bytes_before_external_group_by>268435456</max_bytes_before_external_group_by>
+          <max_memory_usage>1610612736</max_memory_usage>
+          <max_execution_time>60</max_execution_time>
+        </default>
+      </profiles>
+    </clickhouse>
+
+persistence:
+  enabled: true
+  size: 40Gi
+
+nodeSelector:
+  platform-role: control
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 1536Mi
+  limits:
+    cpu: "2"
+    memory: 2560Mi
+
+# 日志检索 API 端口保持默认 9000（HTTP 8123）；chart 内 Service
+# platform-clickhouse.platform.svc.cluster.local
